@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Profile {
   id: string;
-  user_id: string;
+  user_id: string; // Keeping this for type compatibility, but actual queries use 'id'
   default_email: string | null;
   is_default_email: boolean;
   display_name: string | null;
@@ -35,25 +35,28 @@ export function useProfile() {
       return;
     }
 
+    console.log("Current user ID:", user.id);
+
     try {
       setLoading(true);
       console.log("Attempting to fetch or create profile for user:", user.id);
 
-      // Try to fetch existing profile
+      // Try to fetch existing profile using 'id' column
       const { data: existingProfile, error: selectError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("id", user.id) // Changed from user_id to id
         .maybeSingle();
 
       if (selectError) {
         console.error("Error during profile SELECT:", {
           message: selectError.message,
           status: selectError.code,
+          details: selectError.details, // Added explicit details logging
           fullError: selectError,
           queryResult: existingProfile,
         });
-        throw selectError; // Re-throw to be caught by the outer catch block
+        throw selectError;
       }
 
       if (existingProfile) {
@@ -61,15 +64,16 @@ export function useProfile() {
         setProfile(existingProfile);
       } else {
         console.log("No profile found for user, attempting to create a new one.");
-        // Profile does not exist, create it
+        // Profile does not exist, create it using 'id'
         const { data: newProfile, error: upsertError } = await supabase
           .from("profiles")
           .upsert({
-            user_id: user.id,
+            id: user.id, // Changed from user_id to id
+            user_id: user.id, // Keep user_id for consistency if it exists in DB, but 'id' is the primary key
             display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             default_email: user.user_metadata?.email || null,
-            is_default_email: false, // Default to false for new profiles
-          })
+            is_default_email: false,
+          }, { onConflict: 'id' }) // Added onConflict: 'id'
           .select()
           .single();
 
@@ -77,10 +81,11 @@ export function useProfile() {
           console.error("Error during profile UPSERT:", {
             message: upsertError.message,
             status: upsertError.code,
+            details: upsertError.details, // Added explicit details logging
             fullError: upsertError,
             queryResult: newProfile,
           });
-          throw upsertError; // Re-throw to be caught by the outer catch block
+          throw upsertError;
         }
         console.log("New profile created:", newProfile);
         setProfile(newProfile);
@@ -100,15 +105,25 @@ export function useProfile() {
   async function updateProfile(updates: Partial<Profile>) {
     if (!user) return;
 
+    console.log("Current user ID for update:", user.id);
+
     try {
       const { data, error } = await supabase
         .from("profiles")
         .update(updates)
-        .eq("user_id", user.id)
+        .eq("id", user.id) // Changed from user_id to id
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", {
+          message: error.message,
+          status: error.code,
+          details: error.details, // Added explicit details logging
+          fullError: error,
+        });
+        throw error;
+      }
       setProfile(data);
       toast({
         title: "Salvato",
