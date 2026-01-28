@@ -14,21 +14,30 @@ export interface Profile {
 }
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, session, loading: authLoading } = useAuth(); // Ottieni sessione e stato di caricamento dell'autenticazione
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Questo loading è per il fetch del profilo
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-    } else {
-      setProfile(null);
-      setLoading(false);
+    // Se l'autenticazione è ancora in corso, o non c'è un utente loggato, non fare nulla.
+    // Imposta il caricamento del profilo su false se non c'è un utente, poiché non c'è un profilo da caricare.
+    if (authLoading) {
+      setLoading(true); // Ancora in attesa che l'autenticazione si risolva
+      return;
     }
-  }, [user]);
+    if (!user) { // Se non c'è un utente (session?.user è null)
+      setProfile(null);
+      setLoading(false); // Nessun utente, quindi nessun profilo da caricare
+      return;
+    }
+
+    // Se abbiamo un utente e l'autenticazione non è più in caricamento, allora recupera il profilo.
+    fetchProfile();
+  }, [user, authLoading]); // Dipende da user e authLoading
 
   async function fetchProfile() {
+    // Questa guardia è principalmente per sicurezza, ma l'useEffect dovrebbe gestirla.
     if (!user) {
       setProfile(null);
       setLoading(false);
@@ -45,14 +54,14 @@ export function useProfile() {
       const { data: existingProfile, error: selectError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id) // Changed from user_id to id
+        .eq("id", user.id)
         .maybeSingle();
 
       if (selectError) {
         console.error("Error during profile SELECT:", {
           message: selectError.message,
           status: selectError.code,
-          details: selectError.details, // Added explicit details logging
+          details: selectError.details,
           fullError: selectError,
           queryResult: existingProfile,
         });
@@ -68,12 +77,12 @@ export function useProfile() {
         const { data: newProfile, error: upsertError } = await supabase
           .from("profiles")
           .upsert({
-            id: user.id, // Changed from user_id to id
-            user_id: user.id, // Keep user_id for consistency if it exists in DB, but 'id' is the primary key
+            id: user.id,
+            user_id: user.id,
             display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             default_email: user.user_metadata?.email || null,
             is_default_email: false,
-          }, { onConflict: 'id' }) // Added onConflict: 'id'
+          }, { onConflict: 'id' })
           .select()
           .single();
 
@@ -81,7 +90,7 @@ export function useProfile() {
           console.error("Error during profile UPSERT:", {
             message: upsertError.message,
             status: upsertError.code,
-            details: upsertError.details, // Added explicit details logging
+            details: upsertError.details,
             fullError: upsertError,
             queryResult: newProfile,
           });
@@ -103,7 +112,7 @@ export function useProfile() {
   }
 
   async function updateProfile(updates: Partial<Profile>) {
-    if (!user) return;
+    if (!user) return; // Guardia per assicurarsi che l'utente sia definito
 
     console.log("Current user ID for update:", user.id);
 
@@ -111,7 +120,7 @@ export function useProfile() {
       const { data, error } = await supabase
         .from("profiles")
         .update(updates)
-        .eq("id", user.id) // Changed from user_id to id
+        .eq("id", user.id)
         .select()
         .single();
 
@@ -119,7 +128,7 @@ export function useProfile() {
         console.error("Error updating profile:", {
           message: error.message,
           status: error.code,
-          details: error.details, // Added explicit details logging
+          details: error.details,
           fullError: error,
         });
         throw error;
