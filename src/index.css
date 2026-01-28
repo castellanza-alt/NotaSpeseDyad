@@ -1,0 +1,510 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Light Theme - Clean off-white with pure white cards */
+  :root,
+  .light {
+    --background: 210 20% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 220 20% 25%;
+
+    --muted: 210 15% 94%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 217 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 92%;
+    --ring: 217 91% 60%;
+
+    --radius: 9999px;
+
+    --glass-bg: 0 0% 100% / 0.72;
+    --glass-border: 220 20% 90% / 0.5;
+    --glass-shadow: 220 30% 20% / 0.08;
+    
+    --success: 142 72% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Expense card specific colors */
+    --expense-weekday: 0 65% 45%;
+    --expense-amount: 217 55% 39%;
+
+    /* Archive theme colors */
+    --archive-header: 217 55% 39%;
+    --archive-gradient-start: 199 89% 86%;
+    --archive-gradient-end: 280 67% 90%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 220 20% 25%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  /* Dark Theme - Deep slate grays, NOT pure black */
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 20% 98%;
+
+    /* Cards with Slate-900 feel for better contrast */
+    --card: 215 28% 14%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 215 28% 14%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 217 91% 65%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 22%;
+    --secondary-foreground: 210 20% 90%;
+
+    --muted: 217 33% 25%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 85% 65%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 25%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 65%;
+
+    --radius: 9999px;
+
+    --glass-bg: 215 28% 14% / 0.85;
+    --glass-border: 217 33% 30% / 0.3;
+    --glass-shadow: 222 50% 5% / 0.5;
+    
+    --success: 142 72% 50%;
+    --success-foreground: 222 47% 11%;
+
+    /* Expense card specific colors - glow effect in dark mode */
+    --expense-weekday: 0 55% 55%;
+    --expense-amount: 199 89% 70%;
+
+    /* Archive theme colors - dark mode */
+    --archive-header: 217 55% 35%;
+    --archive-gradient-start: 217 40% 20%;
+    --archive-gradient-end: 280 30% 18%;
+
+    --sidebar-background: 215 28% 14%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 217 91% 65%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 22%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 217 91% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Smooth theme transition */
+  body,
+  body * {
+    transition: background-color 300ms ease, border-color 300ms ease, color 150ms ease;
+  }
+}
+
+/* Safe area utilities for iPhone */
+.pt-safe-top {
+  padding-top: max(env(safe-area-inset-top, 20px), 52px);
+}
+
+.pb-safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px);
+}
+
+@layer utilities {
+  /* Glassmorphism utilities */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  .glass-strong {
+    background: hsl(var(--card) / 0.9);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 0 8px 32px hsl(var(--glass-shadow));
+  }
+
+  /* Card shadows */
+  .card-shadow {
+    box-shadow: 
+      0 1px 3px hsl(var(--glass-shadow)),
+      0 4px 12px hsl(var(--glass-shadow));
+  }
+
+  .card-shadow-lg {
+    box-shadow: 
+      0 4px 12px hsl(var(--glass-shadow)),
+      0 12px 32px hsl(var(--glass-shadow));
+  }
+
+  /* Archive Screen Styles */
+  .archive-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--archive-gradient-start)) 0%,
+      hsl(var(--archive-gradient-end)) 100%
+    );
+    min-height: 100vh;
+  }
+
+  .archive-header {
+    background: hsl(var(--archive-header));
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+  }
+
+  .archive-footer {
+    background: hsl(var(--archive-header));
+    border-top-left-radius: 2rem;
+    border-top-right-radius: 2rem;
+  }
+
+  /* Expense Card - Messy rotated layout with stronger shadows & dark mode contrast */
+  .expense-card-rotated {
+    @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 
+      0 8px 30px hsl(220 30% 15% / 0.15),
+      0 16px 50px hsl(220 30% 15% / 0.12),
+      0 4px 10px hsl(220 30% 15% / 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+
+  /* Dark mode: add subtle white border for edge glow and stronger shadow */
+  .dark .expense-card-rotated {
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 
+      0 10px 40px hsl(222 50% 5% / 0.5),
+      0 20px 60px hsl(222 50% 5% / 0.4),
+      0 4px 12px hsl(222 50% 5% / 0.3);
+  }
+
+  .expense-card-rotated:hover {
+    box-shadow: 
+      0 12px 40px hsl(220 30% 15% / 0.2),
+      0 24px 70px hsl(220 30% 15% / 0.15),
+      0 6px 14px hsl(220 30% 15% / 0.1);
+  }
+
+  .dark .expense-card-rotated:hover {
+    box-shadow: 
+      0 14px 50px hsl(222 50% 5% / 0.6),
+      0 28px 80px hsl(222 50% 5% / 0.5),
+      0 6px 16px hsl(222 50% 5% / 0.35);
+  }
+
+  .expense-card-rotated:active {
+    transform: scale(0.98);
+  }
+
+  /* Expense card color utilities */
+  .text-expense-weekday {
+    color: hsl(var(--expense-weekday));
+  }
+
+  .text-expense-amount {
+    color: hsl(var(--expense-amount));
+  }
+
+  .expense-card-new {
+    animation: card-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes card-pop-in {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Fullscreen card modal */
+  .expense-modal-card {
+    @apply bg-card rounded-3xl;
+    box-shadow: 
+      0 25px 50px -12px hsl(220 30% 10% / 0.25),
+      0 12px 24px hsl(220 30% 10% / 0.15);
+  }
+
+  /* Bottom Dock */
+  .dock-pill {
+    background: hsl(var(--card));
+    border-radius: 9999px;
+    box-shadow: 
+      0 4px 20px hsl(var(--glass-shadow)),
+      0 8px 40px hsl(var(--glass-shadow));
+  }
+
+  .dock-button {
+    @apply flex items-center justify-center w-11 h-11 rounded-full;
+    @apply bg-secondary/60 text-muted-foreground;
+    @apply transition-all duration-200;
+    @apply hover:bg-secondary active:scale-95;
+  }
+
+  .fab-button {
+    @apply flex items-center justify-center w-14 h-14 rounded-full;
+    background: hsl(var(--archive-header));
+    @apply text-white;
+    @apply transition-all duration-200;
+    @apply hover:brightness-110 active:scale-95;
+    box-shadow: 0 4px 14px hsl(var(--archive-header) / 0.4);
+  }
+
+  /* Text color for archive header amount */
+  .text-archive-header {
+    color: hsl(var(--archive-header));
+  }
+
+  /* Pill button styles */
+  .pill-button {
+    @apply rounded-full px-6 py-3 font-medium transition-all duration-200;
+    @apply active:scale-95;
+  }
+
+  .pill-button-primary {
+    @apply pill-button bg-primary text-primary-foreground;
+    @apply hover:brightness-110 hover:shadow-lg;
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.35);
+  }
+
+  .pill-button-secondary {
+    @apply pill-button bg-secondary text-secondary-foreground;
+    @apply hover:bg-secondary/80;
+  }
+
+  /* Icon pill container */
+  .icon-pill {
+    @apply inline-flex items-center justify-center rounded-full p-2.5;
+    @apply bg-primary/10 text-primary;
+  }
+
+  .icon-pill-muted {
+    @apply inline-flex items-center justify-center rounded-full p-2;
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* iOS safe areas */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 34px);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translateY(-16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.4s ease-out forwards;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  /* Card shift animation for existing cards */
+  @keyframes card-shift-down {
+    from {
+      transform: translateY(-20px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .card-shift {
+    animation: card-shift-down 0.4s ease-out forwards;
+  }
+
+  /* Laser scan animation */
+  @keyframes laser-scan {
+    0% {
+      top: 0%;
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      top: 100%;
+      opacity: 1;
+    }
+  }
+
+  .laser-line {
+    animation: laser-scan 2s ease-in-out infinite;
+  }
+
+  /* Success pulse animation */
+  @keyframes success-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
+  .success-pulse {
+    animation: success-pulse 0.6s ease-in-out;
+  }
+
+  /* Shimmer effect */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Scrollbar hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

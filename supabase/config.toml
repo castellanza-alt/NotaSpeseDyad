@@ -1,0 +1,7 @@
+project_id = "ngprqpwpcshkvnuqmatc"
+
+[functions.analyze-receipt]
+verify_jwt = false
+
+[functions.send-expense-email]
+verify_jwt = false
