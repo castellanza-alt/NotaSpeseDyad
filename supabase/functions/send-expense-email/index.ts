@@ -15,12 +15,13 @@ interface ExpenseData {
 }
 
 interface SendEmailRequest {
-  to: string[]; // Changed to array of strings
+  to: string[];
   expense: ExpenseData;
   imageBase64: string;
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,19 +29,19 @@ serve(async (req) => {
   try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY is not configured");
+      console.error("[send-expense-email] Missing RESEND_API_KEY");
+      throw new Error("Configurazione server mancante (API Key).");
     }
 
     const { to, expense, imageBase64 }: SendEmailRequest = await req.json();
 
     if (!to || to.length === 0 || !expense) {
-      throw new Error("Missing required fields or no recipients provided");
+      throw new Error("Dati mancanti per l'invio dell'email.");
     }
 
-    // Extract base64 data
-    const base64Data = imageBase64.split(",")[1] || imageBase64;
+    // Extract base64 data safely
+    const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
 
-    // Format date
     const formattedDate = expense.date
       ? new Date(expense.date).toLocaleDateString("it-IT", {
           day: "numeric",
@@ -90,7 +91,7 @@ serve(async (req) => {
         <div class="label">Totale</div>
         <div class="total">${expense.currency} ${expense.total.toFixed(2)}</div>
       </div>
-      ${expense.items.length > 0 ? `
+      ${expense.items && expense.items.length > 0 ? `
       <div class="items">
         <div class="label" style="margin-bottom: 8px;">Articoli</div>
         ${expense.items.map((item) => `
@@ -110,7 +111,8 @@ serve(async (req) => {
 </html>
     `;
 
-    // Send email via Resend API directly
+    console.log(`[send-expense-email] Sending email to ${to.length} recipients...`);
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -119,7 +121,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Nota Spese <notifiche@insightnode.it>",
-        to: to, // Pass array of recipients
+        to: to,
         subject: `Nota Spese: ${expense.merchant || "Nuova spesa"} - ${expense.currency} ${expense.total.toFixed(2)}`,
         html: emailHtml,
         attachments: [
@@ -133,12 +135,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Resend API error:", response.status, errorText);
-      throw new Error(`Email send failed: ${response.status}`);
+      console.error("[send-expense-email] Resend API error:", response.status, errorText);
+      throw new Error(`Errore invio email (Resend API): ${response.status}`);
     }
 
     const emailResponse = await response.json();
-    console.log("Email sent successfully:", emailResponse);
+    console.log("[send-expense-email] Email sent successfully:", emailResponse);
 
     return new Response(
       JSON.stringify({ success: true, id: emailResponse.id }),
@@ -147,7 +149,7 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-expense-email:", error);
+    console.error("[send-expense-email] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

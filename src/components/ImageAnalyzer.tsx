@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Send, Loader2, Check } from "lucide-react";
+import { X, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -59,7 +59,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         img.onload = () => {
           const canvas = document.createElement("canvas");
           let { width, height } = img;
-          const maxDim = 1200; // Ridotto per performance
+          
+          // Riduzione aggressiva per mobile (max 1024px e qualità 0.5)
+          const maxDim = 1024; 
           if (width > maxDim || height > maxDim) {
             if (width > height) { height = (height / width) * maxDim; width = maxDim; }
             else { width = (width / height) * maxDim; height = maxDim; }
@@ -67,7 +69,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.6));
+          // Compressione JPEG a 0.5 per ridurre drasticamente il payload
+          resolve(canvas.toDataURL("image/jpeg", 0.5));
         };
         img.src = e.target?.result as string;
       };
@@ -79,7 +82,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     try {
       const base64Image = await compressImage(imageFile);
       
-      // Invocazione diretta via fetch per evitare errori SDK
       const response = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/analyze-receipt`, {
         method: 'POST',
         headers: {
@@ -100,10 +102,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       console.error("Analysis error:", error);
       toast({
         title: "Errore Analisi",
-        description: "Impossibile analizzare l'immagine automaticamente.",
+        description: "Impossibile analizzare l'immagine. Inserisci i dati manualmente.",
         variant: "destructive"
       });
-      // Fallback a dati vuoti per permettere inserimento manuale
       setExpenseData({ merchant: "", date: new Date().toISOString().split("T")[0], total: 0, currency: "EUR", category: "", items: [] });
     } finally {
       setAnalyzing(false);
@@ -114,17 +115,25 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     if (!expenseData || !session) return;
     setSending(true);
     try {
+      // Ricomprimiamo l'immagine per l'invio finale
       const base64Image = await compressImage(imageFile);
       
       // 1. Upload dell'immagine nello storage
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
-      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, blob);
-      if (uploadError) throw uploadError;
+      
+      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, blob, {
+        upsert: true
+      });
+      
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw new Error(`Errore upload: ${uploadError.message}`);
+      }
       
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // 2. Invio email tramite Edge Function (chiamata diretta)
+      // 2. Invio email tramite Edge Function
       const emailResponse = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
@@ -140,7 +149,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       });
 
       if (!emailResponse.ok) {
-        throw new Error("Errore durante l'invio dell'email all'amministrazione");
+        const errorText = await emailResponse.text();
+        console.error("Email function error:", errorText);
+        throw new Error("Errore durante l'invio dell'email. Riprova.");
       }
 
       // 3. Salvataggio nel database locale
@@ -161,7 +172,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       console.error("Send error:", error);
       toast({ 
         title: "Errore invio", 
-        description: error.message || "Si è verificato un errore imprevisto", 
+        description: error.message || "Controlla la tua connessione e riprova.", 
         variant: "destructive" 
       });
     } finally {
