@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import type { Expense } from "@/hooks/useExpenses";
+import { Utensils, Car, ShoppingBag, Briefcase, Receipt, Coffee, Zap, Home, Plane, Gift } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -10,28 +12,47 @@ interface ExpenseCardProps {
   onClick?: () => void;
 }
 
-// Generate deterministic rotation based on expense ID (-2 to +2 degrees)
+// Map categories to Lucide icons
+const categoryIcons: Record<string, LucideIcon> = {
+  "Ristorazione": Utensils,
+  "Cibo": Utensils,
+  "Trasporti": Car,
+  "Auto": Car,
+  "Benzina": Car,
+  "Shopping": ShoppingBag,
+  "Lavoro": Briefcase,
+  "Ufficio": Briefcase,
+  "Bar": Coffee,
+  "Utenze": Zap,
+  "Casa": Home,
+  "Viaggi": Plane,
+  "Regali": Gift
+};
+
+function getCategoryIcon(category: string | null): LucideIcon {
+  if (!category) return Receipt;
+  // Simple partial match or default
+  const key = Object.keys(categoryIcons).find(k => category.toLowerCase().includes(k.toLowerCase()));
+  return key ? categoryIcons[key] : Receipt;
+}
+
+// Generate deterministic rotation based on expense ID (-1.5 to +1.5 degrees) - Subtle
 function getRotation(id: string): number {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) - hash) + id.charCodeAt(i);
     hash |= 0;
   }
-  // Map to range -2 to +2 degrees
-  return ((hash % 500) / 100) - 2;
-}
-
-// Get Italian day of week abbreviation
-function getDayOfWeek(date: Date): string {
-  return format(date, "EEEE", { locale: it }).toUpperCase();
+  return ((hash % 300) / 100) - 1.5;
 }
 
 export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
-  const dayOfWeek = expenseDate ? getDayOfWeek(expenseDate) : "—";
-  const dayNumber = expenseDate ? format(expenseDate, "d") : "—";
-  const month = expenseDate ? format(expenseDate, "MMM", { locale: it }).toUpperCase() : "—";
+  // Format Date: "28 GEN"
+  const dateFormatted = expenseDate 
+    ? format(expenseDate, "d MMM", { locale: it }).toUpperCase().replace(".", "")
+    : "—";
 
   const formattedTotal = expense.total?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
@@ -39,11 +60,12 @@ export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps
   }) || "0,00";
 
   const rotation = useMemo(() => getRotation(expense.id), [expense.id]);
+  const Icon = getCategoryIcon(expense.category);
 
   return (
     <div
       onClick={onClick}
-      className={`expense-card-rotated ${isNew ? 'expense-card-new' : ''}`}
+      className={`expense-card-rotated group ${isNew ? 'ring-2 ring-primary ring-offset-2' : ''}`}
       style={{
         zIndex: 100 - index,
         transform: `rotate(${rotation}deg)`,
@@ -51,32 +73,26 @@ export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps
       }}
     >
       <div className="flex items-center gap-4">
-        {/* Left - Date Block */}
-        <div className="flex flex-col items-center min-w-[70px] border-r border-border/50 pr-4">
-          <span className="text-[10px] font-semibold tracking-wide text-expense-weekday leading-none">
-            {dayOfWeek}
-          </span>
-          <span className="text-3xl font-bold text-foreground leading-tight mt-0.5">
-            {dayNumber}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground uppercase leading-none">
-            {month}
-          </span>
+        {/* Left - Icon Squircle */}
+        <div className="flex-shrink-0 w-11 h-11 rounded-[14px] bg-[hsl(var(--accent-light))] flex items-center justify-center text-[hsl(var(--accent))]">
+          <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
         
-        {/* Center - Merchant & Category */}
-        <div className="flex-1 min-w-0 py-1">
-          <h3 className="text-lg font-bold text-foreground leading-tight truncate">
+        {/* Center - Info */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+          <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">
             {expense.merchant || "Sconosciuto"}
           </h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {expense.category || "Altro"}
-          </p>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span className="truncate max-w-[100px]">{expense.category || "Altro"}</span>
+            <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/40" />
+            <span>{dateFormatted}</span>
+          </div>
         </div>
         
         {/* Right - Amount */}
-        <div className="flex-shrink-0 text-right">
-          <p className="text-lg font-bold text-expense-amount whitespace-nowrap">
+        <div className="flex-shrink-0 text-right pl-2">
+          <p className="text-[17px] font-bold text-amount tabular-nums tracking-tight">
             €{formattedTotal}
           </p>
         </div>
