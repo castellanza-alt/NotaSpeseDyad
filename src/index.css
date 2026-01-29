@@ -173,7 +173,7 @@
   .dock-pill {
     background: hsl(var(--archive-header));
     border-radius: 9999px;
-    box-shadow: 0 8px 32px hsl(var(--glass-shadow));
+    /* Rimosso shadow-xl */
     z-index: 50;
     min-height: 72px; /* Altezza uniforme per entrambe le pill */
     display: flex;

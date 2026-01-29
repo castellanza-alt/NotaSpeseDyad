@@ -82,7 +82,7 @@ export function RecentExpenses() {
               
               {/* Amount */}
               <p className="text-lg font-semibold text-primary mt-1">
-                €{expense.total?.toFixed(2) || "0.00"}
+                €{expense.total?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00"}
               </p>
               
               {/* Date */}

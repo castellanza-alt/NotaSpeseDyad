@@ -25,7 +25,7 @@ export function VirtualizedExpenseList({
 
   // Card height estimation (including gap)
   const CARD_HEIGHT = 100;
-  const GAP = 16;
+  const GAP = 24; // Increased gap for more vertical spacing
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
   const virtualizer = useVirtualizer({
