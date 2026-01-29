@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Settings, Download, LogOut, Loader2, ChevronRight } from "lucide-react";
+import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useExpenses } from "@/hooks/useExpenses";
 import { signOut } from "@/lib/auth";
@@ -36,35 +36,77 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     }
   };
   
-  const [email, setEmail] = useState(profile?.default_email || "");
+  const [emails, setEmails] = useState<string[]>([]); // Changed to array
   const [isDefault, setIsDefault] = useState(profile?.is_default_email || false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [emailError, setEmailError] = useState("");
+  const [emailErrors, setEmailErrors] = useState<string[]>([]); // Array for errors
   
   // Sync email state with profile
   useEffect(() => {
-    if (profile?.default_email) {
-      setEmail(profile.default_email);
+    if (profile?.default_emails) {
+      setEmails(profile.default_emails);
+    } else {
+      setEmails([""]); // Start with one empty input if no emails
     }
     if (profile?.is_default_email !== undefined) {
       setIsDefault(profile.is_default_email);
     }
   }, [profile]);
 
-  const handleSave = async () => {
-    setEmailError("");
-    if (email) {
-      const result = emailSchema.safeParse(email);
-      if (!result.success) {
-        setEmailError("Inserisci un'email valida");
-        return;
-      }
+  const handleEmailChange = (index: number, value: string) => {
+    const newEmails = [...emails];
+    newEmails[index] = value;
+    setEmails(newEmails);
+    // Clear error for this specific input when it changes
+    const newErrors = [...emailErrors];
+    newErrors[index] = "";
+    setEmailErrors(newErrors);
+  };
+
+  const handleAddEmail = () => {
+    if (emails.length < 3) {
+      setEmails([...emails, ""]);
+      setEmailErrors([...emailErrors, ""]);
     }
+  };
+
+  const handleRemoveEmail = (index: number) => {
+    const newEmails = emails.filter((_, i) => i !== index);
+    setEmails(newEmails.length > 0 ? newEmails : [""]); // Ensure at least one input remains
+    setEmailErrors(emailErrors.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
+    const newErrors: string[] = [];
+    const validEmails: string[] = [];
+
+    emails.forEach((email, index) => {
+      if (email.trim()) {
+        const result = emailSchema.safeParse(email.trim());
+        if (!result.success) {
+          newErrors[index] = "Inserisci un'email valida";
+        } else {
+          validEmails.push(email.trim());
+        }
+      }
+    });
+
+    setEmailErrors(newErrors);
+
+    if (newErrors.some(error => error !== "")) {
+      toast({
+        title: "Errore di validazione",
+        description: "Correggi gli errori nelle email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       await updateProfile({
-        default_email: email || null,
+        default_emails: validEmails.length > 0 ? validEmails : null,
         is_default_email: isDefault
       });
       setOpen(false);
@@ -147,24 +189,46 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
           {/* Email Settings Section */}
           <section className="space-y-4">
             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Email Destinatario
+              Email Destinatari
             </h3>
             
             <div className="bg-card rounded-2xl p-4 card-shadow space-y-4">
-              <Input 
-                type="email" 
-                placeholder="email@esempio.com" 
-                value={email} 
-                onChange={e => {
-                  setEmail(e.target.value);
-                  setEmailError("");
-                }} 
-                className="bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary"
-              />
-              {emailError && (
-                <p className="text-xs text-destructive">{emailError}</p>
-              )}
+              {emails.map((email, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input 
+                    type="email" 
+                    placeholder={`email${index + 1}@esempio.com`} 
+                    value={email} 
+                    onChange={e => handleEmailChange(index, e.target.value)} 
+                    className="flex-1 bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary"
+                  />
+                  {emails.length > 1 && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleRemoveEmail(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <MinusCircle className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              {emailErrors.map((error, index) => error && (
+                <p key={`error-${index}`} className="text-xs text-destructive">{error}</p>
+              ))}
               
+              {emails.length < 3 && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddEmail} 
+                  className="w-full h-12 rounded-full border-dashed"
+                >
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Aggiungi Email
+                </Button>
+              )}
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <Checkbox 
                   id="default-email" 

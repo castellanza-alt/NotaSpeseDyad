@@ -5,10 +5,19 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  isOpen?: boolean; // New prop
 }
 
-export function SearchBar({ value, onChange, placeholder = "Cerca spese..." }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder = "Cerca spese...", isOpen = false }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    } else {
+      inputRef.current?.blur();
+    }
+  }, [isOpen]);
 
   const handleClear = () => {
     onChange("");

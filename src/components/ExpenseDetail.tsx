@@ -21,7 +21,8 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
   const [showReceipt, setShowReceipt] = useState(false);
   
   const [merchant, setMerchant] = useState(expense.merchant || "");
-  const [total, setTotal] = useState(expense.total?.toString() || "0");
+  // Initialize total with comma for display
+  const [total, setTotal] = useState(expense.total?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00");
   const [category, setCategory] = useState(expense.category || "");
   const [expenseDate, setExpenseDate] = useState(expense.expense_date || "");
 
@@ -55,11 +56,14 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Convert comma to dot for parsing
+      const parsedTotal = parseFloat(total.replace(',', '.')) || 0;
+
       const { error } = await supabase
         .from("expenses")
         .update({
           merchant,
-          total: parseFloat(total) || 0,
+          total: parsedTotal,
           category,
           expense_date: expenseDate,
         })
@@ -113,8 +117,9 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Importo (€)</label>
                 <Input
-                  type="number"
-                  step="0.01"
+                  type="text" // Changed to text to allow comma input
+                  inputMode="decimal" // Suggest decimal keyboard
+                  pattern="[0-9]*[.,]?[0-9]*" // Allow comma or dot
                   value={total}
                   onChange={(e) => setTotal(e.target.value)}
                   className="rounded-xl"
@@ -230,9 +235,9 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
               >
                 <Pencil className="w-5 h-5 mr-2" />
                 Modifica
-              </Button>
-            </>
-          )}
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>

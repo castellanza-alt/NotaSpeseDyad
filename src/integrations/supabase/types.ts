@@ -65,7 +65,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          default_email: string | null
+          default_emails: string[] | null /* Changed from default_email: string | null */
           display_name: string | null
           id: string
           is_default_email: boolean | null
@@ -74,7 +74,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          default_email?: string | null
+          default_emails?: string[] | null /* Changed from default_email: string | null */
           display_name?: string | null
           id?: string
           is_default_email?: boolean | null
@@ -83,7 +83,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          default_email?: string | null
+          default_emails?: string[] | null /* Changed from default_email: string | null */
           display_name?: string | null
           id?: string
           is_default_email?: boolean | null

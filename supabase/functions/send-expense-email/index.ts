@@ -15,7 +15,7 @@ interface ExpenseData {
 }
 
 interface SendEmailRequest {
-  to: string;
+  to: string[]; // Changed to array of strings
   expense: ExpenseData;
   imageBase64: string;
 }
@@ -33,8 +33,8 @@ serve(async (req) => {
 
     const { to, expense, imageBase64 }: SendEmailRequest = await req.json();
 
-    if (!to || !expense) {
-      throw new Error("Missing required fields");
+    if (!to || to.length === 0 || !expense) {
+      throw new Error("Missing required fields or no recipients provided");
     }
 
     // Extract base64 data
@@ -119,7 +119,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Nota Spese <notifiche@insightnode.it>",
-        to: [to],
+        to: to, // Pass array of recipients
         subject: `Nota Spese: ${expense.merchant || "Nuova spesa"} - ${expense.currency} ${expense.total.toFixed(2)}`,
         html: emailHtml,
         attachments: [

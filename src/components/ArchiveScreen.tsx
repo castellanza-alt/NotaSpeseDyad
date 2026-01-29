@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check } from "lucide-react";
+import { Moon, Menu, Plus, Check, Search } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { SettingsSheet } from "./SettingsSheet";
 import { ImageAnalyzer } from "./ImageAnalyzer";
@@ -8,6 +8,8 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 
 export function ArchiveScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -16,6 +18,7 @@ export function ArchiveScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchBar, setShowSearchBar] = useState(false); // New state for search bar visibility
   const { theme, toggleTheme } = useTheme();
   const { expenses, loading, refetch, lastAddedId, hasMore, loadingMore, loadMore } = useExpenses();
 
@@ -43,11 +46,24 @@ export function ArchiveScreen() {
     return expenses.filter(expense => {
       const merchant = (expense.merchant || "").toLowerCase();
       const category = (expense.category || "").toLowerCase();
-      const total = expense.total?.toString() || "";
+      const total = expense.total?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "";
+      
+      let dateString = "";
+      let dayOfWeek = "";
+      let monthName = "";
+      if (expense.expense_date) {
+        const expenseDate = new Date(expense.expense_date);
+        dateString = format(expenseDate, "yyyy-MM-dd", { locale: it }).toLowerCase();
+        dayOfWeek = format(expenseDate, "EEEE", { locale: it }).toLowerCase();
+        monthName = format(expenseDate, "MMMM", { locale: it }).toLowerCase();
+      }
       
       return merchant.includes(query) || 
              category.includes(query) || 
-             total.includes(query);
+             total.includes(query.replace(',', '.')) || // Allow searching with comma or dot
+             dateString.includes(query) ||
+             dayOfWeek.includes(query) ||
+             monthName.includes(query);
     });
   }, [expenses, searchQuery]);
 
@@ -98,6 +114,13 @@ export function ArchiveScreen() {
     refetch();
   };
 
+  const toggleSearchBar = () => {
+    setShowSearchBar(prev => !prev);
+    if (searchQuery && !showSearchBar) { // Clear search when hiding
+      setSearchQuery("");
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col archive-gradient overflow-hidden">
       {/* Hidden file input */}
@@ -123,14 +146,17 @@ export function ArchiveScreen() {
         </div>
       </header>
 
-      {/* Search Bar */}
-      <div className="flex-shrink-0 px-4 py-4 z-30 flex justify-center">
-        <SearchBar 
-          value={searchQuery} 
-          onChange={setSearchQuery} 
-          placeholder="Cerca esercente, categoria..."
-        />
-      </div>
+      {/* Search Bar - Conditionally rendered */}
+      {showSearchBar && (
+        <div className="flex-shrink-0 px-4 py-4 z-30 flex justify-center animate-slide-down">
+          <SearchBar 
+            value={searchQuery} 
+            onChange={setSearchQuery} 
+            placeholder="Cerca esercente, categoria, data, importo..."
+            isOpen={showSearchBar}
+          />
+        </div>
+      )}
 
       {/* Cards Container - Virtualized, Scrollable */}
       {loading ? (
@@ -170,6 +196,15 @@ export function ArchiveScreen() {
                 <Moon className="w-5 h-5" strokeWidth={1.5} />
               </button>
               
+              {/* Search Button */}
+              <button
+                onClick={toggleSearchBar}
+                className="dock-button"
+                aria-label="Cerca spese"
+              >
+                <Search className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+
               {/* Menu / Settings */}
               <button
                 onClick={() => setSettingsOpen(true)}

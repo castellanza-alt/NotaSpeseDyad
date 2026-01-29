@@ -52,6 +52,7 @@
     --archive-header: 217 55% 39%;
     --archive-gradient-start: 199 89% 86%;
     --archive-gradient-end: 280 67% 90%;
+    --archive-header-foreground: 0 0% 100%; /* Added for contrast */
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 10%;
@@ -111,6 +112,7 @@
     --archive-header: 217 55% 35%;
     --archive-gradient-start: 217 40% 20%;
     --archive-gradient-end: 280 30% 18%;
+    --archive-header-foreground: 0 0% 100%; /* Added for contrast */
 
     --sidebar-background: 215 28% 14%;
     --sidebar-foreground: 210 20% 98%;
@@ -281,7 +283,7 @@
 
   /* Bottom Dock */
   .dock-pill {
-    background: hsl(var(--card));
+    background: hsl(var(--archive-header)); /* Changed to match ribbon */
     border-radius: 9999px;
     box-shadow: 
       0 4px 20px hsl(var(--glass-shadow)),
@@ -290,15 +292,15 @@
 
   .dock-button {
     @apply flex items-center justify-center w-11 h-11 rounded-full;
-    @apply bg-secondary/60 text-muted-foreground;
+    @apply bg-archive-header/80 text-archive-header-foreground; /* Changed for contrast */
     @apply transition-all duration-200;
-    @apply hover:bg-secondary active:scale-95;
+    @apply hover:bg-archive-header active:scale-95;
   }
 
   .fab-button {
     @apply flex items-center justify-center w-14 h-14 rounded-full;
     background: hsl(var(--archive-header));
-    @apply text-white;
+    @apply text-archive-header-foreground; /* Changed for contrast */
     @apply transition-all duration-200;
     @apply hover:brightness-110 active:scale-95;
     box-shadow: 0 4px 14px hsl(var(--archive-header) / 0.4);
@@ -506,5 +508,11 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Fade out mask for virtualized list */
+  .fade-out-bottom-mask {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
   }
 }

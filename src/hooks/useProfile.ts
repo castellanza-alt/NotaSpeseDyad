@@ -5,8 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Profile {
   id: string;
-  user_id: string; // Keeping this for type compatibility, but actual queries use 'id'
-  default_email: string | null;
+  user_id: string;
+  default_emails: string[] | null; // Changed to array of strings
   is_default_email: boolean;
   display_name: string | null;
   created_at: string;
@@ -14,30 +14,26 @@ export interface Profile {
 }
 
 export function useProfile() {
-  const { user, session, loading: authLoading } = useAuth(); // Ottieni sessione e stato di caricamento dell'autenticazione
+  const { user, session, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true); // Questo loading è per il fetch del profilo
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Se l'autenticazione è ancora in corso, o non c'è un utente loggato, non fare nulla.
-    // Imposta il caricamento del profilo su false se non c'è un utente, poiché non c'è un profilo da caricare.
     if (authLoading) {
-      setLoading(true); // Ancora in attesa che l'autenticazione si risolva
+      setLoading(true);
       return;
     }
-    if (!user) { // Se non c'è un utente (session?.user è null)
+    if (!user) {
       setProfile(null);
-      setLoading(false); // Nessun utente, quindi nessun profilo da caricare
+      setLoading(false);
       return;
     }
 
-    // Se abbiamo un utente e l'autenticazione non è più in caricamento, allora recupera il profilo.
     fetchProfile();
-  }, [user, authLoading]); // Dipende da user e authLoading
+  }, [user, authLoading]);
 
   async function fetchProfile() {
-    // Questa guardia è principalmente per sicurezza, ma l'useEffect dovrebbe gestirla.
     if (!user) {
       setProfile(null);
       setLoading(false);
@@ -50,7 +46,6 @@ export function useProfile() {
       setLoading(true);
       console.log("Attempting to fetch or create profile for user:", user.id);
 
-      // Try to fetch existing profile using 'id' column
       const { data: existingProfile, error: selectError } = await supabase
         .from("profiles")
         .select("*")
@@ -73,14 +68,13 @@ export function useProfile() {
         setProfile(existingProfile);
       } else {
         console.log("No profile found for user, attempting to create a new one.");
-        // Profile does not exist, create it using 'id'
         const { data: newProfile, error: upsertError } = await supabase
           .from("profiles")
           .upsert({
             id: user.id,
             user_id: user.id,
             display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            default_email: user.user_metadata?.email || null,
+            default_emails: user.user_metadata?.email ? [user.user_metadata.email] : null, // Initialize with an array
             is_default_email: false,
           }, { onConflict: 'id' })
           .select()
@@ -92,7 +86,6 @@ export function useProfile() {
             status: upsertError.code,
             details: upsertError.details,
             fullError: upsertError,
-            queryResult: newProfile,
           });
           throw upsertError;
         }
@@ -112,7 +105,7 @@ export function useProfile() {
   }
 
   async function updateProfile(updates: Partial<Profile>) {
-    if (!user) return; // Guardia per assicurarsi che l'utente sia definito
+    if (!user) return;
 
     console.log("Current user ID for update:", user.id);
 

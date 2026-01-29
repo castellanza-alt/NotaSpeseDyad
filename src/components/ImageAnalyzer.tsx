@@ -37,9 +37,10 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
-  const defaultEmail = profile?.is_default_email && profile?.default_email 
-    ? profile.default_email 
-    : "wdellavedova@j-invest.eu";
+  // Use the array of default emails, or fallback to a placeholder
+  const recipientEmails = profile?.default_emails && profile.default_emails.length > 0
+    ? profile.default_emails
+    : ["wdellavedova@j-invest.eu"]; // Fallback if no emails are set
 
   useEffect(() => {
     const url = URL.createObjectURL(imageFile);
@@ -168,9 +169,10 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       const base64Image = await compressImage(imageFile);
 
+      // Send to all recipient emails
       const { error: emailError } = await supabase.functions.invoke("send-expense-email", {
         body: {
-          to: defaultEmail,
+          to: recipientEmails, // Pass array of emails
           expense: expenseData,
           imageBase64: base64Image,
         },
@@ -186,7 +188,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         category: expenseData.category,
         items: expenseData.items,
         image_url: storedImageUrl,
-        sent_to_email: defaultEmail,
+        sent_to_email: recipientEmails[0] || null, // Store first email as sent_to_email
         sent_at: new Date().toISOString(),
       });
 
@@ -249,6 +251,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                   </div>
                   <p className="text-sm text-muted-foreground">Analisi in corso...</p>
                 </div>
+                {/* Laser Scan Animation */}
+                <div className="absolute inset-x-0 h-1 bg-primary/50 laser-line" />
               </div>
             )}
             {sent && (
@@ -324,7 +328,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
               {/* Recipient info */}
               <div className="pt-4 border-t border-border/30">
                 <p className="text-xs text-muted-foreground">
-                  Destinatario: <span className="text-foreground font-medium">{defaultEmail}</span>
+                  Destinatari: <span className="text-foreground font-medium">{recipientEmails.join(", ")}</span>
                 </p>
               </div>
             </div>
