@@ -195,7 +195,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       await addExpense(dbPayload);
 
       setSent(true);
-      // Rimossa notifica toast ridondante. Viene gestita da ArchiveScreen tramite onSuccess
       setTimeout(onSuccess, 1500);
 
     } catch (error: any) {
@@ -213,17 +212,19 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
-      <div className="relative w-full max-w-md max-h-[90vh] expense-modal-card overflow-hidden animate-scale-in flex flex-col">
-        <header className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="text-lg font-semibold">Analisi Giustificativo</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary"><X className="w-5 h-5" /></button>
+      
+      {/* Modale con sfondo solido, bordi arrotondati e testo contrastato */}
+      <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
+        <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+          <h2 className="text-lg font-bold">Analisi Giustificativo</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </header>
 
-        <div className="flex-1 overflow-auto p-5 space-y-6"> {/* Increased spacing */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30">
+        <div className="flex-1 overflow-auto p-5 space-y-4">
+          <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30 border border-border/50">
             <img src={imageUrl} alt="Scontrino" className="w-full h-full object-contain" />
             {analyzing && (
-              <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+              <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm">
                 <div className="text-center">
                   <Loader2 className="w-10 h-10 animate-spin mx-auto mb-2 text-primary" />
                   <p className="text-sm font-medium">Analisi IA in corso...</p>
@@ -231,50 +232,52 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
               </div>
             )}
             {sent && (
-              <div className="absolute inset-0 bg-success/20 flex items-center justify-center">
+              <div className="absolute inset-0 bg-success/20 flex items-center justify-center backdrop-blur-sm">
                 <Check className="w-16 h-16 text-success animate-scale-in" />
               </div>
             )}
           </div>
 
           {!analyzing && expenseData && !sent && (
-            <div className="space-y-5 animate-slide-up">
+            <div className="space-y-3 animate-slide-up">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Esercente</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Esercente</Label>
                 <Input 
                   value={expenseData.merchant || ""} 
                   onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
-                  className="rounded-xl h-12 text-base" 
+                  className="rounded-xl h-12 text-base bg-secondary/30" 
                 />
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Data</Label>
+                <div className="w-full min-w-0">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
                   <Input 
                     type="date" 
                     value={expenseData.expense_date || ""} 
                     onChange={(e) => setExpenseData({...expenseData, expense_date: e.target.value})} 
-                    className="rounded-xl h-12 text-base" 
+                    className="rounded-xl h-12 text-base bg-secondary/30 w-full" 
                   />
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Totale (€)</Label>
+                <div className="w-full min-w-0">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Totale (€)</Label>
                   <Input 
                     type="text" 
                     inputMode="decimal"
                     placeholder="0,00"
                     value={totalString}
                     onChange={handleAmountChange} 
-                    className="rounded-xl h-12 text-base font-medium" 
+                    className="rounded-xl h-12 text-base font-medium bg-secondary/30 w-full text-right" 
                   />
                 </div>
               </div>
+              
               <div>
-                <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
                 <Input 
                   value={expenseData.category || ""} 
                   onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                  className="rounded-xl h-12 text-base" 
+                  className="rounded-xl h-12 text-base bg-secondary/30" 
                 />
               </div>
             </div>
@@ -282,7 +285,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         </div>
 
         {!analyzing && expenseData && !sent && (
-          <div className="p-5 border-t">
+          <div className="p-5 border-t border-border/50 bg-card/50 backdrop-blur-sm">
             <Button 
               onClick={handleSend} 
               disabled={sending} 
