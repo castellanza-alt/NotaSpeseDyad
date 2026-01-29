@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "./ThemeToggle";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AuthScreen() {
@@ -48,16 +49,69 @@ export function AuthScreen() {
           title: "Registrazione completata",
           description: "Controlla la tua email per confermare l'account o esegui il login.",
         });
-        setIsSignUp(false); // Switch to login after signup attempt
+        setIsSignUp(false);
       } else {
         await signInWithEmail(email, password);
-        // Login successful, auto-redirect handles via auth state listener
       }
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
         title: "Errore Autenticazione",
         description: error.message || "Credenziali non valide",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Funzione per il login rapido di sviluppo
+  const handleDevLogin = async () => {
+    setLoading(true);
+    const devEmail = "admin@preview.dev";
+    const devPassword = "adminpassword123";
+
+    try {
+      // Tentativo di login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: devEmail,
+        password: devPassword,
+      });
+
+      if (signInError) {
+        // Se il login fallisce (es. utente non esiste), proviamo a crearlo
+        console.log("Dev user not found, creating...", signInError.message);
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: devEmail,
+          password: devPassword,
+        });
+
+        if (signUpError) throw signUpError;
+
+        // Riprova il login dopo la creazione
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email: devEmail,
+          password: devPassword,
+        });
+        
+        if (retryError) {
+          toast({
+            title: "Verifica richiesta",
+            description: "Account creato. Se richiesto, verifica l'email (admin@preview.dev) o disabilita la conferma email su Supabase.",
+          });
+          return;
+        }
+      }
+
+      toast({
+        title: "Accesso Admin",
+        description: "Login effettuato con successo (Modalità Dev)",
+      });
+    } catch (error: any) {
+      console.error("Dev login error:", error);
+      toast({
+        title: "Errore Dev Login",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
@@ -144,6 +198,17 @@ export function AuthScreen() {
               >
                 <Mail className="h-4 w-4" />
                 Usa Email e Password
+              </Button>
+
+              {/* Dev Login Button */}
+              <Button
+                variant="ghost"
+                onClick={handleDevLogin}
+                disabled={loading}
+                className="w-full h-12 rounded-xl border-2 border-dashed border-destructive/30 text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 mt-2"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                Login Amministratore (Dev)
               </Button>
             </>
           ) : (
