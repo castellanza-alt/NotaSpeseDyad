@@ -175,7 +175,14 @@
     border-radius: 9999px;
     box-shadow: 0 8px 32px hsl(var(--glass-shadow));
     z-index: 50;
-    min-height: 72px; /* Uniform height for both pills */
+    min-height: 72px; /* Altezza uniforme per entrambe le pill */
+    display: flex;
+    flex-direction: column; /* Default per la top pill */
+  }
+
+  /* FORZO la direzione riga per la pillola inferiore */
+  .dock-pill-row {
+    flex-direction: row !important;
   }
 
   .dock-button {
@@ -213,9 +220,9 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Sfumatura: parte superiore ridotta a 15px per non coprire la prima card */
+  /* Sfumatura: parte superiore ridotta a 5px per un attacco netto sotto la pillola */
   .fade-mask-y { 
-    mask-image: linear-gradient(to bottom, transparent 0%, black 15px, black 75%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15px, black 75%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
   }
 }
