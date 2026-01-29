@@ -64,8 +64,15 @@ export function ArchiveScreen() {
   };
 
   return (
-    <div className="h-screen flex flex-col archive-gradient overflow-hidden">
+    <div className="h-screen flex flex-col archive-gradient overflow-hidden relative">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+
+      {/* 
+        PREMIUM HEADER GRADIENT OVERLAY 
+        Sits behind the pill but on top of the list.
+        Uses z-20 to be above list (z-0) but below search (z-30) and pill (z-40).
+      */}
+      <div className="fixed top-0 left-0 right-0 h-52 z-20 pointer-events-none header-gradient-overlay" />
 
       {/* Pill Superiore (Fluttuante) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-3 pointer-events-none">
@@ -89,10 +96,14 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* List Container */}
-      <div className={`flex-1 flex flex-col pt-48 ${showSearchBar ? 'mt-14' : ''}`}>
+      {/* 
+        List Container 
+        Removed top padding/margin so list scrolls fully behind header.
+        Padding is now handled internally by VirtualizedExpenseList spacer.
+      */}
+      <div className="flex-1 flex flex-col h-full w-full">
         {loading && !expenses.length ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center pt-48">
             <div className="shimmer w-48 h-32 rounded-2xl" />
           </div>
         ) : (
@@ -103,6 +114,7 @@ export function ArchiveScreen() {
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
+            paddingClassName={showSearchBar ? 'h-[16.5rem]' : 'h-48'}
           />
         )}
       </div>
@@ -117,7 +129,6 @@ export function ArchiveScreen() {
               <button onClick={() => setSettingsOpen(true)} className="dock-button"><Menu className="w-5 h-5" /></button>
             </div>
             <button onClick={handleSelectPhoto} className="fab-button">
-              {/* Icon size increased from w-7 to w-9 (~30% bigger area visually) */}
               <Plus className="w-9 h-9" />
             </button>
           </div>

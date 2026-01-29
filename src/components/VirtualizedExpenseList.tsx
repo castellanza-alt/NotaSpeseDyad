@@ -1,8 +1,9 @@
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ExpenseCard } from "./ExpenseCard";
 import type { Expense } from "@/hooks/useExpenses";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VirtualizedExpenseListProps {
   expenses: Expense[];
@@ -11,6 +12,7 @@ interface VirtualizedExpenseListProps {
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+  paddingClassName?: string;
 }
 
 export function VirtualizedExpenseList({
@@ -20,6 +22,7 @@ export function VirtualizedExpenseList({
   hasMore,
   loadingMore,
   onLoadMore,
+  paddingClassName = "h-48"
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +57,7 @@ export function VirtualizedExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 text-center">
+      <div className="flex flex-col items-center justify-center h-48 text-center pt-20">
         <p className="text-muted-foreground text-sm">
           Nessuna spesa trovata
         </p>
@@ -68,11 +71,19 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto px-4 fade-mask-y"
+      className="flex-1 overflow-auto px-4 fade-mask-bottom"
       style={{ contain: "strict" }}
     >
+      {/* 
+        SPACER DIV: 
+        Pushes content down initially to clear the header.
+        As you scroll down, this spacer moves up (off screen), 
+        allowing the expense cards to scroll *behind* the header overlay.
+      */}
+      <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
+
       <div
-        className="relative w-full flex flex-col items-center"
+        className="relative w-full flex flex-col items-center pb-32"
         style={{
           height: `${virtualizer.getTotalSize()}px`,
         }}

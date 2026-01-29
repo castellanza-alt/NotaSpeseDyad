@@ -153,6 +153,29 @@
     );
     min-height: 100vh;
   }
+  
+  /* Premium Gradient Easing Overlay - Scrim Effect */
+  .header-gradient-overlay {
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--archive-gradient-start)) 0%,
+      hsl(var(--archive-gradient-start) / 0.987) 8.1%,
+      hsl(var(--archive-gradient-start) / 0.951) 15.5%,
+      hsl(var(--archive-gradient-start) / 0.896) 22.5%,
+      hsl(var(--archive-gradient-start) / 0.825) 29%,
+      hsl(var(--archive-gradient-start) / 0.741) 35.3%,
+      hsl(var(--archive-gradient-start) / 0.648) 41.2%,
+      hsl(var(--archive-gradient-start) / 0.55) 47.1%,
+      hsl(var(--archive-gradient-start) / 0.45) 52.9%,
+      hsl(var(--archive-gradient-start) / 0.352) 58.8%,
+      hsl(var(--archive-gradient-start) / 0.259) 64.7%,
+      hsl(var(--archive-gradient-start) / 0.175) 71%,
+      hsl(var(--archive-gradient-start) / 0.104) 77.5%,
+      hsl(var(--archive-gradient-start) / 0.049) 84.5%,
+      hsl(var(--archive-gradient-start) / 0.013) 91.9%,
+      transparent 100%
+    );
+  }
 
   .expense-card-rotated {
     @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
@@ -173,14 +196,12 @@
   .dock-pill {
     background: hsl(var(--archive-header));
     border-radius: 9999px;
-    /* Rimosso shadow-xl */
     z-index: 50;
-    min-height: 72px; /* Altezza uniforme per entrambe le pill */
+    min-height: 72px;
     display: flex;
-    flex-direction: column; /* Default per la top pill */
+    flex-direction: column;
   }
 
-  /* FORZO la direzione riga per la pillola inferiore */
   .dock-pill-row {
     flex-direction: row !important;
   }
@@ -220,9 +241,9 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Sfumatura: parte superiore ridotta a 5px per un attacco netto sotto la pillola */
-  .fade-mask-y { 
-    mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
+  /* Mask only for the bottom fade now, top handled by overlay */
+  .fade-mask-bottom { 
+    mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
   }
 }
