@@ -10,6 +10,7 @@ interface AnalyzeRequest {
 }
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,29 +18,35 @@ serve(async (req) => {
   try {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+      console.error("[analyze-receipt] Missing GEMINI_API_KEY");
+      throw new Error("La chiave API di Gemini non è configurata nelle impostazioni del progetto.");
     }
 
     const { image }: AnalyzeRequest = await req.json();
 
     if (!image) {
-      throw new Error("No image provided");
+      throw new Error("Nessuna immagine fornita per l'analisi.");
     }
 
     // Extract base64 data from data URL
     const base64Data = image.split(",")[1] || image;
 
-    const prompt = `Analizza questo scontrino fiscale. Estrai in formato JSON: {merchant, date (YYYY-MM-DD), total (numero), currency, category, items (array di {name, quantity, price})}. 
-    
-    Regole:
-    - Se non riesci a leggere un campo, usa una stringa vuota o null
-    - Il totale deve essere un numero, non una stringa
-    - La data deve essere nel formato YYYY-MM-DD
-    - La valuta predefinita è "EUR"
-    - Rispondi ESCLUSIVAMENTE con il JSON, senza markdown o testo aggiuntivo`;
+    const prompt = `Analizza questo scontrino fiscale. Estrai i dati in formato JSON rigoroso.
+    Campi richiesti:
+    - merchant (nome negozio)
+    - date (formato YYYY-MM-DD)
+    - total (numero decimale, usa il punto)
+    - currency (es. EUR)
+    - category (es. Ristorazione, Trasporti, Spesa, Lavoro, Altro)
+    - items (lista di oggetti con name, quantity, price)
 
+    Se un campo non è leggibile, lascialo vuoto o a 0. Non inventare dati.`;
+
+    console.log("[analyze-receipt] Sending request to Gemini...");
+
+    // Utilizziamo il modello stabile 1.5-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -62,6 +69,7 @@ serve(async (req) => {
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 1024,
+            responseMimeType: "application/json", // Forza risposta JSON nativa
           },
         }),
       }
@@ -69,60 +77,47 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error("[analyze-receipt] Gemini API error details:", errorText);
+      throw new Error(`Errore API Gemini: ${response.status} - Controlla i log su Supabase.`);
     }
 
     const result = await response.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("[analyze-receipt] Gemini response received");
 
-    // Parse JSON from response (remove markdown code blocks if present)
-    let cleanedText = text.trim();
-    if (cleanedText.startsWith("```json")) {
-      cleanedText = cleanedText.slice(7);
-    }
-    if (cleanedText.startsWith("```")) {
-      cleanedText = cleanedText.slice(3);
-    }
-    if (cleanedText.endsWith("```")) {
-      cleanedText = cleanedText.slice(0, -3);
-    }
-    cleanedText = cleanedText.trim();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    
+    // Clean up potential markdown formatting just in case
+    const cleanedText = text.replace(/```json|```/g, "").trim();
 
     let data;
     try {
       data = JSON.parse(cleanedText);
     } catch (parseError) {
-      console.error("Failed to parse JSON:", cleanedText);
-      // Return default structure
-      data = {
-        merchant: "",
-        date: new Date().toISOString().split("T")[0],
-        total: 0,
-        currency: "EUR",
-        category: "",
-        items: [],
-      };
+      console.error("[analyze-receipt] JSON Parse error:", cleanedText);
+      throw new Error("Impossibile leggere la risposta dell'AI (JSON non valido).");
     }
 
-    // Ensure required fields
-    data.merchant = data.merchant || "";
-    data.date = data.date || new Date().toISOString().split("T")[0];
-    data.total = typeof data.total === "number" ? data.total : parseFloat(data.total) || 0;
-    data.currency = data.currency || "EUR";
-    data.category = data.category || "";
-    data.items = Array.isArray(data.items) ? data.items : [];
+    // Sanitize and default values
+    const sanitizedData = {
+      merchant: data.merchant || "Sconosciuto",
+      date: data.date || new Date().toISOString().split("T")[0],
+      total: typeof data.total === "number" ? data.total : (parseFloat(data.total) || 0),
+      currency: data.currency || "EUR",
+      category: data.category || "Altro",
+      items: Array.isArray(data.items) ? data.items : [],
+    };
 
     return new Response(
-      JSON.stringify({ success: true, data }),
+      JSON.stringify({ success: true, data: sanitizedData }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
+
   } catch (error: any) {
-    console.error("Error in analyze-receipt:", error);
+    console.error("[analyze-receipt] Error:", error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ success: false, error: error.message }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
