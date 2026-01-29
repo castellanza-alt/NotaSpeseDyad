@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 
 export interface Expense {
   id: string;
@@ -19,6 +21,7 @@ export interface Expense {
 }
 
 const PAGE_SIZE = 30;
+const SEARCH_LIMIT = 200; // Load more items when searching to filter locally
 
 interface UseExpensesOptions {
   limit?: number;
@@ -46,20 +49,21 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       if (isInitial) setLoading(true);
       else setLoadingMore(true);
       
+      // If searching, we fetch a larger batch and filter client-side for better UX
+      // This allows searching formatted dates, amounts, etc.
+      const isSearching = searchQuery.trim().length > 0;
+      
       let query = supabase
         .from("expenses")
         .select("*")
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
-      // Search filters (Server side)
-      if (searchQuery.trim()) {
-        const q = `%${searchQuery.trim()}%`;
-        query = query.or(`merchant.ilike.${q},category.ilike.${q}`);
-      }
-
       if (limit) {
         query = query.limit(limit);
+      } else if (isSearching) {
+        // When searching, fetch recent 200 items to filter
+        query = query.limit(SEARCH_LIMIT);
       } else if (paginated) {
         const start = isInitial ? 0 : expenses.length;
         query = query.range(start, start + PAGE_SIZE - 1);
@@ -68,11 +72,44 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
+      let resultData = data || [];
+
+      // Perform Client-Side Filtering if searching
+      if (isSearching && resultData.length > 0) {
+        const lowerQ = searchQuery.toLowerCase().trim();
+        resultData = resultData.filter(e => {
+          // Fields to search
+          const merchant = e.merchant?.toLowerCase() || "";
+          const category = e.category?.toLowerCase() || "";
+          const totalStr = e.total?.toString() || "";
+          const totalComma = totalStr.replace('.', ',');
+          
+          // Format date to search by "Lunedi", "Gennaio", "2024", etc.
+          let dateStr = "";
+          let dayStr = "";
+          if (e.expense_date) {
+            const d = new Date(e.expense_date);
+            dateStr = format(d, "d MMMM yyyy", { locale: it }).toLowerCase();
+            dayStr = format(d, "EEEE", { locale: it }).toLowerCase();
+          }
+
+          return (
+            merchant.includes(lowerQ) ||
+            category.includes(lowerQ) ||
+            totalStr.includes(lowerQ) ||
+            totalComma.includes(lowerQ) ||
+            dateStr.includes(lowerQ) ||
+            dayStr.includes(lowerQ)
+          );
+        });
+      }
+
       if (isInitial) {
-        setExpenses(data || []);
-        setHasMore((data?.length || 0) === PAGE_SIZE && !limit);
+        setExpenses(resultData);
+        // If searching, hasMore is false (we don't support pagination during search yet for simplicity)
+        setHasMore(isSearching ? false : (data?.length || 0) === PAGE_SIZE && !limit);
       } else {
-        setExpenses(prev => [...prev, ...(data || [])]);
+        setExpenses(prev => [...prev, ...resultData]);
         setHasMore((data?.length || 0) === PAGE_SIZE);
       }
     } catch (error) {
@@ -84,8 +121,9 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   }, [user, limit, paginated, searchQuery, expenses.length]);
 
   useEffect(() => {
+    // Reset and fetch when search query changes
     fetchExpenses(true);
-  }, [user, searchQuery]); // Re-fetch when user or search query changes
+  }, [user, searchQuery]); 
 
   async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;

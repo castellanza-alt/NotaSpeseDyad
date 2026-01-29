@@ -55,11 +55,10 @@
 
   /* Dark Theme */
   .dark {
-    /* Schiarito sfondo base per contrasto con le card */
     --background: 222 25% 25%; 
     --foreground: 210 20% 98%;
 
-    --card: 222 30% 18%; /* Card leggermente più scura dello sfondo ora */
+    --card: 222 30% 18%;
     --card-foreground: 210 20% 98%;
 
     --popover: 222 30% 18%;
@@ -97,7 +96,6 @@
     --expense-amount: 199 89% 80%;
 
     --archive-header: 217 40% 45%;
-    /* Gradienti schiariti per distinguere dallo sfondo card scuro */
     --archive-gradient-start: 217 25% 28%; 
     --archive-gradient-end: 280 20% 26%;
     --archive-header-foreground: 0 0% 100%;
@@ -166,7 +164,7 @@
 
   .dark .expense-card-rotated {
     border: 1px solid hsl(0 0% 100% / 0.1);
-    background: hsl(var(--card)); /* Explicitly use card color */
+    background: hsl(var(--card));
   }
 
   .text-expense-weekday { color: hsl(var(--expense-weekday)); }
@@ -177,6 +175,7 @@
     border-radius: 9999px;
     box-shadow: 0 8px 32px hsl(var(--glass-shadow));
     z-index: 50;
+    min-height: 72px; /* Uniform height for both pills */
   }
 
   .dock-button {
@@ -214,9 +213,12 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Maschera di sfumatura estesa sopra e sotto */
+  /* Maschera di sfumatura: 
+     - Alto: inizia trasparente, diventa nero solido dopo un po' per far entrare le card.
+     - Basso: inizia a sfumare (nero->trasparente) molto prima (75%) per estendere la sfumatura.
+  */
   .fade-mask-y { 
-    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 75%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 75%, transparent 100%);
   }
 }
