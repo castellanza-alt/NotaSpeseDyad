@@ -154,25 +154,21 @@
     min-height: 100vh;
   }
   
-  /* Premium Gradient Easing Overlay - Scrim Effect */
+  /* Premium Gradient Easing Overlay - Ultra Smooth Scrim */
   .header-gradient-overlay {
     background: linear-gradient(
       to bottom,
       hsl(var(--archive-gradient-start)) 0%,
-      hsl(var(--archive-gradient-start) / 0.987) 8.1%,
-      hsl(var(--archive-gradient-start) / 0.951) 15.5%,
-      hsl(var(--archive-gradient-start) / 0.896) 22.5%,
-      hsl(var(--archive-gradient-start) / 0.825) 29%,
-      hsl(var(--archive-gradient-start) / 0.741) 35.3%,
-      hsl(var(--archive-gradient-start) / 0.648) 41.2%,
-      hsl(var(--archive-gradient-start) / 0.55) 47.1%,
-      hsl(var(--archive-gradient-start) / 0.45) 52.9%,
-      hsl(var(--archive-gradient-start) / 0.352) 58.8%,
-      hsl(var(--archive-gradient-start) / 0.259) 64.7%,
-      hsl(var(--archive-gradient-start) / 0.175) 71%,
-      hsl(var(--archive-gradient-start) / 0.104) 77.5%,
-      hsl(var(--archive-gradient-start) / 0.049) 84.5%,
-      hsl(var(--archive-gradient-start) / 0.013) 91.9%,
+      hsl(var(--archive-gradient-start) / 0.99) 10%,
+      hsl(var(--archive-gradient-start) / 0.96) 20%,
+      hsl(var(--archive-gradient-start) / 0.91) 30%,
+      hsl(var(--archive-gradient-start) / 0.83) 40%,
+      hsl(var(--archive-gradient-start) / 0.73) 50%,
+      hsl(var(--archive-gradient-start) / 0.60) 60%,
+      hsl(var(--archive-gradient-start) / 0.45) 70%,
+      hsl(var(--archive-gradient-start) / 0.28) 80%,
+      hsl(var(--archive-gradient-start) / 0.12) 90%,
+      hsl(var(--archive-gradient-start) / 0.03) 96%,
       transparent 100%
     );
   }
@@ -241,7 +237,6 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Mask only for the bottom fade now, top handled by overlay */
   .fade-mask-bottom { 
     mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);

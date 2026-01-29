@@ -71,8 +71,9 @@ export function ArchiveScreen() {
         PREMIUM HEADER GRADIENT OVERLAY 
         Sits behind the pill but on top of the list.
         Uses z-20 to be above list (z-0) but below search (z-30) and pill (z-40).
+        h-40 (160px) ensures the fade starts ~20px below the pill bottom.
       */}
-      <div className="fixed top-0 left-0 right-0 h-52 z-20 pointer-events-none header-gradient-overlay" />
+      <div className="fixed top-0 left-0 right-0 h-40 z-20 pointer-events-none header-gradient-overlay" />
 
       {/* Pill Superiore (Fluttuante) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-3 pointer-events-none">
@@ -98,8 +99,8 @@ export function ArchiveScreen() {
 
       {/* 
         List Container 
-        Removed top padding/margin so list scrolls fully behind header.
-        Padding is now handled internally by VirtualizedExpenseList spacer.
+        Spacer adjusted to h-44 (176px) to match new overlay height of 160px.
+        Card starts at 176px, well clear of the fade.
       */}
       <div className="flex-1 flex flex-col h-full w-full">
         {loading && !expenses.length ? (
@@ -114,7 +115,7 @@ export function ArchiveScreen() {
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
-            paddingClassName={showSearchBar ? 'h-[16.5rem]' : 'h-48'}
+            paddingClassName={showSearchBar ? 'h-[16.5rem]' : 'h-44'}
           />
         )}
       </div>
