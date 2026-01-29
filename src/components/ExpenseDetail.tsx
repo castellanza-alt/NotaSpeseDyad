@@ -87,11 +87,11 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
         onClick={onClose}
       />
       
-      {/* Modal Card - Scrollable content, fixed structure */}
-      <div className="relative w-full max-w-md max-h-[85vh] expense-modal-card overflow-hidden animate-scale-in flex flex-col">
+      {/* Modal Card - Added bg-card and styling */}
+      <div className="relative w-full max-w-md max-h-[85vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <h2 className="text-lg font-bold text-foreground">
+        <div className="flex items-center justify-between p-5 border-b border-border/50">
+          <h2 className="text-lg font-bold">
             {isEditing ? "Modifica Spesa" : "Dettaglio Spesa"}
           </h2>
           <button
@@ -103,7 +103,7 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
         </div>
 
         {/* Content - Scrollable area */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {isEditing ? (
             <>
               <div className="space-y-2">
@@ -117,9 +117,8 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Importo (€)</label>
                 <Input
-                  type="text" // Changed to text to allow comma input
-                  inputMode="decimal" // Suggest decimal keyboard
-                  pattern="[0-9]*[.,]?[0-9]*" // Allow comma or dot
+                  type="text" 
+                  inputMode="decimal"
                   value={total}
                   onChange={(e) => setTotal(e.target.value)}
                   className="rounded-xl"
@@ -145,34 +144,36 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
             </>
           ) : (
             <>
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-1">{formattedDate}</p>
-                <h3 className="text-2xl font-bold text-foreground mb-2">
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground mb-1 font-medium tracking-wide uppercase">{formattedDate}</p>
+                <h3 className="text-2xl font-bold mb-2">
                   {expense.merchant || "Sconosciuto"}
                 </h3>
-                <p className="text-3xl font-bold text-archive-header">
+                <p className="text-4xl font-bold text-primary tracking-tight">
                   €{formattedTotal}
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {expense.category || "Altro"}
-                </p>
+                <div className="inline-block mt-3 px-3 py-1 bg-secondary rounded-full">
+                  <p className="text-sm font-medium text-secondary-foreground">
+                    {expense.category || "Altro"}
+                  </p>
+                </div>
               </div>
 
               {/* Receipt Preview */}
               {expense.image_url && (
                 <button
                   onClick={() => setShowReceipt(!showReceipt)}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-secondary/50 hover:bg-secondary transition-colors border border-border/50"
                 >
                   <Receipt className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-medium">
                     {showReceipt ? "Nascondi Scontrino" : "Vedi Scontrino"}
                   </span>
                 </button>
               )}
 
               {showReceipt && expense.image_url && (
-                <div className="rounded-xl overflow-hidden border border-border">
+                <div className="rounded-2xl overflow-hidden border border-border/50 bg-black/5">
                   <img 
                     src={expense.image_url} 
                     alt="Scontrino" 
@@ -185,21 +186,20 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
         </div>
 
         {/* Actions - Fixed at bottom */}
-        <div className="p-5 pt-3 flex gap-3 border-t border-border flex-shrink-0">
+        <div className="p-5 pt-4 flex gap-3 border-t border-border/50 bg-card/50 backdrop-blur-sm">
           {isEditing ? (
             <>
               <Button
                 variant="outline"
                 onClick={() => setIsEditing(false)}
-                className="flex-1 rounded-full"
+                className="flex-1 rounded-full h-12"
               >
                 Annulla
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-1 rounded-full bg-archive-header hover:brightness-110"
-                style={{ background: 'hsl(var(--archive-header))' }}
+                className="flex-1 rounded-full h-12 bg-primary hover:brightness-110"
               >
                 {isSaving ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -217,7 +217,7 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
                 variant="outline"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="flex-1 rounded-full h-12 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
               >
                 {isDeleting ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -230,8 +230,7 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
               </Button>
               <Button
                 onClick={() => setIsEditing(true)}
-                className="flex-1 rounded-full"
-                style={{ background: 'hsl(var(--archive-header))' }}
+                className="flex-1 rounded-full h-12 bg-primary text-primary-foreground hover:opacity-90 shadow-sm"
               >
                 <Pencil className="w-5 h-5 mr-2" />
                 Modifica

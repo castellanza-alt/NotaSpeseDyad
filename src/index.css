@@ -53,26 +53,26 @@
     --archive-header-foreground: 0 0% 100%;
   }
 
-  /* Dark Theme - Lightened by ~10% brightness */
+  /* Dark Theme */
   .dark {
-    /* Original: 222 47% 11% -> New: Lighter slate */
-    --background: 222 30% 18%; 
+    /* Schiarito sfondo base per contrasto con le card */
+    --background: 222 25% 25%; 
     --foreground: 210 20% 98%;
 
-    --card: 222 30% 22%;
+    --card: 222 30% 18%; /* Card leggermente più scura dello sfondo ora */
     --card-foreground: 210 20% 98%;
 
-    --popover: 222 30% 22%;
+    --popover: 222 30% 18%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 217 91% 70%;
+    --primary: 217 91% 75%;
     --primary-foreground: 222 47% 11%;
 
-    --secondary: 217 25% 26%;
+    --secondary: 217 20% 30%;
     --secondary-foreground: 210 20% 90%;
 
-    --muted: 217 25% 28%;
-    --muted-foreground: 215 20% 70%;
+    --muted: 217 20% 32%;
+    --muted-foreground: 215 20% 75%;
 
     --accent: 217 85% 70%;
     --accent-foreground: 222 47% 11%;
@@ -80,8 +80,8 @@
     --destructive: 0 62% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 25% 28%;
-    --input: 217 25% 25%;
+    --border: 217 25% 30%;
+    --input: 217 25% 28%;
     --ring: 217 91% 70%;
 
     --radius: 9999px;
@@ -93,12 +93,13 @@
     --success: 142 72% 50%;
     --success-foreground: 222 47% 11%;
 
-    --expense-weekday: 0 55% 65%;
-    --expense-amount: 199 89% 75%;
+    --expense-weekday: 0 55% 75%;
+    --expense-amount: 199 89% 80%;
 
-    --archive-header: 217 40% 40%;
-    --archive-gradient-start: 217 30% 22%;
-    --archive-gradient-end: 280 25% 20%;
+    --archive-header: 217 40% 45%;
+    /* Gradienti schiariti per distinguere dallo sfondo card scuro */
+    --archive-gradient-start: 217 25% 28%; 
+    --archive-gradient-end: 280 20% 26%;
     --archive-header-foreground: 0 0% 100%;
   }
 }
@@ -155,8 +156,6 @@
     min-height: 100vh;
   }
 
-  /* .archive-header removed to allow for pill shape */
-
   .expense-card-rotated {
     @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
     padding: 1.25rem 1.5rem;
@@ -167,6 +166,7 @@
 
   .dark .expense-card-rotated {
     border: 1px solid hsl(0 0% 100% / 0.1);
+    background: hsl(var(--card)); /* Explicitly use card color */
   }
 
   .text-expense-weekday { color: hsl(var(--expense-weekday)); }
@@ -214,9 +214,9 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Improved fade mask for bottom scrolling */
-  .fade-out-bottom-mask { 
-    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  /* Maschera di sfumatura estesa sopra e sotto */
+  .fade-mask-y { 
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   }
 }

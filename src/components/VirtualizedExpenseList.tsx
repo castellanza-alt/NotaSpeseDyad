@@ -68,7 +68,7 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto px-4 fade-out-bottom-mask" /* Added fade-out-bottom-mask */
+      className="flex-1 overflow-auto px-4 fade-mask-y"
       style={{ contain: "strict" }}
     >
       <div
