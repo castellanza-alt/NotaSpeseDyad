@@ -25,7 +25,7 @@ interface ImageAnalyzerProps {
 }
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { profile } = useProfile();
   const { addExpense } = useExpenses();
   const { toast } = useToast();
@@ -35,12 +35,10 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
-  // Use the array of default emails, or fallback to a placeholder
-  const recipientEmails = profile?.default_emails && profile.default_emails.length > 0
-    ? profile.default_emails
-    : ["wdellavedova@j-invest.eu"]; // Fallback if no emails are set
+  const recipientEmails = profile?.default_emails?.length 
+    ? profile.default_emails 
+    : ["wdellavedova@j-invest.eu"];
 
   useEffect(() => {
     const url = URL.createObjectURL(imageFile);
@@ -49,46 +47,26 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
-  async function compressImage(file: File, maxSizeKB: number = 1024): Promise<string> {
-    return new Promise((resolve, reject) => {
+  async function compressImage(file: File): Promise<string> {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement("canvas");
           let { width, height } = img;
-          
-          const maxDim = 1920;
+          const maxDim = 1600;
           if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = (height / width) * maxDim;
-              width = maxDim;
-            } else {
-              width = (width / height) * maxDim;
-              height = maxDim;
-            }
+            if (width > height) { height = (height / width) * maxDim; width = maxDim; }
+            else { width = (width / height) * maxDim; height = maxDim; }
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
+          canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          
-          let quality = 0.8;
-          let dataUrl = canvas.toDataURL("image/jpeg", quality);
-          
-          while (dataUrl.length > maxSizeKB * 1024 && quality > 0.1) {
-            quality -= 0.1;
-            dataUrl = canvas.toDataURL("image/jpeg", quality);
-          }
-          
-          resolve(dataUrl);
+          resolve(canvas.toDataURL("image/jpeg", 0.7));
         };
-        img.onerror = reject;
         img.src = e.target?.result as string;
       };
-      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
   }
@@ -96,267 +74,111 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   async function analyzeReceipt() {
     try {
       const base64Image = await compressImage(imageFile);
-      
       const { data, error } = await supabase.functions.invoke("analyze-receipt", {
         body: { image: base64Image },
       });
-
       if (error) throw error;
-
-      if (data?.data) {
-        setExpenseData(data.data);
-      } else {
-        throw new Error("Invalid response from AI");
-      }
+      setExpenseData(data.data);
     } catch (error: any) {
-      console.error("Analysis error:", error);
-      toast({
-        title: "Errore analisi",
-        description: error.message || "Impossibile analizzare lo scontrino",
-        variant: "destructive",
-      });
-      setExpenseData({
-        merchant: "",
-        date: new Date().toISOString().split("T")[0],
-        total: 0,
-        currency: "EUR",
-        category: "",
-        items: [],
-      });
+      console.error(error);
+      setExpenseData({ merchant: "", date: new Date().toISOString().split("T")[0], total: 0, currency: "EUR", category: "", items: [] });
     } finally {
       setAnalyzing(false);
     }
   }
 
-  async function uploadImage(): Promise<string | null> {
-    if (!user) return null;
-    
-    try {
-      const fileName = `${user.id}/${Date.now()}.jpg`;
-      const base64 = await compressImage(imageFile);
-      const base64Data = base64.split(",")[1];
-      const bytes = atob(base64Data);
-      const arr = new Uint8Array(bytes.length);
-      for (let i = 0; i < bytes.length; i++) {
-        arr[i] = bytes.charCodeAt(i);
-      }
-      const blob = new Blob([arr], { type: "image/jpeg" });
-
-      const { error } = await supabase.storage
-        .from("receipts")
-        .upload(fileName, blob);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("receipts")
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
-  }
-
   async function handleSend() {
-    if (!expenseData) return;
-    
+    if (!expenseData || !session) return;
     setSending(true);
     try {
-      const storedImageUrl = await uploadImage();
-      setUploadedImageUrl(storedImageUrl);
-
       const base64Image = await compressImage(imageFile);
+      
+      // Upload to storage
+      const fileName = `${session.user.id}/${Date.now()}.jpg`;
+      const blob = await (await fetch(base64Image)).blob();
+      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, blob);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // Send to all recipient emails
+      // Invoke Email Function
       const { error: emailError } = await supabase.functions.invoke("send-expense-email", {
-        body: {
-          to: recipientEmails, // Pass array of emails
-          expense: expenseData,
-          imageBase64: base64Image,
-        },
+        body: { to: recipientEmails, expense: expenseData, imageBase64: base64Image },
       });
-
       if (emailError) throw emailError;
 
+      // Save to DB
       await addExpense({
-        merchant: expenseData.merchant,
-        expense_date: expenseData.date,
-        total: expenseData.total,
-        currency: expenseData.currency,
-        category: expenseData.category,
-        items: expenseData.items,
-        image_url: storedImageUrl,
-        sent_to_email: recipientEmails[0] || null, // Store first email as sent_to_email
+        ...expenseData,
+        image_url: publicUrl,
+        sent_to_email: recipientEmails[0],
         sent_at: new Date().toISOString(),
       });
 
       setSent(true);
-      
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
-
+      setTimeout(onSuccess, 1500);
     } catch (error: any) {
-      console.error("Send error:", error);
-      toast({
-        title: "Errore invio",
-        description: error.message || "Impossibile inviare la nota spese",
-        variant: "destructive",
-      });
+      toast({ title: "Errore invio", description: error.message, variant: "destructive" });
     } finally {
       setSending(false);
     }
   }
 
-  function updateField(field: keyof ExpenseData, value: any) {
-    if (!expenseData) return;
-    setExpenseData({ ...expenseData, [field]: value });
-  }
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
-      
-      {/* Modal Card */}
       <div className="relative w-full max-w-md max-h-[90vh] expense-modal-card overflow-hidden animate-scale-in flex flex-col">
-        {/* Header */}
-        <header className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Analisi Scontrino</h2>
-          <button
-            onClick={onClose}
-            disabled={sending}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary/80 hover:bg-secondary transition-all duration-200"
-          >
-            <X className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-          </button>
+        <header className="flex items-center justify-between px-5 py-4 border-b">
+          <h2 className="text-lg font-semibold">Analisi Giustificativo</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary"><X className="w-5 h-5" /></button>
         </header>
 
-        {/* Content */}
         <div className="flex-1 overflow-auto p-5 space-y-5">
-          {/* Image Preview */}
-          <div className="relative aspect-[4/3] max-h-48 mx-auto rounded-2xl overflow-hidden bg-secondary/30 card-shadow">
-            <img
-              src={imageUrl}
-              alt="Scontrino"
-              className="w-full h-full object-contain"
-            />
+          <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30">
+            <img src={imageUrl} alt="Scontrino" className="w-full h-full object-contain" />
             {analyzing && (
-              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+              <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="icon-pill w-14 h-14 mx-auto mb-3 animate-pulse-soft">
-                    <FileText className="w-6 h-6" strokeWidth={1.5} />
-                  </div>
-                  <p className="text-sm text-muted-foreground">Analisi in corso...</p>
+                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-sm font-medium">Analisi IA in corso...</p>
                 </div>
-                {/* Laser Scan Animation */}
-                <div className="absolute inset-x-0 h-1 bg-primary/50 laser-line" />
               </div>
             )}
             {sent && (
-              <div className="absolute inset-0 bg-success/20 backdrop-blur-sm flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center success-pulse">
-                  <Check className="w-10 h-10 text-success" strokeWidth={1.5} />
-                </div>
+              <div className="absolute inset-0 bg-success/20 flex items-center justify-center">
+                <Check className="w-16 h-16 text-success animate-scale-in" />
               </div>
             )}
           </div>
 
-          {/* Data Form */}
           {!analyzing && expenseData && !sent && (
-            <div className="bg-secondary/30 rounded-2xl p-5 space-y-5 animate-slide-up">
-              {/* Merchant */}
+            <div className="space-y-4 animate-slide-up">
               <div>
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                  Esercente
-                </Label>
-                <Input
-                  value={expenseData.merchant}
-                  onChange={(e) => updateField("merchant", e.target.value)}
-                  className="bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground w-full"
-                />
+                <Label className="text-xs text-muted-foreground uppercase mb-1 block">Esercente</Label>
+                <Input value={expenseData.merchant} onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} className="rounded-xl" />
               </div>
-              
-              {/* Date */}
-              <div>
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                  Data
-                </Label>
-                <Input
-                  type="date"
-                  value={expenseData.date}
-                  onChange={(e) => updateField("date", e.target.value)}
-                  className="bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground w-full"
-                />
-              </div>
-              
-              {/* Total */}
-              <div>
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                  Totale
-                </Label>
-                <div className="flex gap-3">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={expenseData.total}
-                    onChange={(e) => updateField("total", parseFloat(e.target.value))}
-                    className="flex-1 bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground min-w-0"
-                  />
-                  <Input
-                    value={expenseData.currency}
-                    onChange={(e) => updateField("currency", e.target.value)}
-                    className="w-20 bg-secondary/50 border-0 rounded-xl h-12 px-3 text-foreground text-center flex-shrink-0"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase mb-1 block">Data</Label>
+                  <Input type="date" value={expenseData.date} onChange={(e) => setExpenseData({...expenseData, date: e.target.value})} className="rounded-xl" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase mb-1 block">Totale (€)</Label>
+                  <Input type="number" step="0.01" value={expenseData.total} onChange={(e) => setExpenseData({...expenseData, total: parseFloat(e.target.value)})} className="rounded-xl" />
                 </div>
               </div>
-              
-              {/* Category */}
               <div>
-                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                  Categoria
-                </Label>
-                <Input
-                  value={expenseData.category}
-                  onChange={(e) => updateField("category", e.target.value)}
-                  className="bg-secondary/50 border-0 rounded-xl h-12 px-4 text-foreground w-full"
-                />
-              </div>
-
-              {/* Recipient info */}
-              <div className="pt-4 border-t border-border/30">
-                <p className="text-xs text-muted-foreground">
-                  Destinatari: <span className="text-foreground font-medium">{recipientEmails.join(", ")}</span>
-                </p>
+                <Label className="text-xs text-muted-foreground uppercase mb-1 block">Categoria</Label>
+                <Input value={expenseData.category} onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} className="rounded-xl" />
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer - Send Button */}
         {!analyzing && expenseData && !sent && (
-          <div className="border-t border-border p-5">
-            <Button
-              onClick={handleSend}
-              disabled={sending}
-              className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base
-                         shadow-lg shadow-primary/25 transition-all duration-200
-                         hover:shadow-xl hover:shadow-primary/30
-                         active:scale-[0.98]"
-            >
-              {sending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Invio in corso...
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5 mr-2" strokeWidth={1.5} />
-                  Invia ad Amministrazione
-                </>
-              )}
+          <div className="p-5 border-t">
+            <Button onClick={handleSend} disabled={sending} className="w-full h-14 rounded-full font-bold">
+              {sending ? <Loader2 className="animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
+              Invia ad Amministrazione
             </Button>
           </div>
         )}

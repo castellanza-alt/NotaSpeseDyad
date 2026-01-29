@@ -23,10 +23,11 @@ const PAGE_SIZE = 30;
 interface UseExpensesOptions {
   limit?: number;
   paginated?: boolean;
+  searchQuery?: string;
 }
 
 export function useExpenses(options: UseExpensesOptions = {}) {
-  const { limit, paginated = true } = options;
+  const { limit, paginated = true, searchQuery = "" } = options;
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +35,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   const [hasMore, setHasMore] = useState(true);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
-  // Fetch initial page
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async (isInitial = true) => {
     if (!user) {
       setExpenses([]);
       setLoading(false);
@@ -43,109 +43,69 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     }
 
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
+      else setLoadingMore(true);
       
       let query = supabase
         .from("expenses")
         .select("*")
+        .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
-      // If limit is provided, use it (for non-paginated usage like RecentExpenses)
+      // Search filters (Server side)
+      if (searchQuery.trim()) {
+        const q = `%${searchQuery.trim()}%`;
+        query = query.or(`merchant.ilike.${q},category.ilike.${q}`);
+      }
+
       if (limit) {
         query = query.limit(limit);
-        const { data, error } = await query;
-        if (error) throw error;
-        setExpenses(data || []);
-        setHasMore(false);
       } else if (paginated) {
-        // Paginated mode
-        query = query.range(0, PAGE_SIZE - 1);
-        const { data, error } = await query;
-        if (error) throw error;
+        const start = isInitial ? 0 : expenses.length;
+        query = query.range(start, start + PAGE_SIZE - 1);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (isInitial) {
         setExpenses(data || []);
-        setHasMore((data?.length || 0) === PAGE_SIZE);
+        setHasMore((data?.length || 0) === PAGE_SIZE && !limit);
       } else {
-        // Fetch all (legacy mode)
-        const { data, error } = await query;
-        if (error) throw error;
-        setExpenses(data || []);
-        setHasMore(false);
+        setExpenses(prev => [...prev, ...(data || [])]);
+        setHasMore((data?.length || 0) === PAGE_SIZE);
       }
     } catch (error) {
       console.error("Error fetching expenses:", error);
     } finally {
       setLoading(false);
-    }
-  }, [user, limit, paginated]);
-
-  // Load more (infinite scroll)
-  const loadMore = useCallback(async () => {
-    if (!user || loadingMore || !hasMore || limit) return;
-
-    try {
-      setLoadingMore(true);
-      const startIndex = expenses.length;
-      const endIndex = startIndex + PAGE_SIZE - 1;
-
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(startIndex, endIndex);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setExpenses((prev) => [...prev, ...data]);
-        setHasMore(data.length === PAGE_SIZE);
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Error loading more expenses:", error);
-    } finally {
       setLoadingMore(false);
     }
-  }, [user, expenses.length, loadingMore, hasMore, limit]);
+  }, [user, limit, paginated, searchQuery, expenses.length]);
 
   useEffect(() => {
-    if (user) {
-      fetchExpenses();
-    } else {
-      setExpenses([]);
-      setLoading(false);
-    }
-  }, [user, fetchExpenses]);
+    fetchExpenses(true);
+  }, [user, searchQuery]); // Re-fetch when user or search query changes
 
   async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert({ ...expense, user_id: user.id })
+      .select()
+      .single();
 
-    try {
-      const { data, error } = await supabase
-        .from("expenses")
-        .insert({
-          ...expense,
-          user_id: user.id,
-        })
-        .select()
-        .single();
+    if (error) throw error;
+    setExpenses(prev => [data, ...prev]);
+    setLastAddedId(data.id);
+    setTimeout(() => setLastAddedId(null), 3000);
+    return data;
+  }
 
-      if (error) throw error;
-      
-      // Add to state and mark as new
-      setExpenses((prev) => [data, ...prev]);
-      setLastAddedId(data.id);
-      
-      // Clear the "new" marker after animation
-      setTimeout(() => {
-        setLastAddedId(null);
-      }, 3000);
-      
-      return data;
-    } catch (error) {
-      console.error("Error adding expense:", error);
-      throw error;
-    }
+  async function deleteExpense(id: string) {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) throw error;
+    setExpenses(prev => prev.filter(e => e.id !== id));
   }
 
   return { 
@@ -153,9 +113,10 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     loading, 
     loadingMore,
     hasMore,
-    addExpense, 
-    refetch: fetchExpenses, 
-    loadMore,
+    addExpense,
+    deleteExpense,
+    refetch: () => fetchExpenses(true), 
+    loadMore: () => fetchExpenses(false),
     lastAddedId 
   };
 }
