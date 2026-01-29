@@ -69,7 +69,7 @@ export function ArchiveScreen() {
 
       {/* Pill Superiore (Fluttuante) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-3 pointer-events-none">
-        <div className="dock-pill flex flex-col items-center justify-center px-4 py-2 max-w-sm w-full shadow-xl pointer-events-auto">
+        <div className="dock-pill flex flex-col items-center justify-center px-4 py-3 max-w-sm w-full shadow-xl pointer-events-auto">
           <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Mese Corrente</p>
           <span className="text-white text-2xl font-bold tracking-tight leading-none">
             € <OdometerValue value={currentMonthTotal} />
@@ -110,14 +110,16 @@ export function ArchiveScreen() {
       {/* Floating Bottom Dock (Pill Inferiore) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-0 flex justify-center pointer-events-auto">
-          {/* Aggiunto dock-pill-row per il layout orizzontale */}
           <div className="dock-pill dock-pill-row items-center justify-between px-4 py-3 max-w-sm w-full gap-4 shadow-xl">
             <div className="flex items-center gap-2">
               <button onClick={toggleTheme} className="dock-button"><Moon className="w-5 h-5" /></button>
               <button onClick={toggleSearchBar} className="dock-button"><Search className="w-5 h-5" /></button>
               <button onClick={() => setSettingsOpen(true)} className="dock-button"><Menu className="w-5 h-5" /></button>
             </div>
-            <button onClick={handleSelectPhoto} className="fab-button"><Plus className="w-7 h-7" /></button>
+            <button onClick={handleSelectPhoto} className="fab-button">
+              {/* Icon size increased from w-7 to w-9 (~30% bigger area visually) */}
+              <Plus className="w-9 h-9" />
+            </button>
           </div>
         </div>
       </nav>

@@ -54,7 +54,11 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
   useEffect(() => {
     if (expenseData && expenseData.total !== undefined) {
-      setTotalString(expenseData.total ? expenseData.total.toString().replace('.', ',') : "");
+      // Formatta con puntini delle migliaia e virgola decimale per il display iniziale
+      const val = expenseData.total 
+        ? expenseData.total.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : "";
+      setTotalString(val);
     }
   }, [expenseData?.total]);
 
@@ -131,10 +135,17 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Permettiamo all'utente di scrivere liberamente, la validazione avviene al salvataggio
+    // Accettiamo numeri, punti e virgole
     const val = e.target.value;
-    if (/^[0-9]*[.,]?[0-9]*$/.test(val)) {
+    if (/^[0-9.,]*$/.test(val)) {
       setTotalString(val);
-      const parsed = parseFloat(val.replace(',', '.')) || 0;
+      
+      // Tentiamo di parsare il valore rimuovendo i punti delle migliaia e cambiando la virgola in punto
+      // Es: "1.000,50" -> "1000.50"
+      const cleanVal = val.replace(/\./g, '').replace(',', '.');
+      const parsed = parseFloat(cleanVal) || 0;
+      
       if (expenseData) {
         setExpenseData({ ...expenseData, total: parsed });
       }
@@ -152,9 +163,13 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       await supabase.storage.from("receipts").upload(fileName, blob, { upsert: true });
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
+      // Assicuriamoci che il totale sia corretto prima dell'invio
+      const cleanVal = totalString.replace(/\./g, '').replace(',', '.');
+      const finalTotal = parseFloat(cleanVal) || 0;
+
       const emailPayload = {
         ...expenseData,
-        total: parseFloat(totalString.replace(',', '.')) || 0,
+        total: finalTotal,
         date: expenseData.expense_date 
       };
 
@@ -210,7 +225,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       {/* Sfondo card solido per leggibilità */}
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-          {/* Titolo forzatamente leggibile con text-foreground */}
           <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </header>
@@ -244,8 +258,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 />
               </div>
               
-              {/* Griglia con gap-4 per evitare sovrapposizioni */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Griglia modificata: gap-1 per separazione minima */}
+              <div className="grid grid-cols-2 gap-1">
                 <div className="w-full min-w-0">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
                   <Input 
