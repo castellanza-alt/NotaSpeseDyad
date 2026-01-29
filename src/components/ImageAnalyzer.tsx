@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Send, Loader2, Check, FileText } from "lucide-react";
+import { X, Send, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -23,6 +23,10 @@ interface ImageAnalyzerProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+// Configurazione Supabase hardcoded per invocazione diretta
+const SUPABASE_PROJECT_ID = "iqwbspfvgekhzowqembf";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
   const { session } = useAuth();
@@ -55,7 +59,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         img.onload = () => {
           const canvas = document.createElement("canvas");
           let { width, height } = img;
-          const maxDim = 1600;
+          const maxDim = 1200; // Ridotto per performance
           if (width > maxDim || height > maxDim) {
             if (width > height) { height = (height / width) * maxDim; width = maxDim; }
             else { width = (width / height) * maxDim; height = maxDim; }
@@ -63,7 +67,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", 0.7));
+          resolve(canvas.toDataURL("image/jpeg", 0.6));
         };
         img.src = e.target?.result as string;
       };
@@ -74,13 +78,32 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   async function analyzeReceipt() {
     try {
       const base64Image = await compressImage(imageFile);
-      const { data, error } = await supabase.functions.invoke("analyze-receipt", {
-        body: { image: base64Image },
+      
+      // Invocazione diretta via fetch per evitare errori SDK
+      const response = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/analyze-receipt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': ANON_KEY
+        },
+        body: JSON.stringify({ image: base64Image })
       });
-      if (error) throw error;
-      setExpenseData(data.data);
+
+      if (!response.ok) {
+        throw new Error("Errore durante l'analisi del giustificativo");
+      }
+
+      const result = await response.json();
+      setExpenseData(result.data);
     } catch (error: any) {
-      console.error(error);
+      console.error("Analysis error:", error);
+      toast({
+        title: "Errore Analisi",
+        description: "Impossibile analizzare l'immagine automaticamente.",
+        variant: "destructive"
+      });
+      // Fallback a dati vuoti per permettere inserimento manuale
       setExpenseData({ merchant: "", date: new Date().toISOString().split("T")[0], total: 0, currency: "EUR", category: "", items: [] });
     } finally {
       setAnalyzing(false);
@@ -93,31 +116,54 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     try {
       const base64Image = await compressImage(imageFile);
       
-      // Upload to storage
+      // 1. Upload dell'immagine nello storage
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
       const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, blob);
       if (uploadError) throw uploadError;
+      
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // Invoke Email Function
-      const { error: emailError } = await supabase.functions.invoke("send-expense-email", {
-        body: { to: recipientEmails, expense: expenseData, imageBase64: base64Image },
+      // 2. Invio email tramite Edge Function (chiamata diretta)
+      const emailResponse = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/send-expense-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': ANON_KEY
+        },
+        body: JSON.stringify({ 
+          to: recipientEmails, 
+          expense: expenseData, 
+          imageBase64: base64Image 
+        })
       });
-      if (emailError) throw emailError;
 
-      // Save to DB
+      if (!emailResponse.ok) {
+        throw new Error("Errore durante l'invio dell'email all'amministrazione");
+      }
+
+      // 3. Salvataggio nel database locale
       await addExpense({
         ...expenseData,
         image_url: publicUrl,
-        sent_to_email: recipientEmails[0],
+        sent_to_email: recipientEmails.join(", "),
         sent_at: new Date().toISOString(),
       });
 
       setSent(true);
+      toast({
+        title: "Successo",
+        description: "Spesa inviata e registrata correttamente",
+      });
       setTimeout(onSuccess, 1500);
     } catch (error: any) {
-      toast({ title: "Errore invio", description: error.message, variant: "destructive" });
+      console.error("Send error:", error);
+      toast({ 
+        title: "Errore invio", 
+        description: error.message || "Si è verificato un errore imprevisto", 
+        variant: "destructive" 
+      });
     } finally {
       setSending(false);
     }
@@ -154,21 +200,40 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
             <div className="space-y-4 animate-slide-up">
               <div>
                 <Label className="text-xs text-muted-foreground uppercase mb-1 block">Esercente</Label>
-                <Input value={expenseData.merchant} onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} className="rounded-xl" />
+                <Input 
+                  value={expenseData.merchant || ""} 
+                  onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
+                  className="rounded-xl h-12" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase mb-1 block">Data</Label>
-                  <Input type="date" value={expenseData.date} onChange={(e) => setExpenseData({...expenseData, date: e.target.value})} className="rounded-xl" />
+                  <Input 
+                    type="date" 
+                    value={expenseData.date || ""} 
+                    onChange={(e) => setExpenseData({...expenseData, date: e.target.value})} 
+                    className="rounded-xl h-12" 
+                  />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase mb-1 block">Totale (€)</Label>
-                  <Input type="number" step="0.01" value={expenseData.total} onChange={(e) => setExpenseData({...expenseData, total: parseFloat(e.target.value)})} className="rounded-xl" />
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={expenseData.total || 0} 
+                    onChange={(e) => setExpenseData({...expenseData, total: parseFloat(e.target.value) || 0})} 
+                    className="rounded-xl h-12" 
+                  />
                 </div>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground uppercase mb-1 block">Categoria</Label>
-                <Input value={expenseData.category} onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} className="rounded-xl" />
+                <Input 
+                  value={expenseData.category || ""} 
+                  onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
+                  className="rounded-xl h-12" 
+                />
               </div>
             </div>
           )}
@@ -176,9 +241,19 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
         {!analyzing && expenseData && !sent && (
           <div className="p-5 border-t">
-            <Button onClick={handleSend} disabled={sending} className="w-full h-14 rounded-full font-bold">
-              {sending ? <Loader2 className="animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
-              Invia ad Amministrazione
+            <Button 
+              onClick={handleSend} 
+              disabled={sending} 
+              className="w-full h-14 rounded-full font-bold bg-primary text-primary-foreground hover:opacity-90"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" />
+                  Invio in corso...
+                </>
+              ) : (
+                "Invia ad Amministrazione"
+              )}
             </Button>
           </div>
         )}
