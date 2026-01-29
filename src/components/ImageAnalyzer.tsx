@@ -9,9 +9,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/hooks/use-toast";
 
+// Interface allineata 1:1 con il Database
 interface ExpenseData {
   merchant: string;
-  date: string;
+  expense_date: string; // Rinominato da 'date' a 'expense_date' per coerenza DB
   total: number;
   currency: string;
   category: string;
@@ -24,7 +25,7 @@ interface ImageAnalyzerProps {
   onSuccess: () => void;
 }
 
-// Configurazione Supabase hardcoded per invocazione diretta
+// Configurazione Supabase
 const SUPABASE_PROJECT_ID = "iqwbspfvgekhzowqembf";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
 
@@ -60,7 +61,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           const canvas = document.createElement("canvas");
           let { width, height } = img;
           
-          // Riduzione aggressiva per mobile (max 1024px e qualità 0.5)
           const maxDim = 1024; 
           if (width > maxDim || height > maxDim) {
             if (width > height) { height = (height / width) * maxDim; width = maxDim; }
@@ -69,7 +69,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          // Compressione JPEG a 0.5 per ridurre drasticamente il payload
           resolve(canvas.toDataURL("image/jpeg", 0.5));
         };
         img.src = e.target?.result as string;
@@ -97,7 +96,17 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       }
 
       const result = await response.json();
-      setExpenseData(result.data);
+      
+      // Mappatura esplicita dei dati API -> Struttura Database
+      setExpenseData({
+        merchant: result.data.merchant || "Sconosciuto",
+        expense_date: result.data.date || new Date().toISOString().split("T")[0], // Qui avviene la conversione
+        total: result.data.total || 0,
+        currency: result.data.currency || "EUR",
+        category: result.data.category || "",
+        items: result.data.items || []
+      });
+
     } catch (error: any) {
       console.error("Analysis error:", error);
       toast({
@@ -105,7 +114,15 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         description: "Impossibile analizzare l'immagine. Inserisci i dati manualmente.",
         variant: "destructive"
       });
-      setExpenseData({ merchant: "", date: new Date().toISOString().split("T")[0], total: 0, currency: "EUR", category: "", items: [] });
+      // Fallback data
+      setExpenseData({ 
+        merchant: "", 
+        expense_date: new Date().toISOString().split("T")[0], 
+        total: 0, 
+        currency: "EUR", 
+        category: "", 
+        items: [] 
+      });
     } finally {
       setAnalyzing(false);
     }
@@ -115,10 +132,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     if (!expenseData || !session) return;
     setSending(true);
     try {
-      // Ricomprimiamo l'immagine per l'invio finale
       const base64Image = await compressImage(imageFile);
       
-      // 1. Upload dell'immagine nello storage
+      // 1. Upload Storage
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
       
@@ -126,14 +142,16 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         upsert: true
       });
       
-      if (uploadError) {
-        console.error("Storage upload error:", uploadError);
-        throw new Error(`Errore upload: ${uploadError.message}`);
-      }
+      if (uploadError) throw new Error(`Errore upload: ${uploadError.message}`);
       
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // 2. Invio email tramite Edge Function
+      // 2. Invio Email (mappiamo expense_date -> date per il template email se necessario)
+      const emailPayload = {
+        ...expenseData,
+        date: expenseData.expense_date // La funzione email si aspetta 'date'
+      };
+
       const emailResponse = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
@@ -143,28 +161,28 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         },
         body: JSON.stringify({ 
           to: recipientEmails, 
-          expense: expenseData, 
+          expense: emailPayload, 
           imageBase64: base64Image 
         })
       });
 
-      if (!emailResponse.ok) {
-        const errorText = await emailResponse.text();
-        console.error("Email function error:", errorText);
-        throw new Error("Errore durante l'invio dell'email. Riprova.");
-      }
+      if (!emailResponse.ok) throw new Error("Errore durante l'invio dell'email.");
 
-      // 3. Salvataggio nel database locale
-      // FIX: Rimuoviamo 'date' e usiamo 'expense_date'
-      const { date, ...restExpenseData } = expenseData;
-
-      await addExpense({
-        ...restExpenseData,
-        expense_date: date, // Mappatura corretta per il DB
+      // 3. Salvataggio Database - Costruzione ESPLICITA dell'oggetto
+      // Questo impedisce che campi come 'date' finiscano nella query insert
+      const dbPayload = {
+        merchant: expenseData.merchant,
+        expense_date: expenseData.expense_date, // Campo corretto
+        total: expenseData.total,
+        currency: expenseData.currency,
+        category: expenseData.category,
+        items: expenseData.items,
         image_url: publicUrl,
         sent_to_email: recipientEmails.join(", "),
-        sent_at: new Date().toISOString(),
-      });
+        sent_at: new Date().toISOString()
+      };
+
+      await addExpense(dbPayload);
 
       setSent(true);
       toast({
@@ -176,7 +194,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       console.error("Send error:", error);
       toast({ 
         title: "Errore invio", 
-        description: error.message || "Controlla la tua connessione e riprova.", 
+        description: error.message || "Riprova.", 
         variant: "destructive" 
       });
     } finally {
@@ -224,10 +242,11 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground uppercase mb-1 block">Data</Label>
+                  {/* Usa expense_date coerentemente */}
                   <Input 
                     type="date" 
-                    value={expenseData.date || ""} 
-                    onChange={(e) => setExpenseData({...expenseData, date: e.target.value})} 
+                    value={expenseData.expense_date || ""} 
+                    onChange={(e) => setExpenseData({...expenseData, expense_date: e.target.value})} 
                     className="rounded-xl h-12" 
                   />
                 </div>
