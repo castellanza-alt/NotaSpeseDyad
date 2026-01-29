@@ -235,9 +235,9 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
               >
                 <Pencil className="w-5 h-5 mr-2" />
                 Modifica
-              </>
-            )}
-          </Button>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
