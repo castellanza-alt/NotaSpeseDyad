@@ -155,8 +155,12 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       }
 
       // 3. Salvataggio nel database locale
+      // FIX: Rimuoviamo 'date' e usiamo 'expense_date'
+      const { date, ...restExpenseData } = expenseData;
+
       await addExpense({
-        ...expenseData,
+        ...restExpenseData,
+        expense_date: date, // Mappatura corretta per il DB
         image_url: publicUrl,
         sent_to_email: recipientEmails.join(", "),
         sent_at: new Date().toISOString(),
