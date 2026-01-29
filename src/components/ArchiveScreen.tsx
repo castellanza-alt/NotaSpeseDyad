@@ -120,6 +120,13 @@ export function ArchiveScreen() {
         )}
       </div>
 
+      {/* 
+        BOTTOM GRADIENT OVERLAY
+        Sits above the list but below the dock pill.
+        h-40 matches the top overlay for consistency.
+      */}
+      <div className="fixed bottom-0 left-0 right-0 h-40 z-20 pointer-events-none footer-gradient-overlay" />
+
       {/* Floating Bottom Dock (Pill Inferiore) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-0 flex justify-center pointer-events-auto">

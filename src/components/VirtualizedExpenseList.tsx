@@ -71,7 +71,7 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto px-4 fade-mask-bottom"
+      className="flex-1 overflow-auto px-4"
       style={{ contain: "strict" }}
     >
       {/* 
