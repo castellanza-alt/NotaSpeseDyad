@@ -21,7 +21,6 @@ export function ArchiveScreen() {
   
   const { theme, toggleTheme } = useTheme();
   
-  // Debounce ridotto per feedback più rapido durante la digitazione
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
     return () => clearTimeout(timer);
@@ -68,9 +67,9 @@ export function ArchiveScreen() {
     <div className="h-screen flex flex-col archive-gradient overflow-hidden">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* Pill Superiore (Fluttuante) - Usa la classe dock-pill per uniformità */}
+      {/* Pill Superiore (Fluttuante) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-3 pointer-events-none">
-        <div className="dock-pill flex flex-col items-center justify-center px-4 py-3 max-w-sm w-full shadow-xl pointer-events-auto">
+        <div className="dock-pill flex flex-col items-center justify-center px-4 py-2 max-w-sm w-full shadow-xl pointer-events-auto">
           <p className="text-white/80 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Mese Corrente</p>
           <span className="text-white text-2xl font-bold tracking-tight leading-none">
             € <OdometerValue value={currentMonthTotal} />
@@ -78,7 +77,7 @@ export function ArchiveScreen() {
         </div>
       </header>
 
-      {/* Search Bar - Spostata più in basso (top-36) per non essere coperta dalla pillola più alta */}
+      {/* Search Bar */}
       {showSearchBar && (
         <div className="fixed top-36 left-0 right-0 z-30 px-4 flex justify-center animate-slide-down">
           <SearchBar 
@@ -90,7 +89,7 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* List Container - Padding aumentato (pt-48) per spingere la prima card sotto la sfumatura superiore */}
+      {/* List Container */}
       <div className={`flex-1 flex flex-col pt-48 ${showSearchBar ? 'mt-14' : ''}`}>
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center">
@@ -111,7 +110,8 @@ export function ArchiveScreen() {
       {/* Floating Bottom Dock (Pill Inferiore) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-4 pb-[max(env(safe-area-inset-bottom),10px)] pt-0 flex justify-center pointer-events-auto">
-          <div className="dock-pill flex items-center justify-between px-4 py-3 max-w-sm w-full gap-4 shadow-xl">
+          {/* Aggiunto dock-pill-row per il layout orizzontale */}
+          <div className="dock-pill dock-pill-row items-center justify-between px-4 py-3 max-w-sm w-full gap-4 shadow-xl">
             <div className="flex items-center gap-2">
               <button onClick={toggleTheme} className="dock-button"><Moon className="w-5 h-5" /></button>
               <button onClick={toggleSearchBar} className="dock-button"><Search className="w-5 h-5" /></button>

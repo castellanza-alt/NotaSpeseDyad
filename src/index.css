@@ -175,7 +175,14 @@
     border-radius: 9999px;
     box-shadow: 0 8px 32px hsl(var(--glass-shadow));
     z-index: 50;
-    min-height: 72px; /* Uniform height for both pills */
+    min-height: 72px; /* Altezza minima uniforme per entrambe le pill */
+    display: flex;
+    flex-direction: column; /* Default per la top pill */
+  }
+
+  /* Utility per sovrascrivere la direction nella bottom pill */
+  .dock-pill-row {
+    flex-direction: row;
   }
 
   .dock-button {
@@ -213,12 +220,9 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Maschera di sfumatura: 
-     - Alto: inizia trasparente, diventa nero solido dopo un po' per far entrare le card.
-     - Basso: inizia a sfumare (nero->trasparente) molto prima (75%) per estendere la sfumatura.
-  */
+  /* Sfumatura: accorciata in alto (30px), estesa in basso (inizia al 70%) */
   .fade-mask-y { 
-    mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 75%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 60px, black 75%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 30px, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 30px, black 70%, transparent 100%);
   }
 }

@@ -39,7 +39,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   const [sent, setSent] = useState(false);
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   
-  // Stato locale stringa per gestire virgole e input pulito
   const [totalString, setTotalString] = useState("");
 
   const recipientEmails = profile?.default_emails?.length 
@@ -53,10 +52,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
-  // Sincronizza lo stato stringa quando arriva il dato dall'IA
   useEffect(() => {
     if (expenseData && expenseData.total !== undefined) {
-      // Se è 0 o valore nullo, lasciamo stringa vuota per UX pulita
       setTotalString(expenseData.total ? expenseData.total.toString().replace('.', ',') : "");
     }
   }, [expenseData?.total]);
@@ -133,13 +130,10 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     }
   }
 
-  // Gestione input importo
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    // Accetta solo numeri, virgola o punto
     if (/^[0-9]*[.,]?[0-9]*$/.test(val)) {
       setTotalString(val);
-      // Aggiorna lo stato reale parsando
       const parsed = parseFloat(val.replace(',', '.')) || 0;
       if (expenseData) {
         setExpenseData({ ...expenseData, total: parsed });
@@ -160,7 +154,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       const emailPayload = {
         ...expenseData,
-        total: parseFloat(totalString.replace(',', '.')) || 0, // Usa il valore dall'input stringa
+        total: parseFloat(totalString.replace(',', '.')) || 0,
         date: expenseData.expense_date 
       };
 
@@ -213,10 +207,11 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
-      {/* Modale con sfondo solido, bordi arrotondati e testo contrastato */}
+      {/* Sfondo card solido per leggibilità */}
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-          <h2 className="text-lg font-bold">Analisi Giustificativo</h2>
+          {/* Titolo forzatamente leggibile con text-foreground */}
+          <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </header>
 
@@ -249,6 +244,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 />
               </div>
               
+              {/* Griglia con gap-4 per evitare sovrapposizioni */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="w-full min-w-0">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
