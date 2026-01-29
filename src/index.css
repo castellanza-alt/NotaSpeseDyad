@@ -52,7 +52,7 @@
     --archive-header: 217 55% 39%;
     --archive-gradient-start: 199 89% 86%;
     --archive-gradient-end: 280 67% 90%;
-    --archive-header-foreground: 0 0% 100%; /* Added for contrast */
+    --archive-header-foreground: 0 0% 100%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 10%;
@@ -64,12 +64,11 @@
     --sidebar-ring: 217 91% 60%;
   }
 
-  /* Dark Theme - Deep slate grays, NOT pure black */
+  /* Dark Theme - Deep slate grays */
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 20% 98%;
 
-    /* Cards with Slate-900 feel for better contrast */
     --card: 215 28% 14%;
     --card-foreground: 210 20% 98%;
 
@@ -104,15 +103,15 @@
     --success: 142 72% 50%;
     --success-foreground: 222 47% 11%;
 
-    /* Expense card specific colors - glow effect in dark mode */
+    /* Expense card specific colors */
     --expense-weekday: 0 55% 55%;
     --expense-amount: 199 89% 70%;
 
-    /* Archive theme colors - dark mode */
+    /* Archive theme colors */
     --archive-header: 217 55% 35%;
     --archive-gradient-start: 217 40% 20%;
     --archive-gradient-end: 280 30% 18%;
-    --archive-header-foreground: 0 0% 100%; /* Added for contrast */
+    --archive-header-foreground: 0 0% 100%;
 
     --sidebar-background: 215 28% 14%;
     --sidebar-foreground: 210 20% 98%;
@@ -137,19 +136,9 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  }
-
-  /* Smooth theme transition */
-  body,
-  body * {
-    transition: background-color 300ms ease, border-color 300ms ease, color 150ms ease;
   }
 }
 
-/* Safe area utilities for iPhone */
 .pt-safe-top {
   padding-top: max(env(safe-area-inset-top, 20px), 52px);
 }
@@ -159,7 +148,6 @@
 }
 
 @layer utilities {
-  /* Glassmorphism utilities */
   .glass {
     background: hsl(var(--glass-bg));
     backdrop-filter: blur(20px) saturate(180%);
@@ -175,20 +163,10 @@
     box-shadow: 0 8px 32px hsl(var(--glass-shadow));
   }
 
-  /* Card shadows */
   .card-shadow {
-    box-shadow: 
-      0 1px 3px hsl(var(--glass-shadow)),
-      0 4px 12px hsl(var(--glass-shadow));
+    box-shadow: 0 1px 3px hsl(var(--glass-shadow)), 0 4px 12px hsl(var(--glass-shadow));
   }
 
-  .card-shadow-lg {
-    box-shadow: 
-      0 4px 12px hsl(var(--glass-shadow)),
-      0 12px 32px hsl(var(--glass-shadow));
-  }
-
-  /* Archive Screen Styles */
   .archive-gradient {
     background: linear-gradient(
       135deg,
@@ -210,309 +188,68 @@
     border-top-right-radius: 2rem;
   }
 
-  /* Expense Card - Messy rotated layout with stronger shadows & dark mode contrast */
   .expense-card-rotated {
     @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
     padding: 1.25rem 1.5rem;
-    box-shadow: 
-      0 8px 30px hsl(220 30% 15% / 0.15),
-      0 16px 50px hsl(220 30% 15% / 0.12),
-      0 4px 10px hsl(220 30% 15% / 0.08);
+    box-shadow: 0 8px 30px hsl(220 30% 15% / 0.15), 0 16px 50px hsl(220 30% 15% / 0.12);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
   }
 
-  /* Dark mode: add subtle white border for edge glow and stronger shadow */
   .dark .expense-card-rotated {
     border: 1px solid hsl(0 0% 100% / 0.1);
-    box-shadow: 
-      0 10px 40px hsl(222 50% 5% / 0.5),
-      0 20px 60px hsl(222 50% 5% / 0.4),
-      0 4px 12px hsl(222 50% 5% / 0.3);
   }
 
-  .expense-card-rotated:hover {
-    box-shadow: 
-      0 12px 40px hsl(220 30% 15% / 0.2),
-      0 24px 70px hsl(220 30% 15% / 0.15),
-      0 6px 14px hsl(220 30% 15% / 0.1);
-  }
+  .text-expense-weekday { color: hsl(var(--expense-weekday)); }
+  .text-expense-amount { color: hsl(var(--expense-amount)); }
 
-  .dark .expense-card-rotated:hover {
-    box-shadow: 
-      0 14px 50px hsl(222 50% 5% / 0.6),
-      0 28px 80px hsl(222 50% 5% / 0.5),
-      0 6px 16px hsl(222 50% 5% / 0.35);
-  }
-
-  .expense-card-rotated:active {
-    transform: scale(0.98);
-  }
-
-  /* Expense card color utilities */
-  .text-expense-weekday {
-    color: hsl(var(--expense-weekday));
-  }
-
-  .text-expense-amount {
-    color: hsl(var(--expense-amount));
-  }
-
-  .expense-card-new {
-    animation: card-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-
-  @keyframes card-pop-in {
-    0% {
-      opacity: 0;
-      transform: translateY(-30px) scale(0.9);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  /* Fullscreen card modal */
-  .expense-modal-card {
-    @apply bg-card rounded-3xl;
-    box-shadow: 
-      0 25px 50px -12px hsl(220 30% 10% / 0.25),
-      0 12px 24px hsl(220 30% 10% / 0.15);
-  }
-
-  /* Bottom Dock */
   .dock-pill {
-    background: hsl(var(--archive-header)); /* Changed to match ribbon */
+    background: hsl(var(--archive-header));
     border-radius: 9999px;
-    box-shadow: 
-      0 4px 20px hsl(var(--glass-shadow)),
-      0 8px 40px hsl(var(--glass-shadow));
+    box-shadow: 0 4px 20px hsl(var(--glass-shadow));
   }
 
   .dock-button {
-    @apply flex items-center justify-center w-11 h-11 rounded-full;
-    @apply bg-archive-header/80 text-archive-header-foreground; /* Changed for contrast */
-    @apply transition-all duration-200;
-    @apply hover:bg-archive-header active:scale-95;
+    @apply flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200;
+    background-color: hsl(var(--archive-header) / 0.8);
+    color: hsl(var(--archive-header-foreground));
+    &:hover {
+      background-color: hsl(var(--archive-header));
+    }
+    @apply active:scale-95;
   }
 
   .fab-button {
-    @apply flex items-center justify-center w-14 h-14 rounded-full;
-    background: hsl(var(--archive-header));
-    @apply text-archive-header-foreground; /* Changed for contrast */
-    @apply transition-all duration-200;
+    @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200;
+    background-color: hsl(var(--archive-header));
+    color: hsl(var(--archive-header-foreground));
     @apply hover:brightness-110 active:scale-95;
     box-shadow: 0 4px 14px hsl(var(--archive-header) / 0.4);
   }
 
-  /* Text color for archive header amount */
-  .text-archive-header {
-    color: hsl(var(--archive-header));
-  }
-
-  /* Pill button styles */
   .pill-button {
-    @apply rounded-full px-6 py-3 font-medium transition-all duration-200;
-    @apply active:scale-95;
+    @apply rounded-full px-6 py-3 font-medium transition-all duration-200 active:scale-95;
   }
 
   .pill-button-primary {
-    @apply pill-button bg-primary text-primary-foreground;
-    @apply hover:brightness-110 hover:shadow-lg;
-    box-shadow: 0 4px 14px hsl(var(--primary) / 0.35);
-  }
-
-  .pill-button-secondary {
-    @apply pill-button bg-secondary text-secondary-foreground;
-    @apply hover:bg-secondary/80;
-  }
-
-  /* Icon pill container */
-  .icon-pill {
-    @apply inline-flex items-center justify-center rounded-full p-2.5;
-    @apply bg-primary/10 text-primary;
+    @apply pill-button bg-primary text-primary-foreground hover:brightness-110;
   }
 
   .icon-pill-muted {
-    @apply inline-flex items-center justify-center rounded-full p-2;
-    @apply bg-muted text-muted-foreground;
+    @apply inline-flex items-center justify-center rounded-full p-2 bg-muted text-muted-foreground;
   }
 
-  /* iOS safe areas */
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 20px);
-  }
+  .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+  .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+  .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+  .animate-slide-down { animation: slide-down 0.4s ease-out forwards; }
 
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 34px);
-  }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scale-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slide-down { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
 
-  .safe-left {
-    padding-left: env(safe-area-inset-left, 0px);
-  }
-
-  .safe-right {
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-
-  /* Animations */
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes pulse-soft {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.4s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.3s ease-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out forwards;
-  }
-
-  .animate-slide-down {
-    animation: slide-down 0.4s ease-out forwards;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
-  }
-
-  /* Card shift animation for existing cards */
-  @keyframes card-shift-down {
-    from {
-      transform: translateY(-20px);
-    }
-    to {
-      transform: translateY(0);
-    }
-  }
-
-  .card-shift {
-    animation: card-shift-down 0.4s ease-out forwards;
-  }
-
-  /* Laser scan animation */
-  @keyframes laser-scan {
-    0% {
-      top: 0%;
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-    100% {
-      top: 100%;
-      opacity: 1;
-    }
-  }
-
-  .laser-line {
-    animation: laser-scan 2s ease-in-out infinite;
-  }
-
-  /* Success pulse animation */
-  @keyframes success-pulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-  }
-
-  .success-pulse {
-    animation: success-pulse 0.6s ease-in-out;
-  }
-
-  /* Shimmer effect */
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--muted) / 0.5) 50%,
-      hsl(var(--muted)) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  /* Scrollbar hide */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Fade out mask for virtualized list */
-  .fade-out-bottom-mask {
-    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-  }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .fade-out-bottom-mask { mask-image: linear-gradient(to bottom, black 80%, transparent 100%); }
 }
