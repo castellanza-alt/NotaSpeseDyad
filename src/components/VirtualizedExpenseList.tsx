@@ -1,8 +1,9 @@
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ExpenseCard } from "./ExpenseCard";
 import type { Expense } from "@/hooks/useExpenses";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VirtualizedExpenseListProps {
   expenses: Expense[];
@@ -11,6 +12,7 @@ interface VirtualizedExpenseListProps {
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
+  className?: string;
 }
 
 export function VirtualizedExpenseList({
@@ -20,6 +22,7 @@ export function VirtualizedExpenseList({
   hasMore,
   loadingMore,
   onLoadMore,
+  className,
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -54,7 +57,7 @@ export function VirtualizedExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 text-center">
+      <div className={cn("flex flex-col items-center justify-center h-full text-center pt-48", className)}>
         <p className="text-muted-foreground text-sm">
           Nessuna spesa trovata
         </p>
@@ -68,7 +71,7 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto px-4 fade-mask-y"
+      className={cn("flex-1 overflow-auto px-4 fade-mask-y", className)}
       style={{ contain: "strict" }}
     >
       <div

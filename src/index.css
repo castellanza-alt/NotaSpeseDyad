@@ -220,9 +220,49 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   
-  /* Sfumatura: parte superiore ridotta a 5px per un attacco netto sotto la pillola */
   .fade-mask-y { 
-    mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5px, black 80%, transparent 100%);
+    /* Calcoli per la sfumatura basati sulla pillola superiore */
+    --safe-top: max(env(safe-area-inset-top), 20px);
+    
+    /* Altezza header (pt-safe-top include safe-area + base padding) 
+       pt-safe-top è definito come max(env, 20px) o 52px. Assumiamo 52px base + safe area se > */
+    /* La pillola è in header con mt-3 (12px) e pt-safe-top. 
+       Il contenuto inizia DOPO pt-safe-top.
+       Quindi TopPill = pt-safe-top + 12px (margin).
+       Usiamo un'approssimazione sicura per il rendering visivo */
+       
+    --pill-start: calc(var(--safe-top) + 12px);
+    --pill-height: 72px;
+    
+    /* Sfumatura inizia a metà della pillola */
+    --fade-start: calc(var(--pill-start) + (var(--pill-height) / 2));
+    
+    /* Sfumatura finisce (diventa trasparente/invisibile sopra questo punto, visibile sotto) 5px dopo la fine */
+    /* Wait: Mask logic: Transparent = Invisible, Black = Visible. 
+       We want list HIDDEN (Transparent) at top, and VISIBLE (Black) at bottom.
+       User says "becomes transparent [Invisible?] 5px after pill ends".
+       So at PillBottom + 5px, it should be fully Visible? 
+       No, "becomes transparent" means invisible.
+       
+       Interpreting: The list should be hidden behind the top half. 
+       Fade in (become visible) under the bottom half.
+       Fully visible 5px after pill.
+    */
+    --fade-end: calc(var(--pill-start) + var(--pill-height) + 5px);
+
+    mask-image: linear-gradient(
+      to bottom, 
+      transparent 0px, 
+      transparent var(--fade-start), 
+      black var(--fade-end), 
+      black 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom, 
+      transparent 0px, 
+      transparent var(--fade-start), 
+      black var(--fade-end), 
+      black 100%
+    );
   }
 }

@@ -63,8 +63,11 @@ export function ArchiveScreen() {
     if (showSearchBar) setSearchQuery("");
   };
 
+  // Calcolo dinamico del padding top per la lista in base allo stato
+  const listPaddingTop = showSearchBar ? "pt-64" : "pt-48";
+
   return (
-    <div className="h-screen flex flex-col archive-gradient overflow-hidden">
+    <div className="h-screen flex flex-col archive-gradient overflow-hidden relative">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* Pill Superiore (Fluttuante) */}
@@ -89,10 +92,10 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* List Container */}
-      <div className={`flex-1 flex flex-col pt-48 ${showSearchBar ? 'mt-14' : ''}`}>
+      {/* List Container - Absolute Full Screen to allow masking behind header */}
+      <div className="absolute inset-0 z-0">
         {loading && !expenses.length ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center justify-center h-full pt-48">
             <div className="shimmer w-48 h-32 rounded-2xl" />
           </div>
         ) : (
@@ -103,6 +106,7 @@ export function ArchiveScreen() {
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
+            className={listPaddingTop}
           />
         )}
       </div>
@@ -117,7 +121,6 @@ export function ArchiveScreen() {
               <button onClick={() => setSettingsOpen(true)} className="dock-button"><Menu className="w-5 h-5" /></button>
             </div>
             <button onClick={handleSelectPhoto} className="fab-button">
-              {/* Icon size increased from w-7 to w-9 (~30% bigger area visually) */}
               <Plus className="w-9 h-9" />
             </button>
           </div>
