@@ -155,13 +155,7 @@
     min-height: 100vh;
   }
 
-  .archive-header {
-    background: hsl(var(--archive-header));
-    border-bottom-left-radius: 2rem;
-    border-bottom-right-radius: 2rem;
-  }
-
-  /* Removed archive-footer class to avoid the solid block */
+  /* .archive-header removed to allow for pill shape */
 
   .expense-card-rotated {
     @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
