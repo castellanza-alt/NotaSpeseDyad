@@ -9,10 +9,9 @@ import { useProfile } from "@/hooks/useProfile";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/hooks/use-toast";
 
-// Interface allineata 1:1 con il Database
 interface ExpenseData {
   merchant: string;
-  expense_date: string; // Rinominato da 'date' a 'expense_date' per coerenza DB
+  expense_date: string;
   total: number;
   currency: string;
   category: string;
@@ -25,7 +24,6 @@ interface ImageAnalyzerProps {
   onSuccess: () => void;
 }
 
-// Configurazione Supabase
 const SUPABASE_PROJECT_ID = "iqwbspfvgekhzowqembf";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
 
@@ -40,6 +38,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
+  
+  // Stato locale stringa per gestire virgole e input pulito
+  const [totalString, setTotalString] = useState("");
 
   const recipientEmails = profile?.default_emails?.length 
     ? profile.default_emails 
@@ -51,6 +52,14 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     analyzeReceipt();
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
+
+  // Sincronizza lo stato stringa quando arriva il dato dall'IA
+  useEffect(() => {
+    if (expenseData && expenseData.total !== undefined) {
+      // Se è 0 o valore nullo, lasciamo stringa vuota per UX pulita
+      setTotalString(expenseData.total ? expenseData.total.toString().replace('.', ',') : "");
+    }
+  }, [expenseData?.total]);
 
   async function compressImage(file: File): Promise<string> {
     return new Promise((resolve) => {
@@ -91,16 +100,13 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         body: JSON.stringify({ image: base64Image })
       });
 
-      if (!response.ok) {
-        throw new Error("Errore durante l'analisi del giustificativo");
-      }
+      if (!response.ok) throw new Error("Errore durante l'analisi");
 
       const result = await response.json();
       
-      // Mappatura esplicita dei dati API -> Struttura Database
       setExpenseData({
         merchant: result.data.merchant || "Sconosciuto",
-        expense_date: result.data.date || new Date().toISOString().split("T")[0], // Qui avviene la conversione
+        expense_date: result.data.date || new Date().toISOString().split("T")[0],
         total: result.data.total || 0,
         currency: result.data.currency || "EUR",
         category: result.data.category || "",
@@ -111,10 +117,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       console.error("Analysis error:", error);
       toast({
         title: "Errore Analisi",
-        description: "Impossibile analizzare l'immagine. Inserisci i dati manualmente.",
+        description: "Impossibile analizzare l'immagine.",
         variant: "destructive"
       });
-      // Fallback data
       setExpenseData({ 
         merchant: "", 
         expense_date: new Date().toISOString().split("T")[0], 
@@ -128,28 +133,35 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     }
   }
 
+  // Gestione input importo
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Accetta solo numeri, virgola o punto
+    if (/^[0-9]*[.,]?[0-9]*$/.test(val)) {
+      setTotalString(val);
+      // Aggiorna lo stato reale parsando
+      const parsed = parseFloat(val.replace(',', '.')) || 0;
+      if (expenseData) {
+        setExpenseData({ ...expenseData, total: parsed });
+      }
+    }
+  };
+
   async function handleSend() {
     if (!expenseData || !session) return;
     setSending(true);
     try {
       const base64Image = await compressImage(imageFile);
-      
-      // 1. Upload Storage
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
       
-      const { error: uploadError } = await supabase.storage.from("receipts").upload(fileName, blob, {
-        upsert: true
-      });
-      
-      if (uploadError) throw new Error(`Errore upload: ${uploadError.message}`);
-      
+      await supabase.storage.from("receipts").upload(fileName, blob, { upsert: true });
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // 2. Invio Email (mappiamo expense_date -> date per il template email se necessario)
       const emailPayload = {
         ...expenseData,
-        date: expenseData.expense_date // La funzione email si aspetta 'date'
+        total: parseFloat(totalString.replace(',', '.')) || 0, // Usa il valore dall'input stringa
+        date: expenseData.expense_date 
       };
 
       const emailResponse = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/send-expense-email`, {
@@ -166,14 +178,12 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         })
       });
 
-      if (!emailResponse.ok) throw new Error("Errore durante l'invio dell'email.");
+      if (!emailResponse.ok) throw new Error("Errore email");
 
-      // 3. Salvataggio Database - Costruzione ESPLICITA dell'oggetto
-      // Questo impedisce che campi come 'date' finiscano nella query insert
       const dbPayload = {
         merchant: expenseData.merchant,
-        expense_date: expenseData.expense_date, // Campo corretto
-        total: expenseData.total,
+        expense_date: expenseData.expense_date,
+        total: emailPayload.total,
         currency: expenseData.currency,
         category: expenseData.category,
         items: expenseData.items,
@@ -185,16 +195,14 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       await addExpense(dbPayload);
 
       setSent(true);
-      toast({
-        title: "Successo",
-        description: "Spesa inviata e registrata correttamente",
-      });
+      // Rimossa notifica toast ridondante. Viene gestita da ArchiveScreen tramite onSuccess
       setTimeout(onSuccess, 1500);
+
     } catch (error: any) {
       console.error("Send error:", error);
       toast({ 
         title: "Errore invio", 
-        description: error.message || "Riprova.", 
+        description: "Riprova.", 
         variant: "destructive" 
       });
     } finally {
@@ -211,7 +219,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary"><X className="w-5 h-5" /></button>
         </header>
 
-        <div className="flex-1 overflow-auto p-5 space-y-5">
+        <div className="flex-1 overflow-auto p-5 space-y-6"> {/* Increased spacing */}
           <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30">
             <img src={imageUrl} alt="Scontrino" className="w-full h-full object-contain" />
             {analyzing && (
@@ -230,43 +238,43 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           </div>
 
           {!analyzing && expenseData && !sent && (
-            <div className="space-y-4 animate-slide-up">
+            <div className="space-y-5 animate-slide-up">
               <div>
-                <Label className="text-xs text-muted-foreground uppercase mb-1 block">Esercente</Label>
+                <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Esercente</Label>
                 <Input 
                   value={expenseData.merchant || ""} 
                   onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
-                  className="rounded-xl h-12" 
+                  className="rounded-xl h-12 text-base" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase mb-1 block">Data</Label>
-                  {/* Usa expense_date coerentemente */}
+                  <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Data</Label>
                   <Input 
                     type="date" 
                     value={expenseData.expense_date || ""} 
                     onChange={(e) => setExpenseData({...expenseData, expense_date: e.target.value})} 
-                    className="rounded-xl h-12" 
+                    className="rounded-xl h-12 text-base" 
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground uppercase mb-1 block">Totale (€)</Label>
+                  <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Totale (€)</Label>
                   <Input 
-                    type="number" 
-                    step="0.01" 
-                    value={expenseData.total || 0} 
-                    onChange={(e) => setExpenseData({...expenseData, total: parseFloat(e.target.value) || 0})} 
-                    className="rounded-xl h-12" 
+                    type="text" 
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={totalString}
+                    onChange={handleAmountChange} 
+                    className="rounded-xl h-12 text-base font-medium" 
                   />
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground uppercase mb-1 block">Categoria</Label>
+                <Label className="text-xs text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
                 <Input 
                   value={expenseData.category || ""} 
                   onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                  className="rounded-xl h-12" 
+                  className="rounded-xl h-12 text-base" 
                 />
               </div>
             </div>
@@ -278,7 +286,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
             <Button 
               onClick={handleSend} 
               disabled={sending} 
-              className="w-full h-14 rounded-full font-bold bg-primary text-primary-foreground hover:opacity-90"
+              className="w-full h-14 rounded-full font-bold bg-primary text-primary-foreground hover:opacity-90 shadow-lg"
             >
               {sending ? (
                 <>

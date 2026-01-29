@@ -105,12 +105,13 @@ export function ArchiveScreen() {
         />
       )}
 
-      <div className="flex-shrink-0 h-32" />
+      {/* Spacer to allow scrolling past the bottom dock */}
+      <div className="flex-shrink-0 h-24" />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="archive-footer absolute inset-0" />
-        <div className="relative px-4 pb-safe-bottom pt-6">
-          <div className="dock-pill flex items-center justify-between px-4 py-3 mx-auto max-w-sm">
+      {/* Floating Dock - No solid background container */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+        <div className="relative px-4 pb-safe-bottom pt-6 flex justify-center pointer-events-auto">
+          <div className="dock-pill flex items-center justify-between px-4 py-3 max-w-sm w-full gap-4">
             <div className="flex items-center gap-2">
               <button onClick={toggleTheme} className="dock-button"><Moon className="w-5 h-5" /></button>
               <button onClick={toggleSearchBar} className="dock-button"><Search className="w-5 h-5" /></button>

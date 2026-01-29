@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - Clean off-white with pure white cards */
+  /* Light Theme */
   :root,
   .light {
     --background: 210 20% 98%;
@@ -44,83 +44,62 @@
     --success: 142 72% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Expense card specific colors */
     --expense-weekday: 0 65% 45%;
     --expense-amount: 217 55% 39%;
 
-    /* Archive theme colors */
     --archive-header: 217 55% 39%;
     --archive-gradient-start: 199 89% 86%;
     --archive-gradient-end: 280 67% 90%;
     --archive-header-foreground: 0 0% 100%;
-
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 10%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 96%;
-    --sidebar-accent-foreground: 220 20% 25%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 217 91% 60%;
   }
 
-  /* Dark Theme - Deep slate grays */
+  /* Dark Theme - Lightened by ~10% brightness */
   .dark {
-    --background: 222 47% 11%;
+    /* Original: 222 47% 11% -> New: Lighter slate */
+    --background: 222 30% 18%; 
     --foreground: 210 20% 98%;
 
-    --card: 215 28% 14%;
+    --card: 222 30% 22%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 215 28% 14%;
+    --popover: 222 30% 22%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 217 91% 65%;
+    --primary: 217 91% 70%;
     --primary-foreground: 222 47% 11%;
 
-    --secondary: 217 33% 22%;
+    --secondary: 217 25% 26%;
     --secondary-foreground: 210 20% 90%;
 
-    --muted: 217 33% 25%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 25% 28%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 217 85% 65%;
+    --accent: 217 85% 70%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 62% 55%;
+    --destructive: 0 62% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 22%;
-    --ring: 217 91% 65%;
+    --border: 217 25% 28%;
+    --input: 217 25% 25%;
+    --ring: 217 91% 70%;
 
     --radius: 9999px;
 
-    --glass-bg: 215 28% 14% / 0.85;
-    --glass-border: 217 33% 30% / 0.3;
+    --glass-bg: 222 30% 22% / 0.85;
+    --glass-border: 217 33% 35% / 0.3;
     --glass-shadow: 222 50% 5% / 0.5;
     
     --success: 142 72% 50%;
     --success-foreground: 222 47% 11%;
 
-    /* Expense card specific colors */
-    --expense-weekday: 0 55% 55%;
-    --expense-amount: 199 89% 70%;
+    --expense-weekday: 0 55% 65%;
+    --expense-amount: 199 89% 75%;
 
-    /* Archive theme colors */
-    --archive-header: 217 55% 35%;
-    --archive-gradient-start: 217 40% 20%;
-    --archive-gradient-end: 280 30% 18%;
+    --archive-header: 217 40% 40%;
+    --archive-gradient-start: 217 30% 22%;
+    --archive-gradient-end: 280 25% 20%;
     --archive-header-foreground: 0 0% 100%;
-
-    --sidebar-background: 215 28% 14%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 217 91% 65%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 22%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 217 91% 65%;
   }
 }
 
@@ -182,11 +161,7 @@
     border-bottom-right-radius: 2rem;
   }
 
-  .archive-footer {
-    background: hsl(var(--archive-header));
-    border-top-left-radius: 2rem;
-    border-top-right-radius: 2rem;
-  }
+  /* Removed archive-footer class to avoid the solid block */
 
   .expense-card-rotated {
     @apply bg-card rounded-2xl w-full max-w-[360px] antialiased;
@@ -206,7 +181,8 @@
   .dock-pill {
     background: hsl(var(--archive-header));
     border-radius: 9999px;
-    box-shadow: 0 4px 20px hsl(var(--glass-shadow));
+    box-shadow: 0 8px 32px hsl(var(--glass-shadow));
+    z-index: 50;
   }
 
   .dock-button {
@@ -227,14 +203,6 @@
     box-shadow: 0 4px 14px hsl(var(--archive-header) / 0.4);
   }
 
-  .pill-button {
-    @apply rounded-full px-6 py-3 font-medium transition-all duration-200 active:scale-95;
-  }
-
-  .pill-button-primary {
-    @apply pill-button bg-primary text-primary-foreground hover:brightness-110;
-  }
-
   .icon-pill-muted {
     @apply inline-flex items-center justify-center rounded-full p-2 bg-muted text-muted-foreground;
   }
@@ -251,5 +219,10 @@
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .fade-out-bottom-mask { mask-image: linear-gradient(to bottom, black 80%, transparent 100%); }
+  
+  /* Improved fade mask for bottom scrolling */
+  .fade-out-bottom-mask { 
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
 }
