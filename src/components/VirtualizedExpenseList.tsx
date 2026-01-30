@@ -26,7 +26,6 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Stable Chunky Cards (Tall)
   // Height approx 180px + 24px Gap
   const CARD_HEIGHT = 180;
   const GAP = 24; 
@@ -88,7 +87,7 @@ export function VirtualizedExpenseList({
           return (
             <div
               key={virtualRow.key}
-              className="absolute top-0 left-0 w-full flex justify-center px-4 md:px-6"
+              className="absolute top-0 left-0 w-full flex justify-center px-0 md:px-0 overflow-visible"
               style={{
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
@@ -104,7 +103,7 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-sm h-full pb-2"> 
+                <div className="w-full h-full pb-2 flex justify-center"> 
                   <ExpenseCard
                     expense={expense}
                     onClick={() => onExpenseClick(expense)}

@@ -4,82 +4,68 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - 'Premium Paper & Sunlight' */
+  /* Light Theme - 'Stone White & Sage' */
   :root,
   .light {
-    --background: 60 10% 98%; 
-    --foreground: 160 15% 20%;
-    --foreground-muted: 160 8% 45%;
-
-    --card: 0 0% 100%;
-    /* Bulged Surface Gradient: darker top/bottom, lighter center */
-    --card-surface-top: 45 10% 95%;
-    --card-surface-center: 0 0% 100%;
-    --card-surface-bottom: 45 10% 94%;
+    --background: 40 10% 97%; /* Stone White Base */
+    --foreground: 160 30% 20%; /* Dark Slate Green */
     
-    --card-foreground: 160 15% 20%;
-    --card-border: 160 15% 90%;
-
-    --primary: 35 40% 55%; 
+    --card: 0 0% 100%;
+    --card-surface-top: 0 0% 100%;
+    --card-surface-center: 45 10% 98%;
+    --card-surface-bottom: 45 15% 96%;
+    
+    --card-foreground: 160 30% 20%;
+    
+    --primary: 160 30% 25%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 10% 94%; 
-    --secondary-foreground: 160 15% 30%;
+    --secondary: 100 20% 92%; /* Light Sage for Icon Anchor */
+    --secondary-foreground: 160 30% 20%;
 
     --muted: 40 10% 94%;
-    --muted-foreground: 160 5% 50%;
-
-    /* Metallic Bronze Vars (High Contrast) */
-    --bronze-shine: 45 80% 85%;  /* Pale Gold */
-    --bronze-mid: 35 60% 50%;    /* Copper */
-    --bronze-shadow: 25 70% 30%; /* Dark Bronze */
-
-    --destructive: 0 60% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --muted-foreground: 160 5% 45%; /* Readable Grey */
+    
+    /* Solid Price Color - Slate Green */
+    --price-solid: 160 30% 25%; 
 
     --border: 40 10% 90%;
     --input: 40 10% 92%;
-    --ring: 35 40% 55%;
+    --ring: 160 30% 25%;
 
     --radius: 2rem; 
-    --overlay-color: 60 10% 98%;
+    --overlay-color: 40 10% 97%;
   }
 
-  /* Dark Theme */
+  /* Dark Theme - 'Deep Charcoal & Forest' */
   .dark {
-    --background: 150 12% 10%;
-    --foreground: 40 15% 90%;
-    --foreground-muted: 150 8% 60%;
+    --background: 220 14% 10%; /* Deep Charcoal */
+    --foreground: 40 20% 95%; /* Off White */
 
-    --card: 150 10% 14%;
-    --card-surface-top: 150 10% 16%;
-    --card-surface-center: 150 10% 18%; /* Lighter center */
-    --card-surface-bottom: 150 12% 14%;
+    --card: 220 14% 14%;
+    --card-surface-top: 220 14% 16%;
+    --card-surface-center: 220 14% 18%;
+    --card-surface-bottom: 220 14% 14%;
 
-    --card-foreground: 40 15% 90%;
+    --card-foreground: 40 20% 95%;
     
     --primary: 35 35% 65%;
-    --primary-foreground: 150 12% 10%;
+    --primary-foreground: 220 14% 10%;
 
-    --secondary: 150 10% 18%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 10% 22%; /* Lighter Charcoal for Icon Anchor */
+    --secondary-foreground: 40 20% 95%;
 
-    --muted: 150 10% 18%;
-    --muted-foreground: 150 5% 50%;
+    --muted: 220 10% 18%;
+    --muted-foreground: 220 10% 70%; /* High Contrast Grey for Readability */
 
-    /* Dark Mode Bronze */
-    --bronze-shine: 40 70% 90%;
-    --bronze-mid: 35 60% 60%;
-    --bronze-shadow: 25 60% 35%;
+    /* Solid Price Color - Light Bronze/Off-White */
+    --price-solid: 35 40% 75%;
 
-    --destructive: 0 50% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 150 10% 20%;
-    --input: 150 10% 20%;
+    --border: 220 10% 20%;
+    --input: 220 10% 20%;
     --ring: 35 35% 65%;
 
-    --overlay-color: 150 12% 10%;
+    --overlay-color: 220 14% 10%;
   }
 }
 
@@ -95,27 +81,32 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
 
 @layer utilities {
-  /* --- Atmospheric Backgrounds --- */
+  /* --- Organic Blob Gradients --- */
   .wallet-bg {
     min-height: 100vh;
     width: 100%;
+    position: relative;
+    background-color: hsl(var(--background));
+    overflow: hidden;
   }
   
   .light .wallet-bg {
-    /* Cream White to Stone Grey Diagonal */
-    background: linear-gradient(135deg, #FFFCF5 0%, #F5F5F0 50%, #E6E6E6 100%);
-    background-attachment: fixed;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(100, 20%, 90%, 1) 0px, transparent 50%), /* Sage Blob */
+      radial-gradient(at 100% 0%, hsla(0, 0%, 90%, 1) 0px, transparent 50%),   /* Pearl Blob */
+      radial-gradient(at 100% 100%, hsla(100, 20%, 90%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(0, 0%, 90%, 1) 0px, transparent 50%);
   }
   
   .dark .wallet-bg {
-    /* Deep Green Abyss Radial */
-    background: radial-gradient(circle at 50% 30%, #1A2F2B 0%, #0d1a18 60%, #000000 100%);
-    background-attachment: fixed;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(150, 30%, 15%, 1) 0px, transparent 60%), /* Deep Forest Blob */
+      radial-gradient(at 90% 20%, hsla(210, 15%, 20%, 1) 0px, transparent 50%), /* Slate Blob */
+      radial-gradient(at 20% 80%, hsla(150, 30%, 15%, 1) 0px, transparent 60%);
   }
 
-  /* --- Hyper-3D Chunky Card --- */
+  /* --- Hyper-3D Chunky Card (Updated) --- */
   .chunky-card-3d {
-    /* Surface Gradient: Top(Darker) -> Center(Lighter) -> Bottom(Darker) */
     background: linear-gradient(
       to bottom, 
       hsl(var(--card-surface-top)), 
@@ -124,12 +115,11 @@
       hsl(var(--card-surface-bottom))
     );
     
-    /* Zenithal Highlight (Top white line) + Deep Colored Shadow */
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.8), /* Zenithal Highlight */
-      inset 0 0 0 1px rgba(0,0,0,0.02), /* Subtle definition */
-      0 12px 32px -8px rgba(20, 30, 25, 0.15), /* Deep Ambient Shadow */
-      0 4px 12px -2px rgba(20, 30, 25, 0.08);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.8),
+      inset 0 0 0 1px rgba(0,0,0,0.02),
+      0 12px 32px -8px rgba(0, 0, 0, 0.1),
+      0 4px 12px -2px rgba(0, 0, 0, 0.05);
       
     border: none;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
@@ -137,29 +127,27 @@
   
   .dark .chunky-card-3d {
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
       inset 0 0 0 1px rgba(255,255,255,0.05),
-      0 16px 40px -8px rgba(0, 0, 0, 0.5);
+      0 16px 40px -8px rgba(0, 0, 0, 0.5); /* Colored shadows handled in component/theme logic if needed */
   }
 
   .chunky-card-3d:active {
     transform: scale(0.98) translateY(2px);
   }
 
-  /* --- High Contrast Metallic Bronze Text --- */
+  /* --- Solid Prices (No Metallic) --- */
+  .text-price-solid {
+    color: hsl(var(--price-solid));
+  }
+  
   .text-gradient-bronze-rich {
-    /* Vertical Metal Reflection: Light -> Dark -> Light */
-    background: linear-gradient(
-      180deg, 
-      hsl(var(--bronze-mid)) 0%,
-      hsl(var(--bronze-shine)) 45%,
-      hsl(var(--bronze-mid)) 55%, 
-      hsl(var(--bronze-shadow)) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+     /* Keeping for header balance only if needed, but prices use solid */
+     @apply text-price-solid;
+     background: none;
+     -webkit-background-clip: border-box;
+     background-clip: border-box;
+     filter: none;
   }
 
   /* --- Frosted Materials --- */
@@ -196,16 +184,9 @@
   }
 
   .fab-glass-bronze {
-    /* Enhanced metallic button */
-    background: linear-gradient(
-      135deg, 
-      hsl(var(--bronze-mid)), 
-      hsl(var(--bronze-shadow))
-    );
-    border: 1px solid hsl(var(--bronze-shine) / 0.5);
-    box-shadow: 
-      0 8px 20px -4px hsl(var(--bronze-shadow) / 0.5),
-      inset 0 1px 0 hsl(var(--bronze-shine) / 0.5);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--ring)));
+    border: 1px solid hsl(var(--primary) / 0.5);
+    box-shadow: 0 8px 20px -4px hsl(var(--primary) / 0.4);
     
     @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
     color: white;
