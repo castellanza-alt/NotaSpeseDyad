@@ -8,17 +8,15 @@
   :root,
   .light {
     --background: 60 10% 98%; 
-    --background-deep: 60 10% 96%; 
-    
     --foreground: 160 15% 20%;
     --foreground-muted: 160 8% 45%;
 
     --card: 0 0% 100%;
+    --card-gradient-start: 0 0% 100%;
+    --card-gradient-end: 45 10% 96%; /* Subtle curve effect */
+    
     --card-foreground: 160 15% 20%;
     --card-border: 160 15% 90%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 160 15% 20%;
 
     --primary: 35 40% 55%; 
     --primary-foreground: 0 0% 100%;
@@ -29,6 +27,11 @@
     --muted: 40 10% 94%;
     --muted-foreground: 160 5% 50%;
 
+    /* High Contrast Bronze Vars */
+    --bronze-shine: 40 60% 95%; /* Highlight */
+    --bronze-mid: 35 45% 60%;   /* Base */
+    --bronze-shadow: 25 50% 35%; /* Deep shadow */
+
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
 
@@ -37,35 +40,34 @@
     --ring: 35 40% 55%;
 
     --radius: 2rem; 
-    --success: 140 30% 45%;
-
     --overlay-color: 60 10% 98%;
   }
 
-  /* Dark Theme - 'Deep Aurora' */
+  /* Dark Theme */
   .dark {
     --background: 150 12% 10%;
-    --background-deep: 150 12% 8%;
-
     --foreground: 40 15% 90%;
     --foreground-muted: 150 8% 60%;
 
     --card: 150 10% 14%;
+    --card-gradient-start: 150 10% 16%;
+    --card-gradient-end: 150 12% 12%;
+
     --card-foreground: 40 15% 90%;
-    --card-border: 150 10% 20%;
-
-    --popover: 150 10% 14%;
-    --popover-foreground: 40 15% 90%;
-
+    
     --primary: 35 35% 65%;
     --primary-foreground: 150 12% 10%;
 
     --secondary: 150 10% 18%;
-    /* CORRECTION: Pure White icons in Dark Mode for readability */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 150 10% 18%;
     --muted-foreground: 150 5% 50%;
+
+    /* Dark Mode Bronze */
+    --bronze-shine: 40 60% 85%;
+    --bronze-mid: 40 50% 60%;
+    --bronze-shadow: 30 50% 40%;
 
     --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -90,124 +92,92 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
 
 @layer utilities {
+  /* --- Vivid Mesh Gradient --- */
   .wallet-bg {
     background-color: hsl(var(--background));
   }
   
   .light .wallet-bg {
-    background: radial-gradient(
-      circle at 0% 0%, 
-      hsl(60, 15%, 99%) 0%, 
-      hsl(210, 10%, 96%) 100%
-    );
+    background: 
+      radial-gradient(at 0% 0%, hsla(40, 60%, 96%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(160, 30%, 94%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(40, 40%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(210, 30%, 96%, 1) 0px, transparent 50%);
+    background-size: 100% 100%;
   }
   
   .dark .wallet-bg {
-    background: radial-gradient(
-      circle at 50% -20%, 
-      hsl(150, 20%, 15%) 0%, 
-      hsl(150, 12%, 8%) 80%
+    background: 
+      radial-gradient(at 50% 0%, hsla(150, 20%, 15%, 1) 0px, transparent 60%),
+      radial-gradient(at 0% 50%, hsla(160, 25%, 10%, 1) 0px, transparent 50%),
+      linear-gradient(to bottom, hsl(150, 15%, 8%), hsl(150, 15%, 5%));
+  }
+
+  /* --- Hyper-3D Chunky Card --- */
+  .chunky-card-3d {
+    /* Surface Gradient for Curvature */
+    background: linear-gradient(
+      to bottom, 
+      hsl(var(--card-gradient-start)), 
+      hsl(var(--card-gradient-end))
     );
-  }
-
-  /* --- Frosted Stone Material --- */
-  .glass-stone {
-    background-color: hsl(var(--background) / 0.85);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid hsl(var(--foreground) / 0.05);
+    
+    /* Zenithal Highlight (Top white line) + Deep Shadow */
     box-shadow: 
-      0 4px 30px rgba(0, 0, 0, 0.03),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.7), /* Top Highlight */
+      inset 0 0 0 1px rgba(0,0,0,0.03), /* Subtle Ring */
+      0 12px 24px -4px rgba(0, 0, 0, 0.08), /* Deep Drop Shadow */
+      0 4px 8px -2px rgba(0, 0, 0, 0.04);
+      
+    border: none; /* Shadow handles definition */
+    
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  }
+  
+  .dark .chunky-card-3d {
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 0 0 1px rgba(255,255,255,0.05),
+      0 16px 32px -8px rgba(0, 0, 0, 0.4);
   }
 
-  /* LIQUID GLASS: No border for Header */
-  .glass-borderless {
-    @apply glass-stone;
-    border: none !important;
-    background-color: hsl(var(--background) / 0.7); /* Slightly more transparent */
-    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.05); /* Soft shadow only */
+  .chunky-card-3d:active {
+    transform: scale(0.98) translateY(2px);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 4px 8px -2px rgba(0, 0, 0, 0.1);
   }
 
-  /* --- Metallic Gradients (Specific Hex Codes) --- */
-  .text-gradient-bronze {
-    /* Champagne (#E6CFA1) to Dark Bronze (#A67C52) */
-    background: linear-gradient(135deg, #E6CFA1 0%, #A67C52 100%);
+  /* --- High Contrast Metallic Bronze --- */
+  .text-gradient-bronze-rich {
+    /* Shine -> Mid -> Deep Shadow */
+    background: linear-gradient(
+      135deg, 
+      hsl(var(--bronze-shine)) 0%, 
+      hsl(var(--bronze-mid)) 40%, 
+      hsl(var(--bronze-shadow)) 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 2px 10px rgba(166, 124, 82, 0.2); /* Glow */
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
   }
 
-  .fab-glass-bronze {
-    background: linear-gradient(135deg, rgba(230, 207, 161, 0.95), rgba(166, 124, 82, 0.95));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(230, 207, 161, 0.4);
-    box-shadow: 
-      0 12px 30px -8px rgba(166, 124, 82, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  /* --- Frosted Materials --- */
+  .glass-stone {
+    background-color: hsl(var(--background) / 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
   }
 
-  /* --- Floating Squircles --- */
-  .squircle-card {
-    @apply bg-card rounded-[32px] w-full antialiased relative overflow-hidden;
-    box-shadow: 
-      0 20px 40px -12px rgba(0, 0, 0, 0.08),
-      0 2px 8px -2px rgba(0, 0, 0, 0.04),
-      0 0 0 1px hsl(var(--border) / 0.6);
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
-  }
-
-  .squircle-card:active {
-    transform: scale(0.98);
-  }
-
-  /* --- Gradient Overlays --- */
-  .header-fade {
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--overlay-color)) 0%,
-      hsl(var(--overlay-color)) 20%, 
-      hsl(var(--overlay-color) / 0.95) 30%,
-      hsl(var(--overlay-color) / 0.8) 45%,
-      hsl(var(--overlay-color) / 0.5) 60%,
-      hsl(var(--overlay-color) / 0.2) 80%,
-      transparent 100%
-    );
+  .glass-borderless {
+    background-color: hsl(var(--background) / 0.6);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    /* No border, just blur */
   }
   
-  .dark .header-fade {
-    background: linear-gradient(
-      to bottom,
-      hsl(150, 20%, 15%) 0%,
-      hsl(150, 20%, 15% / 0.95) 30%,
-      hsl(150, 20%, 15% / 0.0) 100%
-    );
-  }
-
-  .footer-fade {
-    background: linear-gradient(
-      to top,
-      hsl(var(--overlay-color)) 0%,
-      hsl(var(--overlay-color)) 25%, 
-      hsl(var(--overlay-color) / 0.95) 35%,
-      hsl(var(--overlay-color) / 0.8) 50%,
-      hsl(var(--overlay-color) / 0.5) 65%,
-      hsl(var(--overlay-color) / 0.2) 85%,
-      transparent 100%
-    );
-  }
-  
-  .dark .footer-fade {
-     background: linear-gradient(
-      to top,
-      hsl(150, 12%, 8%) 0%,
-      hsl(150, 12%, 8% / 0.95) 30%,
-      hsl(150, 12%, 8% / 0.0) 100%
-    );
-  }
-
   .dock-pill {
     border-radius: 9999px;
     z-index: 50;
@@ -215,38 +185,52 @@
     display: flex;
     flex-direction: column;
   }
-  
   .dock-pill-row { flex-direction: row !important; }
 
   .dock-button {
     @apply flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200;
     color: hsl(var(--foreground));
-    background-color: transparent;
-    border: 1px solid transparent;
     
     &:hover {
       background-color: hsl(var(--foreground) / 0.05);
-      border-color: hsl(var(--foreground) / 0.1);
     }
     @apply active:scale-95;
   }
 
-  .fab-button {
+  .fab-glass-bronze {
+    /* Enhanced metallic button */
+    background: linear-gradient(
+      135deg, 
+      hsl(var(--bronze-mid)), 
+      hsl(var(--bronze-shadow))
+    );
+    border: 1px solid hsl(var(--bronze-shine) / 0.5);
+    box-shadow: 
+      0 8px 20px -4px hsl(var(--bronze-shadow) / 0.5),
+      inset 0 1px 0 hsl(var(--bronze-shine) / 0.5);
+    
     @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
     color: white;
-    /* Uses .fab-glass-bronze */
-    
+
     &:hover {
-      transform: translateY(-2px) scale(1.05);
+      transform: translateY(-2px);
       filter: brightness(1.1);
     }
     @apply active:scale-95;
+  }
+
+  /* --- Overlays --- */
+  .header-fade {
+    background: linear-gradient(to bottom, hsl(var(--overlay-color)) 20%, transparent 100%);
+  }
+  
+  .footer-fade {
+    background: linear-gradient(to top, hsl(var(--overlay-color)) 20%, transparent 100%);
   }
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
   .animate-slide-down { animation: slide-down 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-  
   @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 }
