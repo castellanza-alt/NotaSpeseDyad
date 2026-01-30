@@ -4,8 +4,8 @@
   "description": "Gestisci le tue note spese in modo semplice e veloce",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8F7F4",
-  "theme_color": "#F8F7F4",
+  "background_color": "#2C5346",
+  "theme_color": "#2C5346",
   "orientation": "portrait",
   "icons": [
     {
