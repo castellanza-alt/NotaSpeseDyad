@@ -4,16 +4,16 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - 'Warm Ethereal Stone' */
+  /* Light Theme - 'Premium Paper & Sunlight' */
   :root,
   .light {
-    --background: 60 5% 96%; 
+    --background: 60 10% 98%; 
     --foreground: 160 15% 20%;
     --foreground-muted: 160 8% 45%;
 
     --card: 0 0% 100%;
     --card-gradient-start: 0 0% 100%;
-    --card-gradient-end: 45 10% 96%;
+    --card-gradient-end: 45 10% 96%; /* Subtle curve effect */
     
     --card-foreground: 160 15% 20%;
     --card-border: 160 15% 90%;
@@ -27,10 +27,10 @@
     --muted: 40 10% 94%;
     --muted-foreground: 160 5% 50%;
 
-    /* Bronze Vars */
-    --bronze-shine: 40 60% 95%; 
-    --bronze-mid: 35 45% 60%; 
-    --bronze-shadow: 25 50% 35%; 
+    /* High Contrast Bronze Vars */
+    --bronze-shine: 40 60% 95%; /* Highlight */
+    --bronze-mid: 35 45% 60%;   /* Base */
+    --bronze-shadow: 25 50% 35%; /* Deep shadow */
 
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -40,30 +40,31 @@
     --ring: 35 40% 55%;
 
     --radius: 2rem; 
-    --overlay-color: 60 5% 96%; /* Matches bg for fade masks */
+    --overlay-color: 60 10% 98%;
   }
 
-  /* Dark Theme - 'Deep Mineral Abyss' */
+  /* Dark Theme */
   .dark {
-    --background: 160 20% 6%; /* Deep Petrol Black Base */
+    --background: 150 12% 10%;
     --foreground: 40 15% 90%;
     --foreground-muted: 150 8% 60%;
 
-    --card: 150 10% 12%;
-    --card-gradient-start: 150 10% 14%;
-    --card-gradient-end: 150 12% 10%;
+    --card: 150 10% 14%;
+    --card-gradient-start: 150 10% 16%;
+    --card-gradient-end: 150 12% 12%;
 
     --card-foreground: 40 15% 90%;
     
     --primary: 35 35% 65%;
     --primary-foreground: 150 12% 10%;
 
-    --secondary: 150 10% 16%;
+    --secondary: 150 10% 18%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 150 10% 16%;
+    --muted: 150 10% 18%;
     --muted-foreground: 150 5% 50%;
 
+    /* Dark Mode Bronze */
     --bronze-shine: 40 60% 85%;
     --bronze-mid: 40 50% 60%;
     --bronze-shadow: 30 50% 40%;
@@ -71,11 +72,11 @@
     --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 10% 18%;
-    --input: 150 10% 18%;
+    --border: 150 10% 20%;
+    --input: 150 10% 20%;
     --ring: 35 35% 65%;
 
-    --overlay-color: 160 20% 6%;
+    --overlay-color: 150 12% 10%;
   }
 }
 
@@ -91,47 +92,45 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
 
 @layer utilities {
-  /* --- Atmospheric Backgrounds --- */
+  /* --- Vivid Mesh Gradient --- */
   .wallet-bg {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    z-index: 0;
+    background-color: hsl(var(--background));
   }
   
   .light .wallet-bg {
-    /* Warm Ethereal Stone */
-    background: radial-gradient(
-      circle at 0% 0%, 
-      hsla(40, 30%, 98%, 1) 0%,   /* Warm White Light Source Top-Left */
-      hsla(40, 10%, 96%, 1) 40%,  /* Mid Tone */
-      hsla(200, 10%, 92%, 1) 100% /* Cool Stone Grey Shadow Bottom-Right */
-    );
+    background: 
+      radial-gradient(at 0% 0%, hsla(40, 60%, 96%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(160, 30%, 94%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(40, 40%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(210, 30%, 96%, 1) 0px, transparent 50%);
+    background-size: 100% 100%;
   }
   
   .dark .wallet-bg {
-    /* Deep Mineral Abyss */
     background: 
-      radial-gradient(at 50% 40%, hsla(160, 40%, 15%, 0.3) 0px, transparent 60%), /* Subtle Emerald Glow Center */
-      radial-gradient(at 80% 10%, hsla(170, 50%, 10%, 0.4) 0px, transparent 50%), /* Top Right Accent */
-      linear-gradient(to bottom, hsl(160, 20%, 6%), hsl(180, 25%, 4%)); /* Deep Petrol Black Base */
+      radial-gradient(at 50% 0%, hsla(150, 20%, 15%, 1) 0px, transparent 60%),
+      radial-gradient(at 0% 50%, hsla(160, 25%, 10%, 1) 0px, transparent 50%),
+      linear-gradient(to bottom, hsl(150, 15%, 8%), hsl(150, 15%, 5%));
   }
 
   /* --- Hyper-3D Chunky Card --- */
   .chunky-card-3d {
+    /* Surface Gradient for Curvature */
     background: linear-gradient(
       to bottom, 
       hsl(var(--card-gradient-start)), 
       hsl(var(--card-gradient-end))
     );
     
+    /* Zenithal Highlight (Top white line) + Deep Shadow */
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.7), 
-      inset 0 0 0 1px rgba(0,0,0,0.03), 
-      0 12px 24px -4px rgba(0, 0, 0, 0.08), 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.7), /* Top Highlight */
+      inset 0 0 0 1px rgba(0,0,0,0.03), /* Subtle Ring */
+      0 12px 24px -4px rgba(0, 0, 0, 0.08), /* Deep Drop Shadow */
       0 4px 8px -2px rgba(0, 0, 0, 0.04);
       
-    border: none;
+    border: none; /* Shadow handles definition */
+    
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   }
   
@@ -144,10 +143,14 @@
 
   .chunky-card-3d:active {
     transform: scale(0.98) translateY(2px);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      0 4px 8px -2px rgba(0, 0, 0, 0.1);
   }
 
   /* --- High Contrast Metallic Bronze --- */
   .text-gradient-bronze-rich {
+    /* Shine -> Mid -> Deep Shadow */
     background: linear-gradient(
       135deg, 
       hsl(var(--bronze-shine)) 0%, 
@@ -160,7 +163,7 @@
     filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
   }
 
-  /* --- Materials --- */
+  /* --- Frosted Materials --- */
   .glass-stone {
     background-color: hsl(var(--background) / 0.85);
     backdrop-filter: blur(20px);
@@ -172,6 +175,7 @@
     background-color: hsl(var(--background) / 0.6);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
+    /* No border, just blur */
   }
   
   .dock-pill {
@@ -186,17 +190,32 @@
   .dock-button {
     @apply flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200;
     color: hsl(var(--foreground));
-    &:hover { background-color: hsl(var(--foreground) / 0.05); }
+    
+    &:hover {
+      background-color: hsl(var(--foreground) / 0.05);
+    }
     @apply active:scale-95;
   }
 
   .fab-glass-bronze {
-    background: linear-gradient(135deg, hsl(var(--bronze-mid)), hsl(var(--bronze-shadow)));
+    /* Enhanced metallic button */
+    background: linear-gradient(
+      135deg, 
+      hsl(var(--bronze-mid)), 
+      hsl(var(--bronze-shadow))
+    );
     border: 1px solid hsl(var(--bronze-shine) / 0.5);
-    box-shadow: 0 8px 20px -4px hsl(var(--bronze-shadow) / 0.5), inset 0 1px 0 hsl(var(--bronze-shine) / 0.5);
+    box-shadow: 
+      0 8px 20px -4px hsl(var(--bronze-shadow) / 0.5),
+      inset 0 1px 0 hsl(var(--bronze-shine) / 0.5);
+    
     @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
     color: white;
-    &:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+    &:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
     @apply active:scale-95;
   }
 

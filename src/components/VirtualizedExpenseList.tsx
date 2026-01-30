@@ -26,9 +26,9 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Super Chunky Horizontal Cards
-  // Increased height significantly (approx 175% of previous 110px)
-  const CARD_HEIGHT = 190; 
+  // Compact Horizontal Cards
+  // Height approx 110px + 24px Gap
+  const CARD_HEIGHT = 110;
   const GAP = 24; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
@@ -36,7 +36,7 @@ export function VirtualizedExpenseList({
     count: expenses.length + (hasMore ? 1 : 0),
     getScrollElement: () => parentRef.current,
     estimateSize: () => ITEM_SIZE,
-    overscan: 3,
+    overscan: 5,
   });
 
   const items = virtualizer.getVirtualItems();
@@ -104,7 +104,7 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-sm h-full pb-6"> 
+                <div className="w-full max-w-sm h-full pb-2"> 
                   <ExpenseCard
                     expense={expense}
                     onClick={() => onExpenseClick(expense)}
