@@ -4,18 +4,18 @@
   "description": "Gestisci le tue note spese in modo semplice e veloce",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1e293b",
-  "theme_color": "#2B5A9D",
+  "background_color": "#F8F7F4",
+  "theme_color": "#F8F7F4",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://i.postimg.cc/rpkWqFZR/icon-def.png",
+      "src": "https://wsrv.nl/?url=i.postimg.cc/rpkWqFZR/icon-def.png&trim=10&w=192&h=192&fit=cover",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://i.postimg.cc/rpkWqFZR/icon-def.png",
+      "src": "https://wsrv.nl/?url=i.postimg.cc/rpkWqFZR/icon-def.png&trim=10&w=512&h=512&fit=cover",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
