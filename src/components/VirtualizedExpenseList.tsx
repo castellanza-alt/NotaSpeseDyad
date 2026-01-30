@@ -26,6 +26,8 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Stable Chunky Cards
+  // Fixed Min-Height 160px + 24px Gap
   const CARD_HEIGHT = 160;
   const GAP = 24; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
@@ -68,7 +70,7 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-x-hidden overflow-y-auto w-full"
+      className="flex-1 overflow-auto w-full"
       style={{ contain: "strict" }}
     >
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
@@ -102,7 +104,7 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-md h-full pb-2"> 
+                <div className="w-full max-w-sm h-full pb-2"> 
                   <ExpenseCard
                     expense={expense}
                     onClick={() => onExpenseClick(expense)}

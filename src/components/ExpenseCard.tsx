@@ -41,79 +41,77 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
     ? format(expenseDate, "d MMM", { locale: it })
     : "Data sconosciuta";
 
+  // STRICT ITALIAN FORMATTING: 1.234,56
+  // We force manual verification for dot separator
   let rawFormatted = expense.total?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }) || "0,00";
 
+  // Verify dot presence for thousands > 999
   if ((expense.total || 0) >= 1000 && !rawFormatted.includes(".")) {
       rawFormatted = rawFormatted.replace(/\s/g, '.'); 
   }
 
+  // Split integer and decimal for typographic styling
   const [integerPart, decimalPart] = rawFormatted.split(",");
+
   const Icon = getCategoryIcon(expense.category);
   const isIncome = expense.category?.toLowerCase() === "entrate" || (expense.total || 0) < 0; 
 
-  // Random transformations based on ID
-  const { rotation, offsetX } = useMemo(() => {
+  // Random rotation between -3 and 3 degrees
+  const rotation = useMemo(() => {
     const seed = expense.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const rand = Math.sin(seed) * 10000;
     const randomValue = rand - Math.floor(rand);
-    
-    return {
-      rotation: (randomValue * 6) - 3, // -3 to +3 degrees
-      offsetX: (randomValue * 40) - 20 // -20px to +20px drift
-    };
+    return (randomValue * 6) - 3;
   }, [expense.id]);
 
   return (
     <div
       onClick={onClick}
-      style={{ 
-        transform: `rotate(${rotation}deg) translateX(${offsetX}px)`,
-        width: '90%' // Reduced width to allow drift
-      }}
+      style={{ transform: `rotate(${rotation}deg)` }}
       className={cn(
-        "organic-card group relative flex flex-col p-6 mx-auto",
-        "rounded-[1.75rem] cursor-pointer mb-2",
-        "min-h-[160px]", // Stable height
+        "chunky-card-3d group relative flex flex-col justify-between items-center p-6 w-full",
+        "rounded-[2rem] cursor-pointer mb-2",
+        "min-h-[160px]", // Fixed Height Requirement
         className
       )}
     >
-      {/* TOP: Header Row */}
-      <div className="flex items-start justify-between w-full mb-4">
-        {/* Top-Left Icon */}
-        <div className="w-10 h-10 rounded-full bg-[#E8E4D5] dark:bg-muted flex items-center justify-center text-olive dark:text-foreground shadow-sm">
+      {/* TOP: Icon in Circle */}
+      <div className="flex-none">
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-inner ring-1 ring-white/20">
           <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
-        
-        {/* Date on Top Right (Optional balance) */}
-        <span className="text-xs font-medium text-muted-foreground mt-1">
-          {dateFormatted}
-        </span>
       </div>
 
-      {/* MIDDLE: Merchant Name */}
-      <div className="flex-1 w-full mb-4">
-        <h3 className="text-lg font-bold text-coffee dark:text-foreground leading-tight line-clamp-2">
+      {/* MIDDLE: Text Content */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full py-3 space-y-1">
+        <h3 className="text-base font-bold text-foreground leading-snug text-center line-clamp-2">
           {expense.merchant || "Sconosciuto"}
         </h3>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1 block">
-          {expense.category || "Generale"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            {expense.category || "Generale"}
+          </span>
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <span className="text-xs font-medium text-muted-foreground/60">
+            {dateFormatted}
+          </span>
+        </div>
       </div>
 
-      {/* BOTTOM: Hero Price (Right Aligned) */}
-      <div className="mt-auto w-full text-right">
+      {/* BOTTOM: Hero Price */}
+      <div className="flex-none w-full text-center">
         <div className={cn(
-          "font-black tracking-tight flex items-baseline justify-end gap-0.5",
-          isIncome ? "text-olive" : "text-coffee dark:text-foreground"
+          "font-black tracking-tight flex items-baseline justify-center gap-0.5",
+          isIncome ? "text-gradient-bronze-rich" : "text-foreground dark:text-white"
         )}>
           {/* Main Number */}
-          <span className="text-4xl">{integerPart}</span>
+          <span className="text-3xl">{integerPart}</span>
           {/* Decimal */}
-          <span className="text-xl opacity-60">,{decimalPart}</span>
-          <span className="text-xl opacity-60 font-bold ml-1">€</span>
+          <span className="text-lg opacity-60">,{decimalPart}</span>
+          <span className="text-lg opacity-60 font-bold ml-0.5">€</span>
         </div>
       </div>
     </div>

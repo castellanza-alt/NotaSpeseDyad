@@ -76,22 +76,20 @@ export function ArchiveScreen() {
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 
-        HEADER FADE OVERLAY
+        HEADER FADE OVERLAY - Extended Height (h-64 instead of h-48) for smoother transition
       */}
-      <div className="fixed top-0 left-0 right-0 h-48 z-20 pointer-events-none header-fade" />
+      <div className="fixed top-0 left-0 right-0 h-64 z-20 pointer-events-none header-fade" />
 
       {/* Header (Liquid Glass) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-4 pointer-events-none">
-        <div className="flex flex-col items-center justify-center min-w-[280px] pointer-events-auto">
-          {/* Dynamic Title */}
-          <p className="text-olive text-[10px] font-bold uppercase tracking-[2px] mb-2">
+        <div className="dock-pill glass-borderless flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
+          {/* Typography */}
+          <p className="text-slate-green/70 text-xs font-bold uppercase tracking-[1px] mb-1.5">
             SPESE DI {currentMonthName}
           </p>
-          
-          {/* Huge Balance - Coffee Brown */}
-          <div className="flex items-baseline text-coffee dark:text-foreground drop-shadow-sm scale-110">
-            <span className="text-xl font-semibold mr-1.5 opacity-60">€</span>
-            <span className="text-5xl font-black tracking-tighter">
+          <div className="flex items-baseline text-gradient-bronze drop-shadow-sm">
+            <span className="text-xl font-semibold mr-1.5 opacity-80 text-foreground/50">€</span>
+            <span className="text-4xl font-black tracking-tighter">
               <OdometerValue value={currentMonthTotal} />
             </span>
           </div>
@@ -110,7 +108,7 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* List Container - Single Column */}
+      {/* List Container */}
       <div className="flex-1 flex flex-col h-full w-full">
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-48">
@@ -137,7 +135,7 @@ export function ArchiveScreen() {
       {/* Bottom Dock (Frosted Stone) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-6 pb-[max(env(safe-area-inset-bottom),20px)] pt-0 flex justify-center pointer-events-auto">
-          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px] shadow-lg">
+          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px]">
             <div className="flex items-center gap-3">
               <button onClick={toggleTheme} className="dock-button group">
                 <Moon className="w-5 h-5 group-hover:fill-current transition-all" />
@@ -149,9 +147,9 @@ export function ArchiveScreen() {
                 <Menu className="w-5 h-5 group-hover:rotate-90 transition-transform" />
               </button>
             </div>
-            {/* FAB Button with Olive Accent */}
-            <button onClick={handleSelectPhoto} className="fab-button bg-[#7A8068] text-[#FFFCF2] shadow-xl hover:scale-105 transition-transform flex items-center justify-center w-14 h-14 rounded-full">
-              <Plus className="w-8 h-8" strokeWidth={2.5} />
+            {/* FAB Button with Metallic Glass Material */}
+            <button onClick={handleSelectPhoto} className="fab-button fab-glass-bronze">
+              <Plus className="w-8 h-8 text-white" strokeWidth={2.5} />
             </button>
           </div>
         </div>
