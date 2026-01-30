@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import type { Expense } from "@/hooks/useExpenses";
-import { Utensils, Car, ShoppingBag, Briefcase, Receipt, Coffee, Zap, Home, Plane, Gift } from "lucide-react";
+import { Utensils, Car, ShoppingBag, Briefcase, Receipt, Home } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,9 +43,9 @@ function getCategoryIcon(category: string | null): LucideIcon {
 export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
-  const dateFormatted = expenseDate 
-    ? format(expenseDate, "d MMMM yyyy", { locale: it })
-    : "Data sconosciuta";
+  // Calendar Widget Data
+  const day = expenseDate ? format(expenseDate, "d") : "-";
+  const month = expenseDate ? format(expenseDate, "MMM", { locale: it }).replace(".", "") : "";
 
   // STRICT ITALIAN FORMATTING: 1.234,56
   let rawFormatted = expense.total?.toLocaleString("it-IT", {
@@ -97,25 +97,42 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
         className
       )}
     >
-      {/* TOP LEFT: Solid Anchor for Icon */}
-      <div className="self-start mb-2">
+      {/* TOP ROW: Icon (Left) & Date Widget (Right) */}
+      <div className="flex justify-between items-start w-full mb-2">
+        {/* Left: Icon Anchor */}
         <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-sm ring-1 ring-white/20">
           <Icon className="w-5 h-5" strokeWidth={2.5} />
         </div>
+
+        {/* Right: Calendar Widget (In-Card) */}
+        {/* Light: Green Header / Stone Body */}
+        {/* Dark: Bronze Header / Petrol Body */}
+        <div className="flex flex-col items-center justify-center w-9 h-9 rounded-xl overflow-hidden shadow-sm ring-1 ring-black/5">
+            {/* Header: Month */}
+            <div className="w-full h-3.5 bg-primary flex items-center justify-center">
+                <span className="text-[9px] font-black text-primary-foreground uppercase tracking-wider leading-none">
+                    {month}
+                </span>
+            </div>
+            {/* Body: Day */}
+            <div className="w-full flex-1 bg-muted flex items-center justify-center">
+                <span className="text-sm font-bold text-primary leading-none -mt-0.5">
+                    {day}
+                </span>
+            </div>
+        </div>
       </div>
 
-      {/* CENTER: Text Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-1">
+      {/* CENTER: Text Content (Merchant & Category) */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-1 -mt-2">
         <h3 className="text-lg font-extrabold text-foreground leading-snug text-center line-clamp-2 px-2">
           {expense.merchant || "Sconosciuto"}
         </h3>
-        <div className="flex items-center justify-center gap-2">
+        
+        {/* Category Pill (No Date Text) */}
+        <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-secondary/30 border border-border/50">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
             {expense.category || "Altri Costi"}
-          </span>
-          <span className="w-1 h-1 rounded-full bg-border" />
-          <span className="text-xs font-medium text-muted-foreground/60">
-            {dateFormatted}
           </span>
         </div>
       </div>
