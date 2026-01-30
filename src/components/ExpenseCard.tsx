@@ -34,10 +34,24 @@ function getCategoryIcon(category: string | null): LucideIcon {
   return key ? categoryIcons[key] : Receipt;
 }
 
+// Chaotic rotation generator: Range -5deg to +5deg
+// Must be deterministic based on ID to avoid jitter on re-renders
+function getChaoticRotation(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) - hash) + id.charCodeAt(i);
+    hash |= 0;
+  }
+  // Map hash to range [-5, 5]
+  // (hash % 1000) -> 0 to 999
+  // / 100 -> 0 to 9.99
+  // - 5 -> -5 to 4.99
+  return ((Math.abs(hash) % 1001) / 100) - 5;
+}
+
 export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
-  // Format: "28 Gennaio"
   const dateFormatted = expenseDate 
     ? format(expenseDate, "d MMMM", { locale: it })
     : "Data sconosciuta";
@@ -48,6 +62,7 @@ export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps
   }) || "0,00";
 
   const Icon = getCategoryIcon(expense.category);
+  const rotation = useMemo(() => getChaoticRotation(expense.id), [expense.id]);
 
   return (
     <div
@@ -55,6 +70,8 @@ export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps
       className={`squircle-card group mx-4 h-[110px] ${isNew ? 'ring-2 ring-primary ring-offset-4 ring-offset-background' : ''}`}
       style={{
         zIndex: 100 - index,
+        // Apply rotation directly via style for chaotic effect
+        transform: `rotate(${rotation}deg)`,
         animationDelay: isNew ? '0ms' : `${Math.min(index * 40, 600)}ms`,
       }}
     >
@@ -75,9 +92,9 @@ export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps
           </p>
         </div>
         
-        {/* Right: Amount */}
+        {/* Right: Amount - Glowing Bronze */}
         <div className="flex-shrink-0 flex flex-col items-end justify-center">
-          <span className="text-2xl font-bold text-champagne tracking-tight">
+          <span className="text-2xl font-bold text-champagne tracking-tight drop-shadow-sm">
             <span className="text-lg align-top opacity-60 mr-0.5">€</span>
             {formattedTotal}
           </span>

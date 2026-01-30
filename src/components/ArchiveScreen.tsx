@@ -72,16 +72,15 @@ export function ArchiveScreen() {
 
       {/* 
         HEADER FADE OVERLAY
-        Starts 20px below the pill (Pill ~80px height + margin).
-        Height adjusted to create smooth transition.
+        Starts 20px below the pill. 
       */}
       <div className="fixed top-0 left-0 right-0 h-48 z-20 pointer-events-none header-fade" />
 
-      {/* Header Pill (Frosted Stone) */}
+      {/* Header Pill (Frosted Stone with Noise & Blur) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-4 pointer-events-none">
-        <div className="dock-pill glass-stone flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto">
+        <div className="dock-pill glass-stone flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
           <p className="text-slate-green/70 text-[11px] font-bold uppercase tracking-widest mb-1">Portafoglio</p>
-          <div className="flex items-baseline text-champagne">
+          <div className="flex items-baseline text-champagne drop-shadow-sm">
             <span className="text-xl font-semibold mr-1.5 opacity-80">€</span>
             <span className="text-4xl font-black tracking-tighter">
               <OdometerValue value={currentMonthTotal} />
@@ -123,15 +122,13 @@ export function ArchiveScreen() {
 
       {/* 
         FOOTER FADE OVERLAY
-        Starts 30px above the bottom nav.
-        Bottom nav is ~80px + padding.
       */}
       <div className="fixed bottom-0 left-0 right-0 h-48 z-20 pointer-events-none footer-fade" />
 
       {/* Bottom Dock (Frosted Stone) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-6 pb-[max(env(safe-area-inset-bottom),20px)] pt-0 flex justify-center pointer-events-auto">
-          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6">
+          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px]">
             <div className="flex items-center gap-3">
               <button onClick={toggleTheme} className="dock-button group">
                 <Moon className="w-5 h-5 group-hover:fill-current transition-all" />
