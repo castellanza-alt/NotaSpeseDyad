@@ -4,94 +4,88 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - 'Organic Mineral' */
+  /* Light Theme - 'Premium Paper & Sunlight' */
   :root,
   .light {
-    /* Background Gradient Stops */
-    --bg-gradient-start: 40 40% 97%; /* Warm sunlight */
-    --bg-gradient-end: 160 15% 88%; /* Cool mineral green-grey */
+    /* Bright Warm White (Paper) */
+    --background: 60 10% 98%; 
+    --background-deep: 60 10% 96%; 
     
-    /* Rich Slate Green Text (Pigmented) */
-    --foreground: 165 40% 18%; 
-    --foreground-muted: 165 25% 40%;
+    /* Slate Green Text */
+    --foreground: 160 15% 20%;
+    --foreground-muted: 160 8% 45%;
 
-    /* Card: Crisp White with stone tint */
-    --card: 40 10% 99%;
-    --card-foreground: 165 40% 18%;
-    --card-border: 165 20% 85%;
+    /* Pure White Cards for Contrast */
+    --card: 0 0% 100%;
+    --card-foreground: 160 15% 20%;
 
-    --popover: 40 10% 99%;
-    --popover-foreground: 165 40% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 15% 20%;
 
-    /* Hot Metallic Bronze (Incandescent) */
-    --primary: 32 80% 55%; 
+    /* Champagne Bronze Base */
+    --primary: 35 40% 55%; 
     --primary-foreground: 0 0% 100%;
 
-    /* Stone Circle Backgrounds */
-    --secondary: 165 20% 93%;
-    --secondary-foreground: 165 40% 25%;
+    /* Stone Circle Backgrounds - Slightly lighter */
+    --secondary: 40 10% 94%; 
+    --secondary-foreground: 160 15% 30%;
 
-    --muted: 165 15% 90%;
-    --muted-foreground: 165 20% 50%;
+    --muted: 40 10% 94%;
+    --muted-foreground: 160 5% 50%;
 
-    /* Metallic Bronze Accent for amounts */
-    --accent: 32 85% 50%;
-    --accent-foreground: 0 0% 100%;
+    /* Gradient Colors for Metallic Effect */
+    --bronze-light: 35 50% 60%;
+    --bronze-dark: 25 50% 45%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 165 20% 85%;
-    --input: 165 20% 90%;
-    --ring: 32 80% 55%;
+    --border: 40 10% 90%;
+    --input: 40 10% 92%;
+    --ring: 35 40% 55%;
 
-    --radius: 2rem;
-    --success: 142 60% 40%;
+    --radius: 2rem; 
+    --success: 140 30% 45%;
 
-    /* Overlay Vars */
-    --overlay-color: 40 40% 97%;
+    /* Overlay Vars - Match bright background */
+    --overlay-color: 60 10% 98%;
   }
 
-  /* Dark Theme - 'Deep Aurora' */
+  /* Dark Theme - 'Deep Aurora' (Kept rich) */
   .dark {
-    /* Aurora Gradient Stops */
-    --bg-gradient-start: 155 40% 12%; /* Deep Forest Luminescence */
-    --bg-gradient-end: 155 30% 4%; /* Near Black */
+    --background: 150 12% 10%;
+    --background-deep: 150 12% 8%;
 
-    /* Stone White Text */
-    --foreground: 40 20% 92%;
-    --foreground-muted: 155 15% 65%;
+    --foreground: 40 15% 90%;
+    --foreground-muted: 150 8% 60%;
 
-    --card: 155 25% 14%;
-    --card-foreground: 40 20% 92%;
-    --card-border: 155 20% 25%;
+    --card: 150 10% 14%;
+    --card-foreground: 40 15% 90%;
 
-    --popover: 155 25% 14%;
-    --popover-foreground: 40 20% 92%;
+    --popover: 150 10% 14%;
+    --popover-foreground: 40 15% 90%;
 
-    /* Glowing Bronze */
-    --primary: 32 85% 65%;
-    --primary-foreground: 155 40% 10%;
+    --primary: 35 35% 65%;
+    --primary-foreground: 150 12% 10%;
 
-    --secondary: 155 20% 22%;
-    --secondary-foreground: 40 20% 85%;
+    --secondary: 150 10% 18%;
+    --secondary-foreground: 40 10% 80%;
 
-    --muted: 155 20% 20%;
-    --muted-foreground: 155 10% 55%;
+    --muted: 150 10% 18%;
+    --muted-foreground: 150 5% 50%;
 
-    --accent: 32 90% 65%;
-    --accent-foreground: 155 40% 10%;
+    /* Gradient Colors for Metallic Effect (Gold/Bronze) */
+    --bronze-light: 40 60% 70%;
+    --bronze-dark: 30 50% 50%;
 
-    --destructive: 0 60% 60%;
+    --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 155 20% 25%;
-    --input: 155 20% 25%;
-    --ring: 32 85% 65%;
-    
-    --success: 142 60% 50%;
-    
-    --overlay-color: 155 30% 4%; /* Matches end of gradient usually */
+    --border: 150 10% 20%;
+    --input: 150 10% 20%;
+    --ring: 35 35% 65%;
+
+    --overlay-color: 150 12% 10%;
   }
 }
 
@@ -107,83 +101,72 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
 
 @layer utilities {
-  /* 
-     ATMOSPHERIC GRADIENTS 
-  */
   .wallet-bg {
-    background-color: hsl(var(--bg-gradient-end)); /* Fallback */
+    background-color: hsl(var(--background));
   }
   
-  /* Light: Radial warmth from Top-Left */
+  /* Light: Subtle Warm Top-Left to Cool Bottom-Right */
   .light .wallet-bg {
     background: radial-gradient(
       circle at 0% 0%, 
-      hsl(var(--bg-gradient-start)) 0%, 
-      hsl(var(--bg-gradient-end)) 100%
+      hsl(60, 15%, 99%) 0%, 
+      hsl(210, 10%, 96%) 100%
     );
   }
   
-  /* Dark: Aurora luminescence from Top-Center */
+  /* Dark: Deep Aurora */
   .dark .wallet-bg {
     background: radial-gradient(
       circle at 50% -20%, 
-      hsl(var(--bg-gradient-start)) 0%, 
-      hsl(var(--bg-gradient-end)) 80%
+      hsl(150, 20%, 15%) 0%, 
+      hsl(150, 12%, 8%) 80%
     );
   }
 
-  /* --- Frosted Stone Material (Light Reactive) --- */
+  /* --- Frosted Stone Material --- */
   .glass-stone {
-    /* Lower opacity (0.75) to let the atmospheric gradient show through */
-    background-color: hsl(var(--card) / 0.75);
+    background-color: hsl(var(--background) / 0.85);
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    /* Crisper border for contrast */
-    border: 1px solid hsl(var(--foreground) / 0.08);
-    box-shadow: 
-      0 8px 32px -8px rgba(0, 0, 0, 0.05),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
-  
-  .dark .glass-stone {
-    background-color: hsl(var(--card) / 0.65);
     border: 1px solid hsl(var(--foreground) / 0.05);
     box-shadow: 
-      0 8px 32px -8px rgba(0, 0, 0, 0.3),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      0 4px 30px rgba(0, 0, 0, 0.03),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Higher contrast inner ring */
   }
 
-  /* --- Floating Squircles with Rotation --- */
+  /* --- Metallic Gradients --- */
+  .text-gradient-bronze {
+    background: linear-gradient(135deg, hsl(var(--bronze-light)), hsl(var(--bronze-dark)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* Fallback for better contrast if gradient fails or feels too light */
+    text-shadow: 0 1px 1px rgba(0,0,0,0.05); 
+  }
+
+  .fab-glass-bronze {
+    background: linear-gradient(135deg, hsla(var(--bronze-light) / 0.9), hsla(var(--bronze-dark) / 0.9));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsla(var(--bronze-light) / 0.3);
+    box-shadow: 
+      0 8px 32px -4px hsla(var(--bronze-dark) / 0.4),
+      inset 0 1px 0 hsla(255, 100%, 100%, 0.3);
+  }
+
+  /* --- Floating Squircles (Refined) --- */
   .squircle-card {
     @apply bg-card rounded-[32px] w-full antialiased relative overflow-hidden;
-    /* Sharper border for rotated items */
-    border: 1px solid hsl(var(--card-border));
-    
-    /* Ambient Colored Shadow (Depth Charge) */
+    /* Lifted Effect: More diffuse shadow, sharper contrast with background */
     box-shadow: 
-      0 12px 24px -10px hsl(var(--foreground) / 0.08),
-      0 4px 8px -4px hsl(var(--accent) / 0.05); /* Tinted hint */
-      
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-  }
-  
-  .dark .squircle-card {
-    box-shadow: 
-      0 15px 35px -12px rgba(0, 0, 0, 0.5),
-      0 0 0 1px hsl(var(--card-border));
+      0 20px 40px -12px rgba(0, 0, 0, 0.08), /* Main lift */
+      0 2px 8px -2px rgba(0, 0, 0, 0.04), /* grounding */
+      0 0 0 1px hsl(var(--border) / 0.6); /* definition */
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
   }
 
   .squircle-card:active {
-    transform: scale(0.96) !important; /* Override rotation on click */
-    z-index: 1000 !important;
-  }
-
-  .text-champagne {
-    color: hsl(var(--accent));
-  }
-  
-  .text-slate-green {
-    color: hsl(var(--foreground));
+    transform: scale(0.98);
   }
 
   /* --- Gradient Overlays (Ease-in-out) --- */
@@ -203,9 +186,9 @@
   .dark .header-fade {
     background: linear-gradient(
       to bottom,
-      hsl(var(--bg-gradient-start)) 0%, /* Matches top aurora */
-      hsl(var(--bg-gradient-start) / 0.95) 30%,
-      hsl(var(--bg-gradient-start) / 0.0) 100%
+      hsl(150, 20%, 15%) 0%,
+      hsl(150, 20%, 15% / 0.95) 30%,
+      hsl(150, 20%, 15% / 0.0) 100%
     );
   }
 
@@ -225,9 +208,9 @@
   .dark .footer-fade {
      background: linear-gradient(
       to top,
-      hsl(var(--bg-gradient-end)) 0%, /* Matches bottom dark */
-      hsl(var(--bg-gradient-end) / 0.95) 30%,
-      hsl(var(--bg-gradient-end) / 0.0) 100%
+      hsl(150, 12%, 8%) 0%,
+      hsl(150, 12%, 8% / 0.95) 30%,
+      hsl(150, 12%, 8% / 0.0) 100%
     );
   }
 
@@ -256,13 +239,12 @@
 
   .fab-button {
     @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    box-shadow: 0 0 25px hsl(var(--primary) / 0.4);
+    color: white;
+    /* Uses new class .fab-glass-bronze now */
     
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 30px hsl(var(--primary) / 0.6);
+      transform: translateY(-2px) scale(1.05);
+      filter: brightness(1.1);
     }
     @apply active:scale-95;
   }
@@ -270,6 +252,7 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+  /* Animations */
   .animate-slide-down { animation: slide-down 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
   
   @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }

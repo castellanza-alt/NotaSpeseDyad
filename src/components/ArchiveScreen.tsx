@@ -80,8 +80,8 @@ export function ArchiveScreen() {
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-4 pointer-events-none">
         <div className="dock-pill glass-stone flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
           <p className="text-slate-green/70 text-[11px] font-bold uppercase tracking-widest mb-1">Portafoglio</p>
-          <div className="flex items-baseline text-champagne drop-shadow-sm">
-            <span className="text-xl font-semibold mr-1.5 opacity-80">€</span>
+          <div className="flex items-baseline text-gradient-bronze drop-shadow-sm">
+            <span className="text-xl font-semibold mr-1.5 opacity-80 text-foreground/50">€</span>
             <span className="text-4xl font-black tracking-tighter">
               <OdometerValue value={currentMonthTotal} />
             </span>
@@ -140,8 +140,9 @@ export function ArchiveScreen() {
                 <Menu className="w-5 h-5 group-hover:rotate-90 transition-transform" />
               </button>
             </div>
-            <button onClick={handleSelectPhoto} className="fab-button">
-              <Plus className="w-8 h-8" strokeWidth={2.5} />
+            {/* FAB Button with Metallic Glass Material */}
+            <button onClick={handleSelectPhoto} className="fab-button fab-glass-bronze">
+              <Plus className="w-8 h-8 text-white" strokeWidth={2.5} />
             </button>
           </div>
         </div>

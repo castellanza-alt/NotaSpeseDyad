@@ -26,10 +26,9 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Card height estimation
-  // Card is now 110px tall + margins
+  // Tighter stacking: Card (110) + Gap (10)
   const CARD_HEIGHT = 110;
-  const GAP = 16; 
+  const GAP = 10; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
   const virtualizer = useVirtualizer({
@@ -104,7 +103,7 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full max-w-xl px-2"> {/* Added max-width container for the list items */}
+                <div className="w-full max-w-xl px-2"> 
                   <ExpenseCard
                     expense={expense}
                     index={virtualRow.index}
