@@ -40,7 +40,7 @@
     --ring: 160 30% 25%;
 
     --radius: 2rem; 
-    --overlay-color: 40 10% 97%;
+    --overlay-color: 40 10% 94%; /* Updated for darker bg match */
   }
 
   /* Dark Theme - 'Deep Charcoal & Forest' */
@@ -101,12 +101,23 @@
   }
   
   .light .wallet-bg {
-    background-color: #F8F7F4; /* Stone White Base */
+    /* Base: Richer Stone/Greige to make white cards pop */
+    background-color: #EEECE8; 
+    
+    /* Significantly more pigmented gradients for texture */
     background-image: 
-      radial-gradient(at 10% 10%, hsla(100, 20%, 88%, 0.8) 0px, transparent 50%), /* Pale Sage */
-      radial-gradient(at 90% 0%, hsla(40, 30%, 90%, 0.6) 0px, transparent 50%),   /* Sand */
-      radial-gradient(at 20% 80%, hsla(100, 25%, 90%, 0.6) 0px, transparent 50%),  /* Sage Bottom */
-      radial-gradient(at 80% 90%, hsla(40, 30%, 92%, 0.6) 0px, transparent 50%);   /* Sand Bottom */
+      /* Top Left: Deep Pale Sage */
+      radial-gradient(at 0% 0%, hsla(110, 25%, 82%, 1) 0px, transparent 65%),
+      
+      /* Top Right: Warm Sandy Beige */
+      radial-gradient(at 100% 0%, hsla(38, 45%, 84%, 1) 0px, transparent 65%),
+      
+      /* Bottom Left: Soft Sage */
+      radial-gradient(at 0% 100%, hsla(100, 25%, 86%, 1) 0px, transparent 60%),
+      
+      /* Bottom Right: Rich Sand */
+      radial-gradient(at 100% 100%, hsla(35, 40%, 85%, 1) 0px, transparent 60%);
+      
     background-attachment: fixed;
   }
   
