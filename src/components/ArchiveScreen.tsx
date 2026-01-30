@@ -76,10 +76,13 @@ export function ArchiveScreen() {
       */}
       <div className="fixed top-0 left-0 right-0 h-48 z-20 pointer-events-none header-fade" />
 
-      {/* Header Pill (Frosted Stone with Noise & Blur) */}
+      {/* Header Pill (Liquid Glass - No Border) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-4 pointer-events-none">
-        <div className="dock-pill glass-stone flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
-          <p className="text-slate-green/70 text-[11px] font-bold uppercase tracking-widest mb-1">Portafoglio</p>
+        <div className="dock-pill glass-borderless flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
+          {/* Typography: Larger size and 1px spacing */}
+          <p className="text-slate-green/70 text-xs font-bold uppercase tracking-[1px] mb-1.5">
+            Portafoglio
+          </p>
           <div className="flex items-baseline text-gradient-bronze drop-shadow-sm">
             <span className="text-xl font-semibold mr-1.5 opacity-80 text-foreground/50">€</span>
             <span className="text-4xl font-black tracking-tighter">

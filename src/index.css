@@ -7,35 +7,27 @@
   /* Light Theme - 'Premium Paper & Sunlight' */
   :root,
   .light {
-    /* Bright Warm White (Paper) */
     --background: 60 10% 98%; 
     --background-deep: 60 10% 96%; 
     
-    /* Slate Green Text */
     --foreground: 160 15% 20%;
     --foreground-muted: 160 8% 45%;
 
-    /* Pure White Cards for Contrast */
     --card: 0 0% 100%;
     --card-foreground: 160 15% 20%;
+    --card-border: 160 15% 90%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 160 15% 20%;
 
-    /* Champagne Bronze Base */
     --primary: 35 40% 55%; 
     --primary-foreground: 0 0% 100%;
 
-    /* Stone Circle Backgrounds - Slightly lighter */
     --secondary: 40 10% 94%; 
     --secondary-foreground: 160 15% 30%;
 
     --muted: 40 10% 94%;
     --muted-foreground: 160 5% 50%;
-
-    /* Gradient Colors for Metallic Effect */
-    --bronze-light: 35 50% 60%;
-    --bronze-dark: 25 50% 45%;
 
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -47,11 +39,10 @@
     --radius: 2rem; 
     --success: 140 30% 45%;
 
-    /* Overlay Vars - Match bright background */
     --overlay-color: 60 10% 98%;
   }
 
-  /* Dark Theme - 'Deep Aurora' (Kept rich) */
+  /* Dark Theme - 'Deep Aurora' */
   .dark {
     --background: 150 12% 10%;
     --background-deep: 150 12% 8%;
@@ -61,6 +52,7 @@
 
     --card: 150 10% 14%;
     --card-foreground: 40 15% 90%;
+    --card-border: 150 10% 20%;
 
     --popover: 150 10% 14%;
     --popover-foreground: 40 15% 90%;
@@ -69,14 +61,11 @@
     --primary-foreground: 150 12% 10%;
 
     --secondary: 150 10% 18%;
-    --secondary-foreground: 40 10% 80%;
+    /* CORRECTION: Pure White icons in Dark Mode for readability */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 150 10% 18%;
     --muted-foreground: 150 5% 50%;
-
-    /* Gradient Colors for Metallic Effect (Gold/Bronze) */
-    --bronze-light: 40 60% 70%;
-    --bronze-dark: 30 50% 50%;
 
     --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -105,7 +94,6 @@
     background-color: hsl(var(--background));
   }
   
-  /* Light: Subtle Warm Top-Left to Cool Bottom-Right */
   .light .wallet-bg {
     background: radial-gradient(
       circle at 0% 0%, 
@@ -114,7 +102,6 @@
     );
   }
   
-  /* Dark: Deep Aurora */
   .dark .wallet-bg {
     background: radial-gradient(
       circle at 50% -20%, 
@@ -131,37 +118,44 @@
     border: 1px solid hsl(var(--foreground) / 0.05);
     box-shadow: 
       0 4px 30px rgba(0, 0, 0, 0.03),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.2); /* Higher contrast inner ring */
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
-  /* --- Metallic Gradients --- */
+  /* LIQUID GLASS: No border for Header */
+  .glass-borderless {
+    @apply glass-stone;
+    border: none !important;
+    background-color: hsl(var(--background) / 0.7); /* Slightly more transparent */
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.05); /* Soft shadow only */
+  }
+
+  /* --- Metallic Gradients (Specific Hex Codes) --- */
   .text-gradient-bronze {
-    background: linear-gradient(135deg, hsl(var(--bronze-light)), hsl(var(--bronze-dark)));
+    /* Champagne (#E6CFA1) to Dark Bronze (#A67C52) */
+    background: linear-gradient(135deg, #E6CFA1 0%, #A67C52 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    /* Fallback for better contrast if gradient fails or feels too light */
-    text-shadow: 0 1px 1px rgba(0,0,0,0.05); 
+    text-shadow: 0 2px 10px rgba(166, 124, 82, 0.2); /* Glow */
   }
 
   .fab-glass-bronze {
-    background: linear-gradient(135deg, hsla(var(--bronze-light) / 0.9), hsla(var(--bronze-dark) / 0.9));
+    background: linear-gradient(135deg, rgba(230, 207, 161, 0.95), rgba(166, 124, 82, 0.95));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsla(var(--bronze-light) / 0.3);
+    border: 1px solid rgba(230, 207, 161, 0.4);
     box-shadow: 
-      0 8px 32px -4px hsla(var(--bronze-dark) / 0.4),
-      inset 0 1px 0 hsla(255, 100%, 100%, 0.3);
+      0 12px 30px -8px rgba(166, 124, 82, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 
-  /* --- Floating Squircles (Refined) --- */
+  /* --- Floating Squircles --- */
   .squircle-card {
     @apply bg-card rounded-[32px] w-full antialiased relative overflow-hidden;
-    /* Lifted Effect: More diffuse shadow, sharper contrast with background */
     box-shadow: 
-      0 20px 40px -12px rgba(0, 0, 0, 0.08), /* Main lift */
-      0 2px 8px -2px rgba(0, 0, 0, 0.04), /* grounding */
-      0 0 0 1px hsl(var(--border) / 0.6); /* definition */
+      0 20px 40px -12px rgba(0, 0, 0, 0.08),
+      0 2px 8px -2px rgba(0, 0, 0, 0.04),
+      0 0 0 1px hsl(var(--border) / 0.6);
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
   }
 
@@ -169,7 +163,7 @@
     transform: scale(0.98);
   }
 
-  /* --- Gradient Overlays (Ease-in-out) --- */
+  /* --- Gradient Overlays --- */
   .header-fade {
     background: linear-gradient(
       to bottom,
@@ -240,7 +234,7 @@
   .fab-button {
     @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
     color: white;
-    /* Uses new class .fab-glass-bronze now */
+    /* Uses .fab-glass-bronze */
     
     &:hover {
       transform: translateY(-2px) scale(1.05);
@@ -252,7 +246,6 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  /* Animations */
   .animate-slide-down { animation: slide-down 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
   
   @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
