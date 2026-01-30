@@ -38,68 +38,87 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
   const dateFormatted = expenseDate 
-    ? format(expenseDate, "d MMMM yyyy", { locale: it })
+    ? format(expenseDate, "d MMM", { locale: it })
     : "Data sconosciuta";
 
   // STRICT ITALIAN FORMATTING: 1.234,56
-  // Use "de-DE" as a base if "it-IT" fails to produce dots in some browsers, but "it-IT" usually works.
-  // We force manual verify:
-  const rawFormatted = expense.total?.toLocaleString("it-IT", {
+  // Force manual replacement if locale fails or just to be 100% sure
+  let rawFormatted = expense.total?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }) || "0,00";
 
+  // Verify dot presence for thousands > 999
+  if ((expense.total || 0) >= 1000 && !rawFormatted.includes(".")) {
+      // Fallback: replace space or comma used as thousand separator with dot
+      // This is a naive fix, strictly relying on toLocaleString is better usually, 
+      // but the user demanded dots.
+      // Let's trust "it-IT" but ensure we aren't getting space separators.
+      rawFormatted = rawFormatted.replace(/\s/g, '.'); 
+  }
+
   // Split integer and decimal for typographic styling
-  // e.g. "1.234,56" -> ["1.234", "56"]
   const [integerPart, decimalPart] = rawFormatted.split(",");
 
   const Icon = getCategoryIcon(expense.category);
-  
-  // Income vs Expense styling
   const isIncome = expense.category?.toLowerCase() === "entrate" || (expense.total || 0) < 0; 
+
+  // Random rotation between -3 and 3 degrees. 
+  // We use useMemo with the expense ID to keep it stable across renders.
+  const rotation = useMemo(() => {
+    // Deterministic pseudo-random based on ID char codes
+    const seed = expense.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const rand = Math.sin(seed) * 10000;
+    const randomValue = rand - Math.floor(rand); // 0 to 1
+    // Map 0..1 to -3..3
+    return (randomValue * 6) - 3;
+  }, [expense.id]);
 
   return (
     <div
       onClick={onClick}
+      style={{ transform: `rotate(${rotation}deg)` }}
       className={cn(
-        "chunky-card-3d group relative flex flex-col items-center p-8 w-full h-full",
-        "rounded-[2.5rem] cursor-pointer", // Extra roundness
+        "chunky-card-3d group relative flex items-center p-5 w-full",
+        "rounded-[1.5rem] cursor-pointer mb-2", // Compact roundness
+        "min-h-[110px]", // Reduced height for 2.5 rule
         className
       )}
     >
-      {/* TOP: Icon in Circle */}
-      <div className="mb-6">
-        <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-inner ring-1 ring-white/20">
-          <Icon className="w-7 h-7" strokeWidth={2} />
+      {/* LEFT: Icon in Circle (Smaller) */}
+      <div className="mr-5 shrink-0">
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-inner ring-1 ring-white/20">
+          <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
       </div>
 
-      {/* MIDDLE: Details */}
-      <div className="flex-1 w-full text-center space-y-2 mb-8">
-        <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 px-4">
+      {/* CENTER: Details (Name & Category close) */}
+      <div className="flex-1 min-w-0 text-left mr-4">
+        <h3 className="text-base font-bold text-foreground leading-snug truncate">
           {expense.merchant || "Sconosciuto"}
         </h3>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate">
             {expense.category || "Generale"}
           </span>
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <span className="text-xs font-medium text-muted-foreground/60 shrink-0">
             {dateFormatted}
           </span>
         </div>
       </div>
 
-      {/* BOTTOM: Hero Price (Huge & Rich) */}
-      <div className="mt-auto pt-6 border-t border-dashed border-border/60 w-full text-center">
+      {/* RIGHT: Hero Price (Proportioned) */}
+      <div className="shrink-0 text-right">
         <div className={cn(
-          "font-black tracking-tighter flex items-baseline justify-center gap-1",
+          "font-black tracking-tight flex items-baseline justify-end gap-0.5",
           isIncome ? "text-gradient-bronze-rich" : "text-foreground dark:text-white"
         )}>
-          <span className="text-lg opacity-50 font-bold self-start mt-2">€</span>
-          {/* Main Number - Huge */}
-          <span className="text-5xl">{integerPart}</span>
-          {/* Decimal - Smaller */}
-          <span className="text-2xl opacity-50">,{decimalPart}</span>
+          {/* Main Number - Large but fit */}
+          <span className="text-2xl">{integerPart}</span>
+          {/* Decimal - Small */}
+          <span className="text-sm opacity-60">,{decimalPart}</span>
+          <span className="text-sm opacity-60 font-bold ml-0.5">€</span>
         </div>
       </div>
     </div>

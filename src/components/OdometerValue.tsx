@@ -21,7 +21,6 @@ export function OdometerValue({ value, duration = 1000 }: OdometerValueProps) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Easing function for smooth animation
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       
       const currentValue = startValue + (endValue - startValue) * easeOutQuart;
@@ -43,10 +42,15 @@ export function OdometerValue({ value, duration = 1000 }: OdometerValueProps) {
     };
   }, [value, duration]);
 
-  const formattedValue = displayValue.toLocaleString("it-IT", {
+  // STRICT FORMATTING: Force dot for thousands if needed
+  let formattedValue = displayValue.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+  if (displayValue >= 1000 && !formattedValue.includes(".")) {
+      formattedValue = formattedValue.replace(/\s/g, '.');
+  }
 
   return <span className="tabular-nums">{formattedValue}</span>;
 }
