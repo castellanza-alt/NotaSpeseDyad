@@ -46,6 +46,7 @@ export function ArchiveScreen() {
       .reduce((sum, e) => sum + (e.total || 0), 0);
   }, [expenses]);
 
+  // Dynamic Month Name (e.g., "GENNAIO")
   const currentMonthName = useMemo(() => {
     return format(new Date(), "MMMM", { locale: it }).toUpperCase();
   }, []);
@@ -69,6 +70,7 @@ export function ArchiveScreen() {
     if (showSearchBar) setSearchQuery("");
   };
 
+  // Dynamic spacer calculation
   const topSpacerHeight = showSearchBar ? 'h-[17rem]' : 'h-48';
 
   return (
@@ -76,20 +78,22 @@ export function ArchiveScreen() {
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 
-        HEADER FADE OVERLAY - Extended Height (h-64 instead of h-48) for smoother transition
+        HEADER FADE OVERLAY - Extended for Smooth Transition
       */}
       <div className="fixed top-0 left-0 right-0 h-64 z-20 pointer-events-none header-fade" />
 
       {/* Header (Liquid Glass) */}
       <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pt-safe-top mt-4 pointer-events-none">
-        <div className="dock-pill glass-borderless flex flex-col items-center justify-center px-8 py-4 min-w-[280px] pointer-events-auto backdrop-blur-[40px]">
-          {/* Typography */}
-          <p className="text-slate-green/70 text-xs font-bold uppercase tracking-[1px] mb-1.5">
+        <div className="flex flex-col items-center justify-center min-w-[280px] pointer-events-auto">
+          {/* Dynamic Title - Elegant & Spaced */}
+          <p className="text-slate-green/60 text-[10px] font-bold uppercase tracking-[3px] mb-2 font-sans">
             SPESE DI {currentMonthName}
           </p>
-          <div className="flex items-baseline text-gradient-bronze drop-shadow-sm">
-            <span className="text-xl font-semibold mr-1.5 opacity-80 text-foreground/50">€</span>
-            <span className="text-4xl font-black tracking-tighter">
+          
+          {/* Huge Balance */}
+          <div className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110">
+            <span className="text-xl font-semibold mr-1.5 opacity-60 text-foreground/50">€</span>
+            <span className="text-5xl font-black tracking-tighter">
               <OdometerValue value={currentMonthTotal} />
             </span>
           </div>
@@ -108,7 +112,7 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* List Container */}
+      {/* List Container - Single Column */}
       <div className="flex-1 flex flex-col h-full w-full">
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-48">
@@ -135,7 +139,7 @@ export function ArchiveScreen() {
       {/* Bottom Dock (Frosted Stone) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-6 pb-[max(env(safe-area-inset-bottom),20px)] pt-0 flex justify-center pointer-events-auto">
-          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px]">
+          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px] shadow-lg">
             <div className="flex items-center gap-3">
               <button onClick={toggleTheme} className="dock-button group">
                 <Moon className="w-5 h-5 group-hover:fill-current transition-all" />

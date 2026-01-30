@@ -42,15 +42,24 @@ export function OdometerValue({ value, duration = 1000 }: OdometerValueProps) {
     };
   }, [value, duration]);
 
-  // STRICT FORMATTING: Force dot for thousands if needed
+  // STRICT FORMATTING: 1.234,56
+  // Force dot as thousands separator
   let formattedValue = displayValue.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
+  // Verify and fix if system locale didn't use dots for thousands
   if (displayValue >= 1000 && !formattedValue.includes(".")) {
-      formattedValue = formattedValue.replace(/\s/g, '.');
+    // Replace non-numeric, non-comma characters with dots (usually spaces)
+    // Or just re-format manually if locale support is spotty
+    const parts = formattedValue.split(",");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    formattedValue = parts.join(",");
   }
+  
+  // Double check: if it still has spaces instead of dots
+  formattedValue = formattedValue.replace(/\s/g, ".");
 
   return <span className="tabular-nums">{formattedValue}</span>;
 }

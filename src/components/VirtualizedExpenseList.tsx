@@ -26,9 +26,9 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Stable Chunky Cards
-  // Fixed Min-Height 160px + 24px Gap
-  const CARD_HEIGHT = 160;
+  // Stable Chunky Cards (Tall)
+  // Height approx 180px + 24px Gap
+  const CARD_HEIGHT = 180;
   const GAP = 24; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
@@ -36,7 +36,7 @@ export function VirtualizedExpenseList({
     count: expenses.length + (hasMore ? 1 : 0),
     getScrollElement: () => parentRef.current,
     estimateSize: () => ITEM_SIZE,
-    overscan: 5,
+    overscan: 3,
   });
 
   const items = virtualizer.getVirtualItems();

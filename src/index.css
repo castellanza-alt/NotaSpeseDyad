@@ -12,8 +12,10 @@
     --foreground-muted: 160 8% 45%;
 
     --card: 0 0% 100%;
-    --card-gradient-start: 0 0% 100%;
-    --card-gradient-end: 45 10% 96%; /* Subtle curve effect */
+    /* Bulged Surface Gradient: darker top/bottom, lighter center */
+    --card-surface-top: 45 10% 95%;
+    --card-surface-center: 0 0% 100%;
+    --card-surface-bottom: 45 10% 94%;
     
     --card-foreground: 160 15% 20%;
     --card-border: 160 15% 90%;
@@ -27,10 +29,10 @@
     --muted: 40 10% 94%;
     --muted-foreground: 160 5% 50%;
 
-    /* High Contrast Bronze Vars */
-    --bronze-shine: 40 60% 95%; /* Highlight */
-    --bronze-mid: 35 45% 60%;   /* Base */
-    --bronze-shadow: 25 50% 35%; /* Deep shadow */
+    /* Metallic Bronze Vars (High Contrast) */
+    --bronze-shine: 45 80% 85%;  /* Pale Gold */
+    --bronze-mid: 35 60% 50%;    /* Copper */
+    --bronze-shadow: 25 70% 30%; /* Dark Bronze */
 
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -50,8 +52,9 @@
     --foreground-muted: 150 8% 60%;
 
     --card: 150 10% 14%;
-    --card-gradient-start: 150 10% 16%;
-    --card-gradient-end: 150 12% 12%;
+    --card-surface-top: 150 10% 16%;
+    --card-surface-center: 150 10% 18%; /* Lighter center */
+    --card-surface-bottom: 150 12% 14%;
 
     --card-foreground: 40 15% 90%;
     
@@ -65,9 +68,9 @@
     --muted-foreground: 150 5% 50%;
 
     /* Dark Mode Bronze */
-    --bronze-shine: 40 60% 85%;
-    --bronze-mid: 40 50% 60%;
-    --bronze-shadow: 30 50% 40%;
+    --bronze-shine: 40 70% 90%;
+    --bronze-mid: 35 60% 60%;
+    --bronze-shadow: 25 60% 35%;
 
     --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -100,58 +103,57 @@
   
   .light .wallet-bg {
     /* Cream White to Stone Grey Diagonal */
-    background: linear-gradient(to bottom right, #FFFCF5, #E6E6E6);
+    background: linear-gradient(135deg, #FFFCF5 0%, #F5F5F0 50%, #E6E6E6 100%);
     background-attachment: fixed;
   }
   
   .dark .wallet-bg {
     /* Deep Green Abyss Radial */
-    background: radial-gradient(circle at center, #1A2F2B 0%, #000000 100%);
+    background: radial-gradient(circle at 50% 30%, #1A2F2B 0%, #0d1a18 60%, #000000 100%);
     background-attachment: fixed;
   }
 
   /* --- Hyper-3D Chunky Card --- */
   .chunky-card-3d {
-    /* Surface Gradient for Curvature */
+    /* Surface Gradient: Top(Darker) -> Center(Lighter) -> Bottom(Darker) */
     background: linear-gradient(
       to bottom, 
-      hsl(var(--card-gradient-start)), 
-      hsl(var(--card-gradient-end))
+      hsl(var(--card-surface-top)), 
+      hsl(var(--card-surface-center)) 40%,
+      hsl(var(--card-surface-center)) 60%,
+      hsl(var(--card-surface-bottom))
     );
     
-    /* Zenithal Highlight (Top white line) + Deep Shadow */
+    /* Zenithal Highlight (Top white line) + Deep Colored Shadow */
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.7), /* Top Highlight */
-      inset 0 0 0 1px rgba(0,0,0,0.03), /* Subtle Ring */
-      0 12px 24px -4px rgba(0, 0, 0, 0.08), /* Deep Drop Shadow */
-      0 4px 8px -2px rgba(0, 0, 0, 0.04);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.8), /* Zenithal Highlight */
+      inset 0 0 0 1px rgba(0,0,0,0.02), /* Subtle definition */
+      0 12px 32px -8px rgba(20, 30, 25, 0.15), /* Deep Ambient Shadow */
+      0 4px 12px -2px rgba(20, 30, 25, 0.08);
       
-    border: none; /* Shadow handles definition */
-    
+    border: none;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
   }
   
   .dark .chunky-card-3d {
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
       inset 0 0 0 1px rgba(255,255,255,0.05),
-      0 16px 32px -8px rgba(0, 0, 0, 0.4);
+      0 16px 40px -8px rgba(0, 0, 0, 0.5);
   }
 
   .chunky-card-3d:active {
     transform: scale(0.98) translateY(2px);
-    box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-      0 4px 8px -2px rgba(0, 0, 0, 0.1);
   }
 
-  /* --- High Contrast Metallic Bronze --- */
+  /* --- High Contrast Metallic Bronze Text --- */
   .text-gradient-bronze-rich {
-    /* Shine -> Mid -> Deep Shadow */
+    /* Vertical Metal Reflection: Light -> Dark -> Light */
     background: linear-gradient(
-      135deg, 
-      hsl(var(--bronze-shine)) 0%, 
-      hsl(var(--bronze-mid)) 40%, 
+      180deg, 
+      hsl(var(--bronze-mid)) 0%,
+      hsl(var(--bronze-shine)) 45%,
+      hsl(var(--bronze-mid)) 55%, 
       hsl(var(--bronze-shadow)) 100%
     );
     -webkit-background-clip: text;
@@ -172,7 +174,6 @@
     background-color: hsl(var(--background) / 0.6);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
-    /* No border, just blur */
   }
   
   .dock-pill {
@@ -218,11 +219,11 @@
 
   /* --- Overlays --- */
   .header-fade {
-    background: linear-gradient(to bottom, hsl(var(--overlay-color)) 20%, transparent 100%);
+    background: linear-gradient(to bottom, hsl(var(--overlay-color)) 25%, transparent 100%);
   }
   
   .footer-fade {
-    background: linear-gradient(to top, hsl(var(--overlay-color)) 20%, transparent 100%);
+    background: linear-gradient(to top, hsl(var(--overlay-color)) 25%, transparent 100%);
   }
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

@@ -38,7 +38,7 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
   const dateFormatted = expenseDate 
-    ? format(expenseDate, "d MMM", { locale: it })
+    ? format(expenseDate, "d MMMM yyyy", { locale: it })
     : "Data sconosciuta";
 
   // STRICT ITALIAN FORMATTING: 1.234,56
@@ -50,8 +50,18 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
 
   // Verify dot presence for thousands > 999
   if ((expense.total || 0) >= 1000 && !rawFormatted.includes(".")) {
-      rawFormatted = rawFormatted.replace(/\s/g, '.'); 
+      // Manual formatting if system fails
+      const parts = rawFormatted.split(",");
+      parts[0] = parts[0].replace(/\s/g, "."); // replace spaces
+      // If no spaces were there but it needs dots (e.g. 1000,00 -> 1.000,00)
+      if (!parts[0].includes(".")) {
+         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      }
+      rawFormatted = parts.join(",");
   }
+  
+  // Double check spaces
+  rawFormatted = rawFormatted.replace(/\s/g, ".");
 
   // Split integer and decimal for typographic styling
   const [integerPart, decimalPart] = rawFormatted.split(",");
@@ -72,25 +82,25 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
       onClick={onClick}
       style={{ transform: `rotate(${rotation}deg)` }}
       className={cn(
-        "chunky-card-3d group relative flex flex-col justify-between items-center p-6 w-full",
-        "rounded-[2rem] cursor-pointer mb-2",
-        "min-h-[160px]", // Fixed Height Requirement
+        "chunky-card-3d group relative flex flex-col p-5 w-full",
+        "rounded-[2.5rem] cursor-pointer mb-2",
+        "min-h-[175px]", // 175% height approx
         className
       )}
     >
-      {/* TOP: Icon in Circle */}
-      <div className="flex-none">
-        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-inner ring-1 ring-white/20">
+      {/* TOP LEFT: Icon */}
+      <div className="self-start mb-2">
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-sm ring-1 ring-white/10">
           <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
       </div>
 
-      {/* MIDDLE: Text Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full py-3 space-y-1">
-        <h3 className="text-base font-bold text-foreground leading-snug text-center line-clamp-2">
+      {/* CENTER: Text Content */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-1">
+        <h3 className="text-lg font-extrabold text-foreground leading-snug text-center line-clamp-2 px-2">
           {expense.merchant || "Sconosciuto"}
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
             {expense.category || "Generale"}
           </span>
@@ -101,16 +111,16 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
         </div>
       </div>
 
-      {/* BOTTOM: Hero Price */}
-      <div className="flex-none w-full text-center">
+      {/* BOTTOM RIGHT: Hero Price */}
+      <div className="self-end mt-2">
         <div className={cn(
-          "font-black tracking-tight flex items-baseline justify-center gap-0.5",
+          "font-black tracking-tighter flex items-baseline gap-1",
           isIncome ? "text-gradient-bronze-rich" : "text-foreground dark:text-white"
         )}>
-          {/* Main Number */}
-          <span className="text-3xl">{integerPart}</span>
-          {/* Decimal */}
-          <span className="text-lg opacity-60">,{decimalPart}</span>
+          {/* Main Number - Huge */}
+          <span className="text-4xl">{integerPart}</span>
+          {/* Decimal - Smaller */}
+          <span className="text-xl opacity-60">,{decimalPart}</span>
           <span className="text-lg opacity-60 font-bold ml-0.5">€</span>
         </div>
       </div>
