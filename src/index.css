@@ -92,25 +92,22 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
 
 @layer utilities {
-  /* --- Vivid Mesh Gradient --- */
+  /* --- Atmospheric Backgrounds --- */
   .wallet-bg {
-    background-color: hsl(var(--background));
+    min-height: 100vh;
+    width: 100%;
   }
   
   .light .wallet-bg {
-    background: 
-      radial-gradient(at 0% 0%, hsla(40, 60%, 96%, 1) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(160, 30%, 94%, 1) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(40, 40%, 95%, 1) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(210, 30%, 96%, 1) 0px, transparent 50%);
-    background-size: 100% 100%;
+    /* Cream White to Stone Grey Diagonal */
+    background: linear-gradient(to bottom right, #FFFCF5, #E6E6E6);
+    background-attachment: fixed;
   }
   
   .dark .wallet-bg {
-    background: 
-      radial-gradient(at 50% 0%, hsla(150, 20%, 15%, 1) 0px, transparent 60%),
-      radial-gradient(at 0% 50%, hsla(160, 25%, 10%, 1) 0px, transparent 50%),
-      linear-gradient(to bottom, hsl(150, 15%, 8%), hsl(150, 15%, 5%));
+    /* Deep Green Abyss Radial */
+    background: radial-gradient(circle at center, #1A2F2B 0%, #000000 100%);
+    background-attachment: fixed;
   }
 
   /* --- Hyper-3D Chunky Card --- */

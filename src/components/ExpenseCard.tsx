@@ -42,7 +42,7 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
     : "Data sconosciuta";
 
   // STRICT ITALIAN FORMATTING: 1.234,56
-  // Force manual replacement if locale fails or just to be 100% sure
+  // We force manual verification for dot separator
   let rawFormatted = expense.total?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -50,10 +50,6 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
 
   // Verify dot presence for thousands > 999
   if ((expense.total || 0) >= 1000 && !rawFormatted.includes(".")) {
-      // Fallback: replace space or comma used as thousand separator with dot
-      // This is a naive fix, strictly relying on toLocaleString is better usually, 
-      // but the user demanded dots.
-      // Let's trust "it-IT" but ensure we aren't getting space separators.
       rawFormatted = rawFormatted.replace(/\s/g, '.'); 
   }
 
@@ -63,14 +59,11 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
   const Icon = getCategoryIcon(expense.category);
   const isIncome = expense.category?.toLowerCase() === "entrate" || (expense.total || 0) < 0; 
 
-  // Random rotation between -3 and 3 degrees. 
-  // We use useMemo with the expense ID to keep it stable across renders.
+  // Random rotation between -3 and 3 degrees
   const rotation = useMemo(() => {
-    // Deterministic pseudo-random based on ID char codes
     const seed = expense.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const rand = Math.sin(seed) * 10000;
-    const randomValue = rand - Math.floor(rand); // 0 to 1
-    // Map 0..1 to -3..3
+    const randomValue = rand - Math.floor(rand);
     return (randomValue * 6) - 3;
   }, [expense.id]);
 
@@ -79,46 +72,46 @@ export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
       onClick={onClick}
       style={{ transform: `rotate(${rotation}deg)` }}
       className={cn(
-        "chunky-card-3d group relative flex items-center p-5 w-full",
-        "rounded-[1.5rem] cursor-pointer mb-2", // Compact roundness
-        "min-h-[110px]", // Reduced height for 2.5 rule
+        "chunky-card-3d group relative flex flex-col justify-between items-center p-6 w-full",
+        "rounded-[2rem] cursor-pointer mb-2",
+        "min-h-[160px]", // Fixed Height Requirement
         className
       )}
     >
-      {/* LEFT: Icon in Circle (Smaller) */}
-      <div className="mr-5 shrink-0">
+      {/* TOP: Icon in Circle */}
+      <div className="flex-none">
         <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-inner ring-1 ring-white/20">
           <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
       </div>
 
-      {/* CENTER: Details (Name & Category close) */}
-      <div className="flex-1 min-w-0 text-left mr-4">
-        <h3 className="text-base font-bold text-foreground leading-snug truncate">
+      {/* MIDDLE: Text Content */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full py-3 space-y-1">
+        <h3 className="text-base font-bold text-foreground leading-snug text-center line-clamp-2">
           {expense.merchant || "Sconosciuto"}
         </h3>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
             {expense.category || "Generale"}
           </span>
           <span className="w-1 h-1 rounded-full bg-border" />
-          <span className="text-xs font-medium text-muted-foreground/60 shrink-0">
+          <span className="text-xs font-medium text-muted-foreground/60">
             {dateFormatted}
           </span>
         </div>
       </div>
 
-      {/* RIGHT: Hero Price (Proportioned) */}
-      <div className="shrink-0 text-right">
+      {/* BOTTOM: Hero Price */}
+      <div className="flex-none w-full text-center">
         <div className={cn(
-          "font-black tracking-tight flex items-baseline justify-end gap-0.5",
+          "font-black tracking-tight flex items-baseline justify-center gap-0.5",
           isIncome ? "text-gradient-bronze-rich" : "text-foreground dark:text-white"
         )}>
-          {/* Main Number - Large but fit */}
-          <span className="text-2xl">{integerPart}</span>
-          {/* Decimal - Small */}
-          <span className="text-sm opacity-60">,{decimalPart}</span>
-          <span className="text-sm opacity-60 font-bold ml-0.5">€</span>
+          {/* Main Number */}
+          <span className="text-3xl">{integerPart}</span>
+          {/* Decimal */}
+          <span className="text-lg opacity-60">,{decimalPart}</span>
+          <span className="text-lg opacity-60 font-bold ml-0.5">€</span>
         </div>
       </div>
     </div>

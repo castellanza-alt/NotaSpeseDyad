@@ -26,9 +26,9 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Compact Horizontal Cards
-  // Height approx 110px + 24px Gap
-  const CARD_HEIGHT = 110;
+  // Stable Chunky Cards
+  // Fixed Min-Height 160px + 24px Gap
+  const CARD_HEIGHT = 160;
   const GAP = 24; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
