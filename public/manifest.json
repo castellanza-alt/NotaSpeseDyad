@@ -9,13 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://ui-avatars.com/api/?name=Nota+Spese&background=2C5346&color=ffffff&length=2&size=192&bold=true&font-size=0.45",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://ui-avatars.com/api/?name=Nota+Spese&background=2C5346&color=ffffff&length=2&size=512&bold=true&font-size=0.45",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
