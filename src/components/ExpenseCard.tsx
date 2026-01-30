@@ -4,12 +4,12 @@ import { it } from "date-fns/locale";
 import type { Expense } from "@/hooks/useExpenses";
 import { Utensils, Car, ShoppingBag, Briefcase, Receipt, Coffee, Zap, Home, Plane, Gift } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ExpenseCardProps {
   expense: Expense;
-  index: number;
-  isNew?: boolean;
   onClick?: () => void;
+  className?: string;
 }
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -34,67 +34,68 @@ function getCategoryIcon(category: string | null): LucideIcon {
   return key ? categoryIcons[key] : Receipt;
 }
 
-// Controlled Rotation: Range -2.5deg to +2.5deg
-// (hash % 501) -> 0 to 500
-// / 100 -> 0 to 5
-// - 2.5 -> -2.5 to 2.5
-function getSubtleRotation(id: string): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return ((Math.abs(hash) % 501) / 100) - 2.5;
-}
-
-export function ExpenseCard({ expense, index, isNew, onClick }: ExpenseCardProps) {
+export function ExpenseCard({ expense, onClick, className }: ExpenseCardProps) {
   const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
   
   const dateFormatted = expenseDate 
-    ? format(expenseDate, "d MMMM", { locale: it })
+    ? format(expenseDate, "d MMM yyyy", { locale: it })
     : "Data sconosciuta";
 
+  // Strict Italian Formatting: 1.234,56
   const formattedTotal = expense.total?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }) || "0,00";
 
+  // Split integer and decimal for typographic styling
+  const [integerPart, decimalPart] = formattedTotal.split(",");
+
   const Icon = getCategoryIcon(expense.category);
-  const rotation = useMemo(() => getSubtleRotation(expense.id), [expense.id]);
+  
+  // Check if it's "Entrate" (Income) for Bronze styling, otherwise Slate Green
+  const isIncome = expense.category?.toLowerCase() === "entrate" || (expense.total || 0) < 0; // Fallback logic
 
   return (
     <div
       onClick={onClick}
-      className={`squircle-card group mx-4 h-[110px] ${isNew ? 'ring-2 ring-primary ring-offset-4 ring-offset-background' : ''}`}
-      style={{
-        zIndex: 100 - index,
-        transform: `rotate(${rotation}deg)`,
-        animationDelay: isNew ? '0ms' : `${Math.min(index * 40, 600)}ms`,
-      }}
+      className={cn(
+        "group relative flex flex-col items-center p-5 bg-card rounded-[2rem] w-full",
+        "border border-border/60 shadow-sm transition-all duration-300",
+        "active:scale-95 hover:shadow-md",
+        className
+      )}
     >
-      <div className="flex items-center h-full px-6 gap-5">
-        
-        {/* Left: Icon in Stone Circle */}
-        <div className="flex-shrink-0 w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-sm">
-          <Icon className="w-6 h-6" strokeWidth={1.5} />
+      {/* TOP: Icon in Circle */}
+      <div className="mb-4">
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-secondary-foreground shadow-sm ring-4 ring-background">
+          <Icon className="w-5 h-5" strokeWidth={2} />
         </div>
-        
-        {/* Center: Info */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-          <h3 className="text-lg font-bold text-foreground tracking-tight truncate">
-            {expense.merchant || "Sconosciuto"}
-          </h3>
-          <p className="text-sm font-medium text-muted-foreground capitalize truncate">
-            {expense.category || "Generale"} • {dateFormatted}
-          </p>
-        </div>
-        
-        {/* Right: Amount - Metallic Bronze */}
-        <div className="flex-shrink-0 flex flex-col items-end justify-center">
-          <span className="text-2xl font-bold text-gradient-bronze tracking-tight drop-shadow-sm">
-            <span className="text-lg align-top opacity-60 mr-0.5 text-foreground/50">€</span>
-            {formattedTotal}
+      </div>
+
+      {/* MIDDLE: Details */}
+      <div className="flex-1 w-full text-center space-y-1 mb-6">
+        <h3 className="text-lg font-bold text-foreground leading-tight line-clamp-2">
+          {expense.merchant || "Sconosciuto"}
+        </h3>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+            {expense.category || "Generale"}
           </span>
+          <span className="text-xs font-medium text-muted-foreground/60">
+            {dateFormatted}
+          </span>
+        </div>
+      </div>
+
+      {/* BOTTOM: Hero Price */}
+      <div className="mt-auto pt-4 border-t border-border/40 w-full text-center">
+        <div className={cn(
+          "font-black tracking-tight flex items-baseline justify-center gap-0.5",
+          isIncome ? "text-gradient-bronze" : "text-foreground dark:text-white"
+        )}>
+          <span className="text-sm opacity-60 font-bold self-start mt-1">€</span>
+          <span className="text-3xl">{integerPart}</span>
+          <span className="text-lg opacity-60">,{decimalPart}</span>
         </div>
       </div>
     </div>
