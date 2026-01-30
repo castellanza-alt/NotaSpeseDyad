@@ -4,10 +4,10 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - 'Warm Ethereal Stone' */
+  /* Light Theme - 'Warm Morning Fog' */
   :root,
   .light {
-    --background: 60 5% 96%; 
+    --background: 45 20% 98%; /* Warm white base */
     --foreground: 160 15% 20%;
     --foreground-muted: 160 8% 45%;
 
@@ -40,28 +40,28 @@
     --ring: 35 40% 55%;
 
     --radius: 2rem; 
-    --overlay-color: 60 5% 96%; /* Matches bg for fade masks */
+    --overlay-color: 45 20% 98%;
   }
 
-  /* Dark Theme - 'Deep Mineral Abyss' */
+  /* Dark Theme - 'Deep Ocean Abyss' */
   .dark {
-    --background: 160 20% 6%; /* Deep Petrol Black Base */
+    --background: 160 20% 6%;
     --foreground: 40 15% 90%;
     --foreground-muted: 150 8% 60%;
 
-    --card: 150 10% 12%;
-    --card-gradient-start: 150 10% 14%;
-    --card-gradient-end: 150 12% 10%;
+    --card: 150 10% 14%;
+    --card-gradient-start: 150 10% 16%;
+    --card-gradient-end: 150 12% 12%;
 
     --card-foreground: 40 15% 90%;
     
     --primary: 35 35% 65%;
     --primary-foreground: 150 12% 10%;
 
-    --secondary: 150 10% 16%;
+    --secondary: 150 10% 18%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 150 10% 16%;
+    --muted: 150 10% 18%;
     --muted-foreground: 150 5% 50%;
 
     --bronze-shine: 40 60% 85%;
@@ -71,8 +71,8 @@
     --destructive: 0 50% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 10% 18%;
-    --input: 150 10% 18%;
+    --border: 150 10% 20%;
+    --input: 150 10% 20%;
     --ring: 35 35% 65%;
 
     --overlay-color: 160 20% 6%;
@@ -100,21 +100,21 @@
   }
   
   .light .wallet-bg {
-    /* Warm Ethereal Stone */
+    /* Warm Morning Fog (#FFFCF5 -> #E3E3DE) */
     background: radial-gradient(
       circle at 0% 0%, 
-      hsla(40, 30%, 98%, 1) 0%,   /* Warm White Light Source Top-Left */
-      hsla(40, 10%, 96%, 1) 40%,  /* Mid Tone */
-      hsla(200, 10%, 92%, 1) 100% /* Cool Stone Grey Shadow Bottom-Right */
+      #FFFCF5 0%, 
+      #E3E3DE 100%
     );
   }
   
   .dark .wallet-bg {
-    /* Deep Mineral Abyss */
-    background: 
-      radial-gradient(at 50% 40%, hsla(160, 40%, 15%, 0.3) 0px, transparent 60%), /* Subtle Emerald Glow Center */
-      radial-gradient(at 80% 10%, hsla(170, 50%, 10%, 0.4) 0px, transparent 50%), /* Top Right Accent */
-      linear-gradient(to bottom, hsl(160, 20%, 6%), hsl(180, 25%, 4%)); /* Deep Petrol Black Base */
+    /* Deep Ocean Abyss (#0F1F1A -> #000000) */
+    background: radial-gradient(
+      circle at 50% 50%, 
+      #0F1F1A 0%, 
+      #000000 100%
+    );
   }
 
   /* --- Hyper-3D Chunky Card --- */
