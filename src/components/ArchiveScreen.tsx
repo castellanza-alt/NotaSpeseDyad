@@ -23,21 +23,20 @@ export function ArchiveScreen() {
   const [showSearchBar, setShowSearchBar] = useState(false);
   
   // --- WHEEL STATE ---
-  // Default to Feb 2026 if today is close, otherwise use real date.
-  // For the purpose of the prompt request, let's initialize cleanly.
-  const [currentDate, setCurrentDate] = useState(() => new Date()); 
+  // START DATE FIX: Impostato su FEBBRAIO 2026 come richiesto per la demo
+  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1)); 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const { theme, toggleTheme } = useTheme();
 
-  // Generate range: Previous 12 months to Next 12 months
-  // Logic updated: Center on "Current" logically.
+  // Generate range: Previous 12 months to Next 12 months from target date
   const monthsList = useMemo(() => {
-    const today = new Date();
-    // Start strictly from today - 1 year to today + 1 year
-    const start = subMonths(today, 12);
-    const end = addMonths(today, 12);
+    // Center around the specific demo date (Feb 2026) instead of 'today'
+    // to ensure user can scroll back and forth from the data point
+    const center = new Date(2026, 1, 1);
+    const start = subMonths(center, 12);
+    const end = addMonths(center, 12);
     return eachMonthOfInterval({ start, end });
   }, []);
 
@@ -46,12 +45,13 @@ export function ArchiveScreen() {
     if (scrollRef.current) {
       const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
       if (index !== -1) {
-        const itemWidth = scrollRef.current.clientWidth / 3; // We show 3 items roughly
+        const itemWidth = scrollRef.current.clientWidth / 3; 
         const scrollPos = (index * itemWidth) - (scrollRef.current.clientWidth / 2) + (itemWidth / 2);
+        // Instant jump for initial load
         scrollRef.current.scrollTo({ left: scrollPos, behavior: 'auto' });
       }
     }
-  }, []); 
+  }, []); // Run once on mount
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -167,12 +167,7 @@ export function ArchiveScreen() {
                 >
                   <button 
                     onClick={() => {
-                        // Click to center
-                        if (scrollRef.current) {
-                            const itemWidth = scrollRef.current.clientWidth / 3;
-                            const scrollPos = (i * itemWidth); // Simplified offset logic needed if clicking logic is desired
-                            // For now just visual
-                        }
+                        // Click to center logic if needed
                     }}
                     className={cn(
                       "transition-all duration-300 transform",
@@ -290,22 +285,7 @@ export function ArchiveScreen() {
         expenses={expenses}
         onDataGenerated={() => {
           refetch();
-          // Force jump to Feb 2026 if generated
           setCurrentDate(new Date(2026, 1, 1));
-          if (scrollRef.current) {
-             // Try to scroll to it roughly (approximate since we rebuild list)
-             // This is a UX enhancement for the demo
-             setTimeout(() => {
-                // Find index of Feb 2026
-                const target = new Date(2026, 1, 1);
-                const idx = monthsList.findIndex(m => isSameMonth(m, target));
-                if (idx !== -1 && scrollRef.current) {
-                    const itemWidth = scrollRef.current.clientWidth / 3;
-                    const pos = (idx * itemWidth);
-                    scrollRef.current.scrollTo({ left: pos, behavior: 'smooth' });
-                }
-             }, 100);
-          }
         }}
       />
 
