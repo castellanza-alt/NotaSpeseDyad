@@ -231,8 +231,8 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       )}
       
       <SheetContent 
-        side="bottom" 
-        className="bg-background border-t border-border/50 rounded-t-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto"
+        side="top" 
+        className="bg-background border-b border-border/50 rounded-b-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="pb-6">
