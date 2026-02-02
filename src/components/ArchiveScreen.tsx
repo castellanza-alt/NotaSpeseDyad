@@ -114,19 +114,19 @@ export function ArchiveScreen() {
   };
 
   // SPACER CALCULATION:
-  // Reduced header height to ~16.5rem due to wheel shrinking.
+  // Header bg is h-[15rem] (~240px). List starts below it.
   // Spacer adjustments:
-  // - Standard: 16.5rem header + gap -> 17.5rem spacer
-  // - With Search: 17.5rem + search bar -> 21.5rem spacer
-  const topSpacerHeight = showSearchBar ? 'h-[21.5rem]' : 'h-[17.5rem]';
+  // - Standard: 15rem header + gap -> 15.5rem spacer
+  // - With Search: 15.5rem + search bar -> 19.5rem spacer
+  const topSpacerHeight = showSearchBar ? 'h-[19.5rem]' : 'h-[15.5rem]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Reduced height to 18.5rem to end just below the balance */}
-      <div className="fixed top-0 left-0 right-0 h-[18.5rem] z-40 pointer-events-none">
+      {/* Reduced height to 15rem to end ~10px below the balance */}
+      <div className="fixed top-0 left-0 right-0 h-[15rem] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -234,9 +234,9 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Moved up to 17rem to match new header bottom */}
+      {/* Moved up to 15.5rem to match new header bottom */}
       {showSearchBar && (
-        <div className="fixed top-[17rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[15.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
