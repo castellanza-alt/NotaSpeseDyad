@@ -39,23 +39,19 @@ export function ArchiveScreen() {
 
   // Scroll to current month on mount (Logic Perfected)
   useEffect(() => {
-    // Timeout breve per garantire che il rendering sia completato
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
         if (index !== -1) {
           const containerWidth = scrollRef.current.clientWidth;
-          const itemWidth = containerWidth / 3; // 33vw approx
-          
-          // Calcolo preciso per centrare l'elemento
+          const itemWidth = containerWidth / 3; 
           const scrollPos = (index * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
-          
           scrollRef.current.scrollTo({ left: scrollPos, behavior: 'instant' });
         }
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, []); // Run once on mount
+  }, []); 
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -145,9 +141,8 @@ export function ArchiveScreen() {
         {/* 2. THE WHEEL INTERFACE */}
         <div className="relative w-full h-24 flex items-center justify-center pointer-events-auto">
           
-          {/* THE RADIO WHEEL GRAPHIC (Background Element) */}
+          {/* THE RADIO WHEEL GRAPHIC */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-20 z-0 pointer-events-none opacity-90">
-             {/* 3D Cylinder Effect */}
              <div 
                className="w-full h-full rounded-full"
                style={{
@@ -159,12 +154,10 @@ export function ArchiveScreen() {
                  maskImage: 'linear-gradient(to right, transparent, black 30%, black 70%, transparent)'
                }}
              />
-             {/* Top/Bottom Highlight Lines for edge definition */}
              <div className="absolute top-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
              <div className="absolute bottom-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
           </div>
 
-          {/* Side Gradients for fading text */}
           <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
 
@@ -176,16 +169,11 @@ export function ArchiveScreen() {
             onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)}
             className="w-full h-full overflow-x-auto scrollbar-hide flex items-center snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-30"
           >
-            {/* Start Spacer */}
             <div className="shrink-0 w-[33vw]" />
-            
             {monthsList.map((date, i) => {
               const isCurrent = isSameMonth(date, currentDate);
               return (
-                <div 
-                  key={i} 
-                  className="flex-shrink-0 w-[33vw] h-full flex items-center justify-center snap-center"
-                >
+                <div key={i} className="flex-shrink-0 w-[33vw] h-full flex items-center justify-center snap-center">
                   <button 
                     onClick={() => {
                         if (scrollRef.current) {
@@ -200,21 +188,16 @@ export function ArchiveScreen() {
                         ? "text-3xl font-bold text-foreground scale-110 tracking-tight" 
                         : "text-lg font-medium text-muted-foreground/30 scale-90 blur-[1px]"
                     )}
-                    style={{
-                      textShadow: isCurrent ? '0 2px 10px rgba(0,0,0,0.1)' : 'none'
-                    }}
+                    style={{ textShadow: isCurrent ? '0 2px 10px rgba(0,0,0,0.1)' : 'none' }}
                   >
                     {format(date, "MMMM", { locale: it })}
                   </button>
                 </div>
               );
             })}
-            
-            {/* End Spacer */}
             <div className="shrink-0 w-[33vw]" />
           </div>
           
-          {/* Center Indicator (Subtle notch) */}
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1.5 bg-primary rounded-full z-40" />
         </div>
         
@@ -246,7 +229,6 @@ export function ArchiveScreen() {
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
           </div>
         ) : filteredExpenses.length === 0 ? (
-          // CLEAN EMPTY STATE (Minimal)
           <div className="flex-1 flex flex-col items-center justify-center pt-32 animate-fade-in text-center px-10">
             <p className="text-muted-foreground/40 text-sm font-medium tracking-wide">
               Nessuna voce per questo mese
@@ -273,35 +255,35 @@ export function ArchiveScreen() {
       {/* CONSOLE DI COMANDO */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
-          <div className="relative flex items-center justify-between px-8 py-3 rounded-[2.5rem] glass-stone shadow-xl shadow-black/5 min-w-[300px]">
+          <div className="relative flex items-center justify-between px-6 py-2 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
             
             {/* Search */}
             <button 
               onClick={toggleSearchBar}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
             >
-              <Search className="w-6 h-6" strokeWidth={2} />
+              <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* GIANT FAB (Elevated) */}
-            <div className="relative -top-10 mx-8">
+            {/* ACTION BUTTON (Smaller, Integrated) */}
+            <div className="relative mx-6">
               <button 
                 onClick={handleSelectPhoto} 
-                className="w-20 h-20 rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
+                className="w-14 h-14 rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[3px] border-background"
               >
-                <Plus className="w-9 h-9 text-white drop-shadow-md" strokeWidth={2.5} />
+                <Plus className="w-7 h-7 text-white drop-shadow-sm" strokeWidth={2.5} />
               </button>
             </div>
 
             {/* Theme */}
             <button 
               onClick={toggleTheme}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
             >
               {theme === 'dark' ? (
-                <Moon className="w-6 h-6" strokeWidth={2} />
+                <Moon className="w-5 h-5" strokeWidth={2} />
               ) : (
-                <Sun className="w-6 h-6" strokeWidth={2} />
+                <Sun className="w-5 h-5" strokeWidth={2} />
               )}
             </button>
 
