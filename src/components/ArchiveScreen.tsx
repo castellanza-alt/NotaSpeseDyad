@@ -29,6 +29,9 @@ export function ArchiveScreen() {
 
   const { theme, toggleTheme } = useTheme();
 
+  // RULER CONFIGURATION
+  const ITEM_WIDTH = 120; // Larghezza fissa di ogni blocco mese in pixel
+
   // Range: +/- 12 mesi dalla data target
   const monthsList = useMemo(() => {
     const center = new Date(2026, 1, 1);
@@ -37,15 +40,15 @@ export function ArchiveScreen() {
     return eachMonthOfInterval({ start, end });
   }, []);
 
-  // Scroll to current month on mount (Logic Perfected)
+  // Scroll to current month on mount
   useEffect(() => {
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
         if (index !== -1) {
           const containerWidth = scrollRef.current.clientWidth;
-          const itemWidth = containerWidth / 3; 
-          const scrollPos = (index * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
+          // Calcolo per centrare l'elemento: (Index * Width) - (MetaSchermo) + (MetaOggetto)
+          const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
           scrollRef.current.scrollTo({ left: scrollPos, behavior: 'instant' });
         }
       }
@@ -97,9 +100,10 @@ export function ArchiveScreen() {
     if (!scrollRef.current) return;
     
     const container = scrollRef.current;
+    // Troviamo il centro dello schermo
     const center = container.scrollLeft + (container.clientWidth / 2);
-    const itemWidth = container.clientWidth / 3;
-    const index = Math.floor(center / itemWidth);
+    // Indice = Centro / LarghezzaOggetto
+    const index = Math.floor(center / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
       const newMonth = monthsList[index];
@@ -131,78 +135,94 @@ export function ArchiveScreen() {
       {/* MAXI HEADER */}
       <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top pointer-events-none">
         
-        {/* 1. YEAR */}
-        <div className="mb-4 opacity-50 animate-fade-in pointer-events-none">
-          <span className="text-xs font-semibold tracking-[0.4em] uppercase text-foreground">
+        {/* 1. YEAR (Statico sopra il righello) */}
+        <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
+          <span className="text-xs font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
-        {/* 2. THE WHEEL INTERFACE */}
-        <div className="relative w-full h-24 flex items-center justify-center pointer-events-auto">
+        {/* 2. THE RULER INTERFACE (Il Righello) */}
+        <div className="relative w-full h-24 flex items-end pointer-events-auto select-none">
           
-          {/* THE RADIO WHEEL GRAPHIC */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-20 z-0 pointer-events-none opacity-90">
-             <div 
-               className="w-full h-full rounded-full"
-               style={{
-                 background: `
-                   linear-gradient(to right, transparent 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.05) 80%, transparent 100%),
-                   repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(150,150,150,0.15) 19px, rgba(150,150,150,0.15) 20px)
-                 `,
-                 boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)',
-                 maskImage: 'linear-gradient(to right, transparent, black 30%, black 70%, transparent)'
-               }}
-             />
-             <div className="absolute top-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
-             <div className="absolute bottom-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
+          {/* MASCHERE LATERALI SFUMATE */}
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
+          
+          {/* INDICATORE CENTRALE (La linea rossa) */}
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 flex flex-col items-center">
+             <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+             {/* Triangolino sotto */}
+             <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
-          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
-
-          {/* Scroll Container */}
+          {/* SCROLL CONTAINER */}
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
             onTouchStart={() => setIsUserScrolling(true)}
             onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)}
-            className="w-full h-full overflow-x-auto scrollbar-hide flex items-center snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-30"
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
           >
-            <div className="shrink-0 w-[33vw]" />
+            {/* SPACER INIZIALE: Meta schermo - meta oggetto */}
+            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
+            
             {monthsList.map((date, i) => {
               const isCurrent = isSameMonth(date, currentDate);
+              
               return (
-                <div key={i} className="flex-shrink-0 w-[33vw] h-full flex items-center justify-center snap-center">
+                <div 
+                  key={i} 
+                  style={{ width: `${ITEM_WIDTH}px` }}
+                  className="shrink-0 h-20 snap-center flex flex-col justify-end group relative"
+                >
                   <button 
                     onClick={() => {
                         if (scrollRef.current) {
-                            const itemWidth = scrollRef.current.clientWidth / 3;
-                            const scrollPos = (i * itemWidth) - (scrollRef.current.clientWidth / 2) + (itemWidth / 2);
+                            const scrollPos = (i * ITEM_WIDTH) - (scrollRef.current.clientWidth / 2) + (ITEM_WIDTH / 2);
                             scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
                         }
                     }}
-                    className={cn(
-                      "transition-all duration-500 ease-out transform select-none",
-                      isCurrent 
-                        ? "text-3xl font-bold text-foreground scale-110 tracking-tight" 
-                        : "text-lg font-medium text-muted-foreground/30 scale-90 blur-[1px]"
-                    )}
-                    style={{ textShadow: isCurrent ? '0 2px 10px rgba(0,0,0,0.1)' : 'none' }}
+                    className="w-full h-full flex flex-col justify-end"
                   >
-                    {format(date, "MMMM", { locale: it })}
+                    {/* ZONA TACCHE (Ticks) */}
+                    <div className="w-full h-10 flex items-end justify-between px-1 mb-2">
+                      {/* TACCA MAGGIORE (Mese) */}
+                      <div className={cn(
+                        "w-[2px] rounded-t-sm transition-all duration-300",
+                        isCurrent ? "h-10 bg-foreground" : "h-6 bg-foreground/30 group-hover:bg-foreground/50"
+                      )} />
+                      
+                      {/* TACCHE MINORI (Riempitivo) - 4 tacche */}
+                      <div className="w-[1px] h-3 bg-foreground/10" />
+                      <div className="w-[1px] h-3 bg-foreground/10" />
+                      <div className="w-[1px] h-3 bg-foreground/10" />
+                      <div className="w-[1px] h-3 bg-foreground/10" />
+                    </div>
+
+                    {/* LABEL MESE */}
+                    <div className="absolute bottom-0 left-0 w-full text-left pl-1">
+                      <span className={cn(
+                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]", // Centra testo sotto la tacca
+                        isCurrent 
+                          ? "text-foreground scale-110" 
+                          : "text-muted-foreground/50 scale-90"
+                      )}>
+                        {format(date, "MMM", { locale: it }).toUpperCase()}
+                      </span>
+                    </div>
                   </button>
                 </div>
               );
             })}
-            <div className="shrink-0 w-[33vw]" />
+            
+            {/* SPACER FINALE */}
+            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
           </div>
-          
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1.5 bg-primary rounded-full z-40" />
         </div>
         
         {/* 3. HUGE BALANCE */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-8 pointer-events-auto">
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-6 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
             <OdometerValue value={currentMonthTotal} />
@@ -303,9 +323,8 @@ export function ArchiveScreen() {
             if (scrollRef.current) {
                const index = monthsList.findIndex(m => isSameMonth(m, new Date(2026, 1, 1)));
                if(index !== -1) {
-                   const itemWidth = scrollRef.current.clientWidth / 3;
-                   const pos = (index * itemWidth) - (scrollRef.current.clientWidth / 2) + (itemWidth / 2);
-                   scrollRef.current.scrollTo({ left: pos, behavior: 'smooth' });
+                   const scrollPos = (index * ITEM_WIDTH) - (scrollRef.current.clientWidth / 2) + (ITEM_WIDTH / 2);
+                   scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
                }
             }
           }, 100);
