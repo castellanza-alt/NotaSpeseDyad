@@ -24,12 +24,8 @@ interface ImageAnalyzerProps {
   onSuccess: () => void;
 }
 
-// Fallback values need to match client.ts to work in preview without env vars
-const FALLBACK_PROJECT_ID = "iqwbspfvgekhzowqembf";
-const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
-
-const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || FALLBACK_PROJECT_ID;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
   const { session } = useAuth();
@@ -92,7 +88,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   async function analyzeReceipt() {
-    if (!SUPABASE_PROJECT_ID || !ANON_KEY) {
+    if (!SUPABASE_URL || !ANON_KEY) {
       console.error("Missing Env Vars");
       toast({
         title: "Errore Configurazione",
@@ -106,7 +102,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     try {
       const base64Image = await compressImage(imageFile);
       
-      const response = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/analyze-receipt`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +166,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   async function handleSend() {
     if (!expenseData || !session) return;
     
-    if (!SUPABASE_PROJECT_ID || !ANON_KEY) {
+    if (!SUPABASE_URL || !ANON_KEY) {
       toast({ title: "Errore", description: "Configurazione mancante", variant: "destructive" });
       return;
     }
@@ -194,7 +190,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         date: expenseData.expense_date 
       };
 
-      const emailResponse = await fetch(`https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/send-expense-email`, {
+      const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
