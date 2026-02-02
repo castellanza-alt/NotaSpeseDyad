@@ -114,19 +114,19 @@ export function ArchiveScreen() {
   };
 
   // SPACER CALCULATION:
-  // Reduced header height to ~14rem.
+  // Base header height is ~14rem + 10px extra padding.
   // Spacer adjustments:
-  // - Standard: 14rem header + gap -> 14.5rem spacer
-  // - With Search: 14.5rem + search bar -> 18.5rem spacer
-  const topSpacerHeight = showSearchBar ? 'h-[18.5rem]' : 'h-[14.5rem]';
+  // - Standard: 14.5rem + 10px
+  // - With Search: 18.5rem + 10px
+  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+10px)]' : 'h-[calc(14.5rem+10px)]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Reduced height to 14rem to match raised content */}
-      <div className="fixed top-0 left-0 right-0 h-[14rem] z-40 pointer-events-none">
+      {/* Height increased by 10px as requested (14rem + 10px) */}
+      <div className="fixed top-0 left-0 right-0 h-[calc(14rem+10px)] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -224,7 +224,7 @@ export function ArchiveScreen() {
         </div>
         
         {/* HUGE BALANCE */}
-        {/* Removed top margin (previously mt-[15px]) to raise by 15px */}
+        {/* Margin top removed (0px) */}
         <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-0 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
@@ -234,9 +234,9 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Moved up to 14.5rem to match new header bottom */}
+      {/* Position adjusted: 14.5rem + 10px */}
       {showSearchBar && (
-        <div className="fixed top-[14.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[calc(14.5rem+10px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
