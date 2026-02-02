@@ -137,7 +137,7 @@ export function ArchiveScreen() {
         
         {/* 1. YEAR (Statico sopra il righello) */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
-          <span className="text-xs font-bold tracking-[0.3em] text-foreground font-mono">
+          <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
