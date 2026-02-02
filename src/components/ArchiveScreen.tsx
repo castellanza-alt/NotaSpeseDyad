@@ -11,8 +11,10 @@ import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
 import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useHaptic } from "@/hooks/useHaptic";
 
 export function ArchiveScreen() {
+  const { impact, success } = useHaptic();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -22,17 +24,17 @@ export function ArchiveScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
   
-  // START DATE: Febbraio 2026
+  // PARALLAX REFS
+  const bgRef = useRef<HTMLDivElement>(null);
+  
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1)); 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const { theme, toggleTheme } = useTheme();
 
-  // RULER CONFIGURATION
-  const ITEM_WIDTH = 120; // Larghezza fissa di ogni blocco mese in pixel
+  const ITEM_WIDTH = 120; 
 
-  // Range: +/- 12 mesi dalla data target
   const monthsList = useMemo(() => {
     const center = new Date(2026, 1, 1);
     const start = subMonths(center, 12);
@@ -40,14 +42,12 @@ export function ArchiveScreen() {
     return eachMonthOfInterval({ start, end });
   }, []);
 
-  // Scroll to current month on mount
   useEffect(() => {
     const timer = setTimeout(() => {
       if (scrollRef.current) {
         const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
         if (index !== -1) {
           const containerWidth = scrollRef.current.clientWidth;
-          // Calcolo per centrare l'elemento: (Index * Width) - (MetaSchermo) + (MetaOggetto)
           const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
           scrollRef.current.scrollTo({ left: scrollPos, behavior: 'instant' });
         }
@@ -77,7 +77,10 @@ export function ArchiveScreen() {
     return filteredExpenses.reduce((sum, e) => sum + (e.total || 0), 0);
   }, [filteredExpenses]);
 
-  const handleSelectPhoto = () => fileInputRef.current?.click();
+  const handleSelectPhoto = () => {
+    impact();
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) setSelectedImage(e.target.files[0]);
@@ -85,13 +88,15 @@ export function ArchiveScreen() {
   };
 
   const handleSuccess = useCallback(() => {
+    success(); // Haptic success
     setSelectedImage(null);
     refetch();
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2500);
-  }, [refetch]);
+  }, [refetch, success]);
 
   const toggleSearchBar = () => {
+    impact();
     setShowSearchBar(prev => !prev);
     if (showSearchBar) setSearchQuery("");
   };
@@ -100,24 +105,39 @@ export function ArchiveScreen() {
     if (!scrollRef.current) return;
     
     const container = scrollRef.current;
-    // Troviamo il centro dello schermo
     const center = container.scrollLeft + (container.clientWidth / 2);
-    // Indice = Centro / LarghezzaOggetto
     const index = Math.floor(center / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
       const newMonth = monthsList[index];
       if (!isSameMonth(newMonth, currentDate)) {
+        impact(); // Little bump on month change
         setCurrentDate(newMonth);
       }
+    }
+  };
+
+  // PARALLAX HANDLER
+  const handleListScroll = (scrollTop: number) => {
+    if (bgRef.current) {
+      // Background moves at 20% speed of the scroll
+      // Using transform3d for hardware acceleration
+      bgRef.current.style.transform = `translate3d(0, -${scrollTop * 0.2}px, 0)`;
     }
   };
 
   const topSpacerHeight = showSearchBar ? 'h-[24rem]' : 'h-[20rem]';
 
   return (
-    <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
+    <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+
+      {/* PARALLAX BACKGROUND LAYER */}
+      <div 
+        ref={bgRef}
+        className="fixed inset-0 wallet-bg z-0 will-change-transform"
+        style={{ height: '120vh' }} // Taller than screen to allow movement
+      />
 
       {/* HEADER BACKGROUND & FADE */}
       <div className="fixed top-0 left-0 right-0 h-[26rem] z-10 pointer-events-none header-fade opacity-100" />
@@ -125,7 +145,7 @@ export function ArchiveScreen() {
       {/* BURGER MENU */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button 
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => { impact(); setSettingsOpen(true); }}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
         >
           <Menu className="w-5 h-5 text-foreground/80" strokeWidth={2} />
@@ -135,28 +155,23 @@ export function ArchiveScreen() {
       {/* MAXI HEADER */}
       <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top pointer-events-none">
         
-        {/* 1. YEAR (Statico sopra il righello) */}
+        {/* YEAR */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
           <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
-        {/* 2. THE RULER INTERFACE (Il Righello) */}
+        {/* RULER */}
         <div className="relative w-full h-24 flex items-end pointer-events-auto select-none">
-          
-          {/* MASCHERE LATERALI SFUMATE */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
           
-          {/* INDICATORE CENTRALE (La linea rossa) */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-             {/* Triangolino sotto */}
              <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
-          {/* SCROLL CONTAINER */}
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
@@ -164,7 +179,6 @@ export function ArchiveScreen() {
             onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)}
             className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
           >
-            {/* SPACER INIZIALE: Meta schermo - meta oggetto */}
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
             
             {monthsList.map((date, i) => {
@@ -178,6 +192,7 @@ export function ArchiveScreen() {
                 >
                   <button 
                     onClick={() => {
+                        impact();
                         if (scrollRef.current) {
                             const scrollPos = (i * ITEM_WIDTH) - (scrollRef.current.clientWidth / 2) + (ITEM_WIDTH / 2);
                             scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
@@ -185,25 +200,19 @@ export function ArchiveScreen() {
                     }}
                     className="w-full h-full flex flex-col justify-end"
                   >
-                    {/* ZONA TACCHE (Ticks) */}
                     <div className="w-full h-10 flex items-end justify-between px-1 mb-2">
-                      {/* TACCA MAGGIORE (Mese) */}
                       <div className={cn(
                         "w-[2px] rounded-t-sm transition-all duration-300",
                         isCurrent ? "h-10 bg-foreground" : "h-6 bg-foreground/30 group-hover:bg-foreground/50"
                       )} />
-                      
-                      {/* TACCHE MINORI (Riempitivo) - 4 tacche */}
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                     </div>
-
-                    {/* LABEL MESE */}
                     <div className="absolute bottom-0 left-0 w-full text-left pl-1">
                       <span className={cn(
-                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]", // Centra testo sotto la tacca
+                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]",
                         isCurrent 
                           ? "text-foreground scale-110" 
                           : "text-muted-foreground/50 scale-90"
@@ -216,12 +225,11 @@ export function ArchiveScreen() {
               );
             })}
             
-            {/* SPACER FINALE */}
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
           </div>
         </div>
         
-        {/* 3. HUGE BALANCE */}
+        {/* BALANCE */}
         <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-6 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
@@ -230,7 +238,6 @@ export function ArchiveScreen() {
         </div>
       </header>
 
-      {/* SEARCH BAR (Slide down) */}
       {showSearchBar && (
         <div className="fixed top-[20rem] left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
           <SearchBar 
@@ -258,26 +265,25 @@ export function ArchiveScreen() {
           <VirtualizedExpenseList
             expenses={filteredExpenses}
             lastAddedId={lastAddedId}
-            onExpenseClick={setSelectedExpense}
+            onExpenseClick={(e) => { impact(); setSelectedExpense(e); }}
             onExpenseDelete={deleteExpense}
             onExpenseEdit={(expense) => setSelectedExpense(expense)}
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
             paddingClassName={topSpacerHeight}
+            onScroll={handleListScroll}
           />
         )}
       </div>
 
-      {/* FOOTER FADE */}
       <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
 
-      {/* CONSOLE DI COMANDO */}
+      {/* NAVIGATION */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
           <div className="relative flex items-center justify-between px-6 py-2 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
             
-            {/* Search */}
             <button 
               onClick={toggleSearchBar}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
@@ -285,7 +291,6 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* ACTION BUTTON (Smaller, Integrated) */}
             <div className="relative mx-6">
               <button 
                 onClick={handleSelectPhoto} 
@@ -295,9 +300,8 @@ export function ArchiveScreen() {
               </button>
             </div>
 
-            {/* Theme */}
             <button 
-              onClick={toggleTheme}
+              onClick={() => { impact(); toggleTheme(); }}
               className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
             >
               {theme === 'dark' ? (
@@ -317,6 +321,7 @@ export function ArchiveScreen() {
         showTrigger={false} 
         expenses={expenses}
         onDataGenerated={() => {
+          success();
           refetch();
           setCurrentDate(new Date(2026, 1, 1));
           setTimeout(() => {
