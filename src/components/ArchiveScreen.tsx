@@ -114,19 +114,19 @@ export function ArchiveScreen() {
   };
 
   // SPACER CALCULATION:
-  // Header bg is h-[15rem] (~240px). List starts below it.
+  // Reduced header height to ~14rem.
   // Spacer adjustments:
-  // - Standard: 15rem header + gap -> 15.5rem spacer
-  // - With Search: 15.5rem + search bar -> 19.5rem spacer
-  const topSpacerHeight = showSearchBar ? 'h-[19.5rem]' : 'h-[15.5rem]';
+  // - Standard: 14rem header + gap -> 14.5rem spacer
+  // - With Search: 14.5rem + search bar -> 18.5rem spacer
+  const topSpacerHeight = showSearchBar ? 'h-[18.5rem]' : 'h-[14.5rem]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Reduced height to 15rem to end ~10px below the balance */}
-      <div className="fixed top-0 left-0 right-0 h-[15rem] z-40 pointer-events-none">
+      {/* Reduced height to 14rem to match raised content */}
+      <div className="fixed top-0 left-0 right-0 h-[14rem] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -224,8 +224,8 @@ export function ArchiveScreen() {
         </div>
         
         {/* HUGE BALANCE */}
-        {/* Margin top reduced to 15px */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-[15px] pointer-events-auto">
+        {/* Removed top margin (previously mt-[15px]) to raise by 15px */}
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-0 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
             <OdometerValue value={currentMonthTotal} />
@@ -234,9 +234,9 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Moved up to 15.5rem to match new header bottom */}
+      {/* Moved up to 14.5rem to match new header bottom */}
       {showSearchBar && (
-        <div className="fixed top-[15.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[14.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
