@@ -3,12 +3,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle } from "lucide-react";
+import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle, Database } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
-import { Expense } from "@/hooks/useExpenses"; // Import Type only
+import { Expense } from "@/hooks/useExpenses"; 
 import { signOut } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const emailSchema = z.string().email("Email non valida");
 
@@ -16,11 +18,13 @@ interface SettingsSheetProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
-  expenses: Expense[]; // Receive expenses from parent to ensure sync with DB/UI changes
+  expenses: Expense[]; 
+  onDataGenerated?: () => void; // Callback to refresh list
 }
 
-export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses }: SettingsSheetProps) {
+export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses, onDataGenerated }: SettingsSheetProps) {
   const { profile, updateProfile } = useProfile();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [internalOpen, setInternalOpen] = useState(false);
@@ -39,6 +43,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
   const [isDefault, setIsDefault] = useState(profile?.is_default_email || false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
   
   useEffect(() => {
@@ -114,11 +119,52 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     }
   };
 
+  const handleGenerateDemoData = async () => {
+    if (!user) return;
+    setGenerating(true);
+    try {
+      const demoExpenses = [
+        { merchant: "Trenitalia", category: "Trasporti", total: 45.50, day: 2 },
+        { merchant: "Ristorante Da Mario", category: "Cibo", total: 62.00, day: 5 },
+        { merchant: "Uber", category: "Trasporti", total: 12.30, day: 8 },
+        { merchant: "Apple Store", category: "Shopping", total: 129.00, day: 10 },
+        { merchant: "Bar Centrale", category: "Cibo", total: 4.50, day: 12 },
+        { merchant: "Amazon", category: "Shopping", total: 34.99, day: 15 },
+        { merchant: "Benzinaio IP", category: "Trasporti", total: 80.00, day: 18 },
+        { merchant: "Supermercato", category: "Cibo", total: 156.45, day: 20 },
+        { merchant: "Taxi", category: "Trasporti", total: 25.00, day: 24 },
+        { merchant: "Libreria Feltrinelli", category: "Shopping", total: 22.50, day: 27 },
+      ];
+
+      for (const item of demoExpenses) {
+        await supabase.from("expenses").insert({
+          user_id: user.id,
+          merchant: item.merchant,
+          category: item.category,
+          total: item.total,
+          currency: "EUR",
+          expense_date: `2026-02-${item.day.toString().padStart(2, '0')}`,
+          created_at: new Date().toISOString()
+        });
+      }
+
+      toast({
+        title: "Dati Generati",
+        description: "10 spese aggiunte per Febbraio 2026",
+      });
+      onDataGenerated?.();
+      setOpen(false);
+    } catch (error) {
+      console.error("Error generating data:", error);
+      toast({ title: "Errore", description: "Impossibile generare i dati", variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      // Use the expenses prop which comes directly from ArchiveScreen state
-      // ensuring it reflects recent deletions/edits immediately.
       const headers = ["Data", "Esercente", "Importo", "Valuta", "Categoria"];
       const rows = expenses.map(e => [
         e.expense_date || "", 
@@ -179,8 +225,6 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
         </SheetTrigger>
       )}
       
-      {/* Changed side to "bottom" for slide-up animation */}
-      {/* Added onOpenAutoFocus to prevent keyboard popup */}
       <SheetContent 
         side="bottom" 
         className="bg-background border-t border-border/50 rounded-t-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto"
@@ -191,6 +235,36 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
         </SheetHeader>
 
         <div className="space-y-8">
+          {/* Demo Data Section */}
+          <section className="space-y-4">
+             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Area Sviluppatore
+            </h3>
+            <button 
+              onClick={handleGenerateDemoData} 
+              disabled={generating}
+              className="w-full flex items-center justify-between bg-card rounded-2xl p-4 card-shadow
+                         disabled:opacity-50 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="icon-pill-muted bg-primary/10 text-primary">
+                  {generating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Database className="w-4 h-4" strokeWidth={1.5} />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground">Genera Dati Demo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Crea 10 spese per Febbraio 2026
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+            </button>
+          </section>
+
           {/* Email Settings Section */}
           <section className="space-y-4">
             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

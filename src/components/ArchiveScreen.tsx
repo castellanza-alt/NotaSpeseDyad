@@ -1,6 +1,6 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check, Search, ChevronLeft, ChevronRight, Sun } from "lucide-react";
+import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { SettingsSheet } from "./SettingsSheet";
 import { ImageAnalyzer } from "./ImageAnalyzer";
@@ -8,8 +8,9 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
-import { format, addMonths, subMonths, isSameMonth } from "date-fns";
+import { format, addMonths, subMonths, isSameMonth, startOfMonth, eachMonthOfInterval } from "date-fns";
 import { it } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export function ArchiveScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,52 +70,70 @@ export function ArchiveScreen() {
     if (showSearchBar) setSearchQuery("");
   };
 
-  // Month Navigation
-  const nextMonth = () => setCurrentDate(prev => addMonths(prev, 1));
-  const prevMonth = () => setCurrentDate(prev => subMonths(prev, 1));
+  // Generate Month Scroller Items (-2 to +2 months)
+  const monthScrollerItems = useMemo(() => {
+    const start = subMonths(currentDate, 2);
+    const end = addMonths(currentDate, 2);
+    return eachMonthOfInterval({ start, end });
+  }, [currentDate]);
 
   // Dynamic spacer calculation
-  const topSpacerHeight = showSearchBar ? 'h-[18rem]' : 'h-52';
+  const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-72'; // Increased for taller header
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* HEADER FADE */}
-      <div className="fixed top-0 left-0 right-0 h-64 z-20 pointer-events-none header-fade" />
+      <div className="fixed top-0 left-0 right-0 h-80 z-20 pointer-events-none header-fade" />
 
-      {/* TOP RIGHT: Burger Menu */}
+      {/* TOP RIGHT: Burger Menu (Minimal) */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button 
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md shadow-sm border border-black/5 active:scale-95 transition-all"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md hover:bg-background/80 transition-all active:scale-95"
         >
-          <Menu className="w-5 h-5 text-foreground" strokeWidth={2} />
+          <Menu className="w-6 h-6 text-foreground" strokeWidth={2} />
         </button>
       </div>
 
-      {/* CENTER HEADER: Month Carousel & Balance */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top mt-2 pointer-events-none">
+      {/* MAXI HEADER: Horizontal Scroller & Balance */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top mt-4 pointer-events-none">
         
-        {/* Month Carousel */}
-        <div className="pointer-events-auto flex items-center gap-4 mb-2 bg-background/30 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-sm">
-          <button onClick={prevMonth} className="p-1 hover:bg-black/5 rounded-full transition-colors">
-            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-          </button>
-          
-          <span className="text-xs font-bold uppercase tracking-[2px] text-foreground w-28 text-center select-none">
-            {format(currentDate, "MMMM yyyy", { locale: it })}
-          </span>
-
-          <button onClick={nextMonth} className="p-1 hover:bg-black/5 rounded-full transition-colors">
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
+        {/* Month Roller */}
+        <div className="pointer-events-auto w-full overflow-x-auto scrollbar-hide flex items-center justify-center gap-6 px-10 py-4 mb-2 mask-linear-fade">
+          {monthScrollerItems.map((date, i) => {
+            const isCurrent = isSameMonth(date, currentDate);
+            return (
+              <button
+                key={i}
+                onClick={() => setCurrentDate(date)}
+                className={cn(
+                  "transition-all duration-300 flex flex-col items-center justify-center shrink-0",
+                  isCurrent ? "scale-110 opacity-100" : "scale-90 opacity-40 hover:opacity-70"
+                )}
+              >
+                <span className={cn(
+                  "text-sm font-bold uppercase tracking-widest mb-1",
+                  isCurrent ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {format(date, "MMMM", { locale: it })}
+                </span>
+                <span className={cn(
+                  "text-xs font-medium text-muted-foreground",
+                  isCurrent && "text-foreground"
+                )}>
+                  {format(date, "yyyy")}
+                </span>
+              </button>
+            );
+          })}
         </div>
         
-        {/* Huge Balance */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 pointer-events-auto">
+        {/* Huge Balance (No Subtitles if 0) */}
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-125 mt-2 pointer-events-auto">
           <span className="text-xl font-semibold mr-1.5 opacity-60 text-foreground/50">€</span>
-          <span className="text-5xl font-black tracking-tighter">
+          <span className="text-6xl font-black tracking-tighter">
             <OdometerValue value={currentMonthTotal} />
           </span>
         </div>
@@ -122,7 +141,7 @@ export function ArchiveScreen() {
 
       {/* Search Bar (Slide down) */}
       {showSearchBar && (
-        <div className="fixed top-48 left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-64 left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
@@ -138,13 +157,23 @@ export function ArchiveScreen() {
           <div className="flex-1 flex items-center justify-center pt-48">
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
           </div>
+        ) : filteredExpenses.length === 0 ? (
+          // CLEAN EMPTY STATE
+          <div className="flex-1 flex flex-col items-center justify-center pt-20 animate-fade-in text-center px-10">
+            <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
+              <Search className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-foreground/60 text-lg font-medium leading-relaxed">
+              Nessuna spesa registrata per questo mese
+            </p>
+          </div>
         ) : (
           <VirtualizedExpenseList
             expenses={filteredExpenses}
             lastAddedId={lastAddedId}
             onExpenseClick={setSelectedExpense}
             onExpenseDelete={deleteExpense}
-            onExpenseEdit={(expense) => setSelectedExpense(expense)} // Opens detail in view mode (can switch to edit inside)
+            onExpenseEdit={(expense) => setSelectedExpense(expense)}
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
@@ -154,38 +183,40 @@ export function ArchiveScreen() {
       </div>
 
       {/* FOOTER FADE */}
-      <div className="fixed bottom-0 left-0 right-0 h-48 z-20 pointer-events-none footer-fade" />
+      <div className="fixed bottom-0 left-0 right-0 h-40 z-20 pointer-events-none footer-fade" />
 
-      {/* BOTTOM ACTION BAR (Floating) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[max(env(safe-area-inset-bottom),24px)]">
+      {/* CONSOLE DI COMANDO (Floating Bottom Bar) */}
+      <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
-          <div className="flex items-center gap-6 px-6 py-2 rounded-full glass-stone shadow-xl border border-white/10">
+          <div className="relative flex items-center justify-between px-8 py-3 rounded-[2.5rem] glass-stone shadow-2xl border border-white/10 min-w-[300px]">
             
-            {/* Left: Search (Minimal) */}
+            {/* Left: Search */}
             <button 
               onClick={toggleSearchBar}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-black/5'}`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-black/5'}`}
             >
-              <Search className="w-6 h-6" strokeWidth={2} />
+              <Search className="w-6 h-6" strokeWidth={2.5} />
             </button>
 
             {/* Center: GIANT FAB (+25% bigger) */}
-            <button 
-              onClick={handleSelectPhoto} 
-              className="w-20 h-20 rounded-full fab-glass-bronze -mt-8 shadow-2xl flex items-center justify-center transform transition-transform active:scale-95"
-            >
-              <Plus className="w-10 h-10 text-white drop-shadow-md" strokeWidth={3} />
-            </button>
+            <div className="relative -top-10 mx-6">
+              <button 
+                onClick={handleSelectPhoto} 
+                className="w-24 h-24 rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-transform active:scale-95 border-[6px] border-background"
+              >
+                <Plus className="w-10 h-10 text-white drop-shadow-md" strokeWidth={3} />
+              </button>
+            </div>
 
             {/* Right: Theme Toggle */}
             <button 
               onClick={toggleTheme}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-muted-foreground hover:bg-black/5 transition-all"
+              className="w-12 h-12 rounded-full flex items-center justify-center text-muted-foreground hover:bg-black/5 transition-all active:scale-90"
             >
               {theme === 'dark' ? (
-                <Moon className="w-6 h-6" strokeWidth={2} />
+                <Moon className="w-6 h-6" strokeWidth={2.5} />
               ) : (
-                <Sun className="w-6 h-6" strokeWidth={2} />
+                <Sun className="w-6 h-6" strokeWidth={2.5} />
               )}
             </button>
 
@@ -193,21 +224,22 @@ export function ArchiveScreen() {
         </div>
       </nav>
 
-      {/* Settings Sheet (Triggered via Burger Menu) */}
+      {/* Settings Sheet (Includes Demo Data Generator) */}
       <SettingsSheet 
         open={settingsOpen} 
         onOpenChange={setSettingsOpen} 
         showTrigger={false} 
         expenses={expenses}
+        onDataGenerated={refetch}
       />
 
       {showSuccess && (
-        <div className="fixed top-48 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
-          <div className="glass-stone flex items-center gap-4 px-6 py-4 rounded-full shadow-lg border border-success/20">
-            <div className="w-6 h-6 rounded-full bg-success flex items-center justify-center">
-              <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-scale-in">
+          <div className="glass-stone flex flex-col items-center gap-3 px-8 py-6 rounded-3xl shadow-2xl border border-success/20">
+            <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center shadow-lg shadow-success/30">
+              <Check className="w-6 h-6 text-white" strokeWidth={3} />
             </div>
-            <span className="text-slate-green font-bold text-sm tracking-wide uppercase">Salvato</span>
+            <span className="text-foreground font-bold text-lg">Salvato!</span>
           </div>
         </div>
       )}
