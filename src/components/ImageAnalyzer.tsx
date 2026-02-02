@@ -24,8 +24,9 @@ interface ImageAnalyzerProps {
   onSuccess: () => void;
 }
 
-const SUPABASE_PROJECT_ID = "iqwbspfvgekhzowqembf";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
+// Utilizziamo le variabili d'ambiente
+const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
   const { session } = useAuth();
@@ -88,6 +89,17 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   async function analyzeReceipt() {
+    if (!SUPABASE_PROJECT_ID || !ANON_KEY) {
+      console.error("Missing Env Vars");
+      toast({
+        title: "Errore Configurazione",
+        description: "Variabili d'ambiente mancanti.",
+        variant: "destructive"
+      });
+      setAnalyzing(false);
+      return;
+    }
+
     try {
       const base64Image = await compressImage(imageFile);
       
@@ -154,6 +166,12 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
   async function handleSend() {
     if (!expenseData || !session) return;
+    
+    if (!SUPABASE_PROJECT_ID || !ANON_KEY) {
+      toast({ title: "Errore", description: "Configurazione mancante", variant: "destructive" });
+      return;
+    }
+
     setSending(true);
     try {
       const base64Image = await compressImage(imageFile);
