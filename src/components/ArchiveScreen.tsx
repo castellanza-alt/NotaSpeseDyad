@@ -116,16 +116,16 @@ export function ArchiveScreen() {
   // SPACER CALCULATION:
   // Base header height is ~14rem + 15px extra padding.
   // Spacer adjustments:
-  // - Standard: 14.5rem + 15px
-  // - With Search: 18.5rem + 15px
-  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+15px)]' : 'h-[calc(14.5rem+15px)]';
+  // - Standard: 14.5rem + 22px (Increased by 7px from 15px)
+  // - With Search: 18.5rem + 22px
+  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+22px)]' : 'h-[calc(14.5rem+22px)]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Height increased by 15px as requested (14rem + 15px) */}
+      {/* Height remains +15px as requested */}
       <div className="fixed top-0 left-0 right-0 h-[calc(14rem+15px)] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
@@ -234,9 +234,14 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Position adjusted: 14.5rem + 15px */}
+      {/* Position adjusted: 14.5rem + 15px (Search bar position follows spacer logic + adjustment) */}
+      {/* Wait, the search bar top position should likely match the content start or slightly overlap. 
+          Currently it's 'top-[calc(14.5rem+15px)]'. 
+          If we move content down (+7px), search bar should probably move down too to stay with content?
+          Usually yes. Let's update it to +22px to match spacer.
+      */}
       {showSearchBar && (
-        <div className="fixed top-[calc(14.5rem+15px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
