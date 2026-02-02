@@ -97,10 +97,10 @@ export function ArchiveScreen() {
               <OdometerValue value={currentMonthTotal} />
             </span>
             
-            {/* Search Button moved here */}
+            {/* Search Button moved here - aligned to bottom */}
             <button 
               onClick={toggleSearchBar} 
-              className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 rounded-full text-foreground/40 hover:text-primary transition-colors hover:bg-black/5"
+              className="absolute -right-8 bottom-1 p-2 rounded-full text-foreground/40 hover:text-primary transition-colors hover:bg-black/5"
               aria-label="Cerca"
             >
               <Search className="w-4 h-4" />
