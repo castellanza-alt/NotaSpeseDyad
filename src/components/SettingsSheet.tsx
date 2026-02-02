@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle, Database } from "lucide-react";
+import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle, Database, X } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { Expense } from "@/hooks/useExpenses"; 
 import { signOut } from "@/lib/auth";
@@ -232,11 +232,20 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       
       <SheetContent 
         side="top" 
-        className="bg-background border-b border-border/50 rounded-b-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto"
+        className="bg-background border-b border-border/50 rounded-b-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto [&>button]:hidden"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="pb-6">
-          <SheetTitle className="text-foreground text-xl font-semibold">Impostazioni</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-foreground text-xl font-semibold">Impostazioni</SheetTitle>
+            <button 
+              onClick={() => setOpen(false)}
+              className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:bg-red-600 transition-transform active:scale-95"
+              aria-label="Chiudi impostazioni"
+            >
+              <X className="w-5 h-5" strokeWidth={2.5} />
+            </button>
+          </div>
         </SheetHeader>
 
         <div className="space-y-8">
