@@ -224,8 +224,8 @@ export function ArchiveScreen() {
         </div>
         
         {/* HUGE BALANCE */}
-        {/* Removed scale-110 to reduce size by ~10% */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm mt-0 pointer-events-auto">
+        {/* Scaled down to 90% */}
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 mt-0 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
             <OdometerValue value={currentMonthTotal} />
