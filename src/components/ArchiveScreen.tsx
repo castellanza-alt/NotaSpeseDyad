@@ -114,19 +114,19 @@ export function ArchiveScreen() {
   };
 
   // SPACER CALCULATION:
-  // Base header height is ~14rem + 10px extra padding.
+  // Base header height is ~14rem + 15px extra padding.
   // Spacer adjustments:
-  // - Standard: 14.5rem + 10px
-  // - With Search: 18.5rem + 10px
-  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+10px)]' : 'h-[calc(14.5rem+10px)]';
+  // - Standard: 14.5rem + 15px
+  // - With Search: 18.5rem + 15px
+  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+15px)]' : 'h-[calc(14.5rem+15px)]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Height increased by 10px as requested (14rem + 10px) */}
-      <div className="fixed top-0 left-0 right-0 h-[calc(14rem+10px)] z-40 pointer-events-none">
+      {/* Height increased by 15px as requested (14rem + 15px) */}
+      <div className="fixed top-0 left-0 right-0 h-[calc(14rem+15px)] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -234,9 +234,9 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Position adjusted: 14.5rem + 10px */}
+      {/* Position adjusted: 14.5rem + 15px */}
       {showSearchBar && (
-        <div className="fixed top-[calc(14.5rem+10px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[calc(14.5rem+15px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
