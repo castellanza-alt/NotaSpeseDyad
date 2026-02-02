@@ -82,6 +82,7 @@ export function VirtualizedExpenseList({
     <div
       ref={parentRef}
       className="flex-1 overflow-auto w-full scrollbar-hide"
+      style={{ contain: "strict" }}
       onScroll={handleScroll}
     >
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
