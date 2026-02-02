@@ -8,7 +8,7 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
-import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval, startOfMonth } from "date-fns";
+import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -25,9 +25,11 @@ export function ArchiveScreen() {
   // --- WHEEL STATE ---
   const [currentDate, setCurrentDate] = useState(new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
 
-  // Generate a wide range of months for the wheel (e.g., +/- 24 months)
+  const { theme, toggleTheme } = useTheme();
+
+  // Generate range of months (+/- 24 months)
   const monthsList = useMemo(() => {
     const today = new Date();
     const start = subMonths(today, 24);
@@ -35,27 +37,7 @@ export function ArchiveScreen() {
     return eachMonthOfInterval({ start, end });
   }, []);
 
-  const { theme, toggleTheme } = useTheme();
-
-  // Scroll to current month on mount
-  useEffect(() => {
-    if (scrollRef.current) {
-      const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
-      if (index !== -1) {
-        // Center the selected month
-        // Item width (2px line + 14px gap = ~16px per step visually, 
-        // but we use actual DOM measurement for precision)
-        // Let's assume a fixed width per tick container for simpler math: w-12 (48px)
-        const itemWidth = 48; 
-        const containerWidth = scrollRef.current.clientWidth;
-        const scrollPos = (index * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
-        
-        scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
-      }
-    }
-  }, []); // Run once on mount to set initial position
-
-  
+  // Sync Search
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
     return () => clearTimeout(timer);
@@ -97,16 +79,14 @@ export function ArchiveScreen() {
   };
 
   // --- WHEEL LOGIC ---
+  const ITEM_WIDTH = 64; // Width of one tick area (w-16 = 64px)
+
   const handleWheelScroll = () => {
     if (!scrollRef.current) return;
     
-    // Simple debounce/throttle could be added here if performance suffers
+    // Calculate center index
     const container = scrollRef.current;
-    const center = container.scrollLeft + (container.clientWidth / 2);
-    const itemWidth = 48; // Must match the CSS width of the tick container
-    
-    // Calculate which index is at the center
-    const index = Math.floor(center / itemWidth);
+    const index = Math.round(container.scrollLeft / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
       const newMonth = monthsList[index];
@@ -116,20 +96,35 @@ export function ArchiveScreen() {
     }
   };
 
+  // Initial Center & Programmatic Updates
+  useEffect(() => {
+    if (scrollRef.current && !isUserScrolling) {
+      const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
+      if (index !== -1) {
+        const targetScroll = index * ITEM_WIDTH;
+        // Check distance to avoid fighting native snap during small adjustments
+        if (Math.abs(scrollRef.current.scrollLeft - targetScroll) > 5) {
+           scrollRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
+        }
+      }
+    }
+  }, [currentDate, isUserScrolling, monthsList]);
+
+  // Adjust spacer based on SearchBar visibility
   const topSpacerHeight = showSearchBar ? 'h-[24rem]' : 'h-[20rem]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER FADE & BACKGROUND */}
+      {/* HEADER FADE */}
       <div className="fixed top-0 left-0 right-0 h-96 z-20 pointer-events-none header-fade" />
 
-      {/* BURGER MENU */}
+      {/* TOP RIGHT: Burger Menu */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button 
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md hover:bg-background/80 transition-all active:scale-95 shadow-sm"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md hover:bg-background/80 transition-all active:scale-95 shadow-sm border border-white/5"
         >
           <Menu className="w-6 h-6 text-foreground" strokeWidth={2} />
         </button>
@@ -138,8 +133,8 @@ export function ArchiveScreen() {
       {/* MAXI HEADER: WHEEL & BALANCE */}
       <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top mt-2 pointer-events-none">
         
-        {/* 1. CURRENT MONTH NAME (Top of Wheel) */}
-        <div className="flex flex-col items-center mb-4 animate-fade-in">
+        {/* 1. CURRENT MONTH NAME (Fixed Above Wheel) */}
+        <div className="flex flex-col items-center mb-6 animate-fade-in pointer-events-none z-30">
           <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground uppercase">
             {format(currentDate, "yyyy")}
           </h2>
@@ -148,40 +143,52 @@ export function ArchiveScreen() {
           </h1>
         </div>
 
-        {/* 2. HORIZONTAL WHEEL (Interactive) */}
+        {/* 2. HORIZONTAL GRAPHICAL WHEEL (The Ruler) */}
         <div className="relative w-full h-16 pointer-events-auto">
-          {/* Center Indicator (The "Needle") */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-primary z-10 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.2)]" />
+          {/* Center Indicator (Needle) */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[3px] bg-primary z-20 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)]" />
           
-          {/* Gradients to fade edges */}
-          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background/80 to-transparent z-10 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background/80 to-transparent z-10 pointer-events-none" />
+          {/* Side Gradients */}
+          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-          {/* Scrollable Container */}
+          {/* Scroll Container */}
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
-            className="w-full h-full overflow-x-auto scrollbar-hide flex items-center px-[50%] snap-x snap-mandatory"
-            style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
-            onTouchStart={() => setIsScrolling(true)}
-            onTouchEnd={() => setIsScrolling(false)}
+            onTouchStart={() => setIsUserScrolling(true)}
+            onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)} // Delay to allow snap to finish
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-center px-[calc(50%-32px)] snap-x snap-mandatory cursor-grab active:cursor-grabbing"
           >
             {monthsList.map((date, i) => {
               const isCurrent = isSameMonth(date, currentDate);
+              // We emphasize start of year or quarter
+              const isStartOfYear = date.getMonth() === 0;
+              const isQuarter = date.getMonth() % 3 === 0;
+
               return (
                 <div 
                   key={i} 
-                  className="flex-shrink-0 w-12 h-full flex flex-col items-center justify-center snap-center"
+                  className="flex-shrink-0 w-16 h-full flex flex-col items-center justify-center snap-center group relative"
                 >
-                  {/* The Tick Line */}
+                  {/* The Tick */}
                   <div 
                     className={cn(
-                      "w-[2px] rounded-full transition-all duration-200",
+                      "rounded-full transition-all duration-300",
                       isCurrent 
-                        ? "h-8 bg-primary opacity-0" // Hidden because of the center indicator overlaid above
-                        : "h-4 bg-muted-foreground/30"
+                        ? "w-[3px] h-10 bg-transparent" // Invisible center (placeholder for alignment with needle)
+                        : cn(
+                            "bg-muted-foreground/30 group-hover:bg-muted-foreground/50",
+                            isStartOfYear ? "h-10 w-[2px] bg-foreground/40" : 
+                            isQuarter ? "h-7 w-[1.5px]" : "h-4 w-[1px]"
+                          )
                     )} 
                   />
+                  
+                  {/* Optional: Tiny dot for start of year */}
+                  {isStartOfYear && !isCurrent && (
+                     <div className="absolute bottom-2 w-1 h-1 rounded-full bg-foreground/30" />
+                  )}
                 </div>
               );
             })}
@@ -189,7 +196,7 @@ export function ArchiveScreen() {
         </div>
         
         {/* 3. HUGE BALANCE */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-125 mt-6 pointer-events-auto">
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-125 mt-8 pointer-events-auto transition-all duration-300">
           <span className="text-xl font-semibold mr-1.5 opacity-60 text-foreground/50">€</span>
           <span className="text-6xl font-black tracking-tighter">
             <OdometerValue value={currentMonthTotal} />
@@ -289,8 +296,6 @@ export function ArchiveScreen() {
         expenses={expenses}
         onDataGenerated={() => {
           refetch();
-          // Optional: Jump to the generated month (Feb 2026) if you want immediate feedback
-          // setCurrentDate(new Date(2026, 1, 1)); 
         }}
       />
 
