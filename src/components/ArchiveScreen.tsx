@@ -1,3 +1,4 @@
+py-1) e conferma allineamento verticale">
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
 import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
@@ -234,12 +235,7 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Position adjusted: 14.5rem + 15px (Search bar position follows spacer logic + adjustment) */}
-      {/* Wait, the search bar top position should likely match the content start or slightly overlap. 
-          Currently it's 'top-[calc(14.5rem+15px)]'. 
-          If we move content down (+7px), search bar should probably move down too to stay with content?
-          Usually yes. Let's update it to +22px to match spacer.
-      */}
+      {/* Position adjusted: 14.5rem + 22px */}
       {showSearchBar && (
         <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
@@ -290,7 +286,7 @@ export function ArchiveScreen() {
       {/* CONSOLE DI COMANDO */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
-          <div className="relative flex items-center justify-between px-6 py-2 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
+          <div className="relative flex items-center justify-between px-6 py-1 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
             
             <button 
               onClick={toggleSearchBar}
