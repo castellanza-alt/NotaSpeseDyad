@@ -113,15 +113,16 @@ export function ArchiveScreen() {
     }
   };
 
-  const topSpacerHeight = showSearchBar ? 'h-[24rem]' : 'h-[20rem]';
+  // Adjusted spacer to match new header height (18.5rem + gap)
+  const topSpacerHeight = showSearchBar ? 'h-[23.5rem]' : 'h-[19.5rem]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Sostituito l'header-fade con un effetto vetro fisico */}
-      <div className="fixed top-0 left-0 right-0 h-[26rem] z-40 pointer-events-none">
+      {/* Reduced height to 18.5rem to end just below the balance */}
+      <div className="fixed top-0 left-0 right-0 h-[18.5rem] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -225,8 +226,9 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
+      {/* Repositioned to sit just below the new header height */}
       {showSearchBar && (
-        <div className="fixed top-[20rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[19rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
