@@ -119,8 +119,14 @@ export function ArchiveScreen() {
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER BACKGROUND & FADE */}
-      <div className="fixed top-0 left-0 right-0 h-[26rem] z-10 pointer-events-none header-fade opacity-100" />
+      {/* 1. HEADER FROSTED GLASS BACKGROUND */}
+      {/* Sostituito l'header-fade con un effetto vetro fisico */}
+      <div className="fixed top-0 left-0 right-0 h-[26rem] z-40 pointer-events-none">
+        {/* Strato sfocatura e colore diluito */}
+        <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
+        {/* Sfumatura inferiore per ammorbidire il taglio */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
+      </div>
 
       {/* BURGER MENU */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
@@ -132,27 +138,26 @@ export function ArchiveScreen() {
         </button>
       </div>
 
-      {/* MAXI HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top pointer-events-none">
+      {/* MAXI HEADER CONTENT */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
-        {/* 1. YEAR (Statico sopra il righello) */}
+        {/* YEAR */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
           <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
-        {/* 2. THE RULER INTERFACE (Il Righello) */}
+        {/* RULER INTERFACE */}
         <div className="relative w-full h-24 flex items-end pointer-events-auto select-none">
           
           {/* MASCHERE LATERALI SFUMATE */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
           
-          {/* INDICATORE CENTRALE (La linea rossa) */}
+          {/* INDICATORE CENTRALE */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-             {/* Triangolino sotto */}
              <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
@@ -164,12 +169,10 @@ export function ArchiveScreen() {
             onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)}
             className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
           >
-            {/* SPACER INIZIALE: Meta schermo - meta oggetto */}
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
             
             {monthsList.map((date, i) => {
               const isCurrent = isSameMonth(date, currentDate);
-              
               return (
                 <div 
                   key={i} 
@@ -185,28 +188,20 @@ export function ArchiveScreen() {
                     }}
                     className="w-full h-full flex flex-col justify-end"
                   >
-                    {/* ZONA TACCHE (Ticks) */}
                     <div className="w-full h-10 flex items-end justify-between px-1 mb-2">
-                      {/* TACCA MAGGIORE (Mese) */}
                       <div className={cn(
                         "w-[2px] rounded-t-sm transition-all duration-300",
                         isCurrent ? "h-10 bg-foreground" : "h-6 bg-foreground/30 group-hover:bg-foreground/50"
                       )} />
-                      
-                      {/* TACCHE MINORI (Riempitivo) - 4 tacche */}
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                       <div className="w-[1px] h-3 bg-foreground/10" />
                     </div>
-
-                    {/* LABEL MESE */}
                     <div className="absolute bottom-0 left-0 w-full text-left pl-1">
                       <span className={cn(
-                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]", // Centra testo sotto la tacca
-                        isCurrent 
-                          ? "text-foreground scale-110" 
-                          : "text-muted-foreground/50 scale-90"
+                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]", 
+                        isCurrent ? "text-foreground scale-110" : "text-muted-foreground/50 scale-90"
                       )}>
                         {format(date, "MMM", { locale: it }).toUpperCase()}
                       </span>
@@ -216,12 +211,11 @@ export function ArchiveScreen() {
               );
             })}
             
-            {/* SPACER FINALE */}
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
           </div>
         </div>
         
-        {/* 3. HUGE BALANCE */}
+        {/* HUGE BALANCE */}
         <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110 mt-6 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
@@ -230,9 +224,9 @@ export function ArchiveScreen() {
         </div>
       </header>
 
-      {/* SEARCH BAR (Slide down) */}
+      {/* SEARCH BAR */}
       {showSearchBar && (
-        <div className="fixed top-[20rem] left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[20rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
@@ -242,8 +236,15 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* LIST CONTAINER */}
-      <div className="flex-1 flex flex-col h-full w-full relative z-0">
+      {/* LIST CONTAINER WITH MASK */}
+      {/* z-0 per stare sotto al vetro. maskImage per sfumare dolcemente in alto */}
+      <div 
+        className="flex-1 flex flex-col h-full w-full relative z-0"
+        style={{
+          maskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)'
+        }}
+      >
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-32">
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
@@ -277,7 +278,6 @@ export function ArchiveScreen() {
         <div className="flex justify-center pointer-events-auto">
           <div className="relative flex items-center justify-between px-6 py-2 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
             
-            {/* Search */}
             <button 
               onClick={toggleSearchBar}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
@@ -285,7 +285,6 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* ACTION BUTTON (Smaller, Integrated) */}
             <div className="relative mx-6">
               <button 
                 onClick={handleSelectPhoto} 
@@ -295,7 +294,6 @@ export function ArchiveScreen() {
               </button>
             </div>
 
-            {/* Theme */}
             <button 
               onClick={toggleTheme}
               className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
