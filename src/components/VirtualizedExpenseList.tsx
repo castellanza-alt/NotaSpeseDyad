@@ -9,6 +9,8 @@ interface VirtualizedExpenseListProps {
   expenses: Expense[];
   lastAddedId: string | null;
   onExpenseClick: (expense: Expense) => void;
+  onExpenseDelete: (id: string) => void;
+  onExpenseEdit: (expense: Expense) => void; // New prop
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
@@ -19,6 +21,8 @@ export function VirtualizedExpenseList({
   expenses,
   lastAddedId,
   onExpenseClick,
+  onExpenseDelete,
+  onExpenseEdit,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -26,9 +30,9 @@ export function VirtualizedExpenseList({
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Height approx 180px + 24px Gap
-  const CARD_HEIGHT = 180;
-  const GAP = 24; 
+  // Height approx 175px + 12px Gap (reduced gap for tighter feel)
+  const CARD_HEIGHT = 175;
+  const GAP = 12; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
 
   const virtualizer = useVirtualizer({
@@ -69,7 +73,7 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto w-full"
+      className="flex-1 overflow-auto w-full scrollbar-hide"
       style={{ contain: "strict" }}
     >
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
@@ -103,10 +107,12 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full h-full pb-2 flex justify-center"> 
+                <div className="w-full h-full flex justify-center"> 
                   <ExpenseCard
                     expense={expense}
                     onClick={() => onExpenseClick(expense)}
+                    onDelete={() => onExpenseDelete(expense.id)}
+                    onEdit={() => onExpenseEdit(expense)}
                   />
                 </div>
               )}
