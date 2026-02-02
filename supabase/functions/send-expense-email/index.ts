@@ -21,6 +21,16 @@ interface SendEmailRequest {
   imageBase64: string;
 }
 
+// Simple HTML escaping function
+const escapeHtml = (unsafe: string | number): string => {
+  return String(unsafe)
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -73,6 +83,13 @@ serve(async (req) => {
         })
       : "Data non disponibile";
 
+    // Sanitize inputs
+    const safeMerchant = escapeHtml(expense.merchant || "Non specificato");
+    const safeDate = escapeHtml(formattedDate);
+    const safeCategory = escapeHtml(expense.category || "Non categorizzato");
+    const safeCurrency = escapeHtml(expense.currency);
+    const safeTotal = expense.total.toFixed(2); // Numbers fixed to 2 decimals don't need escaping but toFixed returns string safe for HTML in this context
+
     const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -100,27 +117,27 @@ serve(async (req) => {
     <div class="content">
       <div class="field">
         <div class="label">Esercente</div>
-        <div class="value">${expense.merchant || "Non specificato"}</div>
+        <div class="value">${safeMerchant}</div>
       </div>
       <div class="field">
         <div class="label">Data</div>
-        <div class="value">${formattedDate}</div>
+        <div class="value">${safeDate}</div>
       </div>
       <div class="field">
         <div class="label">Categoria</div>
-        <div class="value">${expense.category || "Non categorizzato"}</div>
+        <div class="value">${safeCategory}</div>
       </div>
       <div class="field">
         <div class="label">Totale</div>
-        <div class="total">${expense.currency} ${expense.total.toFixed(2)}</div>
+        <div class="total">${safeCurrency} ${safeTotal}</div>
       </div>
       ${expense.items && expense.items.length > 0 ? `
       <div class="items">
         <div class="label" style="margin-bottom: 8px;">Articoli</div>
         ${expense.items.map((item) => `
           <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-            <span>${item.name} (x${item.quantity})</span>
-            <span>${expense.currency} ${item.price.toFixed(2)}</span>
+            <span>${escapeHtml(item.name)} (x${escapeHtml(item.quantity)})</span>
+            <span>${safeCurrency} ${item.price.toFixed(2)}</span>
           </div>
         `).join("")}
       </div>
@@ -145,6 +162,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Nota Spese <notifiche@insightnode.it>",
         to: to,
+        // Subject typically plain text, but good to be careful. JSON.stringify handles basic escaping for JSON payload.
         subject: `Nota Spese: ${expense.merchant || "Nuova spesa"} - ${expense.currency} ${expense.total.toFixed(2)}`,
         html: emailHtml,
         attachments: [
