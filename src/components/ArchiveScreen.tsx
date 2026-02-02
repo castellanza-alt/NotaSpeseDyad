@@ -1,4 +1,3 @@
-py-1) e conferma allineamento verticale">
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
 import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
@@ -295,12 +294,13 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            <div className="relative mx-6 -translate-y-[15px]">
+            {/* Pulsante Centrale Float (Wrapper h-0 per non espandere la pillola) */}
+            <div className="relative w-[74px] h-0 mx-4 flex items-center justify-center">
               <button 
                 onClick={handleSelectPhoto} 
-                className="w-16 h-16 rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
+                className="absolute bottom-[-15px] w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
               >
-                <Plus className="w-8 h-8 text-white drop-shadow-sm" strokeWidth={2.5} />
+                <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
               </button>
             </div>
 
