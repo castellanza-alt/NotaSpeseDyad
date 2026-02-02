@@ -86,7 +86,12 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
     <div className="relative w-full max-w-[90%] mx-auto mb-3 min-h-[175px]">
       
       {/* BACKGROUND ACTIONS (Revealed on Swipe) */}
-      <div className="absolute inset-0 flex justify-end items-center px-4 rounded-[2.5rem] bg-transparent">
+      <div 
+        className={cn(
+          "absolute inset-0 flex justify-end items-center px-4 rounded-[2.5rem] bg-transparent transition-opacity duration-200",
+          swipeOffset < -5 ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+      >
         <div className="flex flex-col gap-3 pl-4">
           {/* VIEW BUTTON (First/Top) */}
           <button 
