@@ -2,20 +2,23 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Rimuoviamo i valori di fallback hardcoded per sicurezza
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Fallback values for development/preview if env vars are missing
+const FALLBACK_URL = "https://iqwbspfvgekhzowqembf.supabase.co";
+const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("Attenzione: Variabili d'ambiente Supabase mancanti (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)");
+  console.error("Attenzione: Variabili d'ambiente Supabase mancanti e nessun fallback disponibile.");
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(
-  SUPABASE_URL || "", 
-  SUPABASE_ANON_KEY || "", 
+  SUPABASE_URL, 
+  SUPABASE_ANON_KEY, 
   {
     auth: {
       storage: localStorage,
