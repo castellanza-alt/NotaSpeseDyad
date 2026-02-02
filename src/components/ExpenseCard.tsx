@@ -92,7 +92,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
       
       {/* BACKGROUND ACTIONS (Revealed on Swipe) */}
       <div className="absolute inset-0 flex justify-end items-center px-4 rounded-[2.5rem] bg-transparent">
-        <div className="flex gap-3 pl-4">
+        <div className="flex flex-col gap-3 pl-4">
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit?.(); setSwipeOffset(0); }}
             className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-white shadow-lg z-10"
