@@ -3,10 +3,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
-import { useExpenses } from "@/hooks/useExpenses";
+import { Expense } from "@/hooks/useExpenses"; // Import Type only
 import { signOut } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
@@ -17,11 +16,11 @@ interface SettingsSheetProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
+  expenses: Expense[]; // Receive expenses from parent to ensure sync with DB/UI changes
 }
 
-export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true }: SettingsSheetProps) {
+export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses }: SettingsSheetProps) {
   const { profile, updateProfile } = useProfile();
-  const { expenses } = useExpenses();
   const { toast } = useToast();
   
   const [internalOpen, setInternalOpen] = useState(false);
@@ -36,18 +35,17 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     }
   };
   
-  const [emails, setEmails] = useState<string[]>([]); // Changed to array
+  const [emails, setEmails] = useState<string[]>([]);
   const [isDefault, setIsDefault] = useState(profile?.is_default_email || false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [emailErrors, setEmailErrors] = useState<string[]>([]); // Array for errors
+  const [emailErrors, setEmailErrors] = useState<string[]>([]);
   
-  // Sync email state with profile
   useEffect(() => {
     if (profile?.default_emails) {
       setEmails(profile.default_emails);
     } else {
-      setEmails([""]); // Start with one empty input if no emails
+      setEmails([""]);
     }
     if (profile?.is_default_email !== undefined) {
       setIsDefault(profile.is_default_email);
@@ -58,7 +56,6 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     const newEmails = [...emails];
     newEmails[index] = value;
     setEmails(newEmails);
-    // Clear error for this specific input when it changes
     const newErrors = [...emailErrors];
     newErrors[index] = "";
     setEmailErrors(newErrors);
@@ -73,7 +70,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
 
   const handleRemoveEmail = (index: number) => {
     const newEmails = emails.filter((_, i) => i !== index);
-    setEmails(newEmails.length > 0 ? newEmails : [""]); // Ensure at least one input remains
+    setEmails(newEmails.length > 0 ? newEmails : [""]);
     setEmailErrors(emailErrors.filter((_, i) => i !== index));
   };
 
@@ -120,6 +117,8 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
   const handleExportCSV = async () => {
     setExporting(true);
     try {
+      // Use the expenses prop which comes directly from ArchiveScreen state
+      // ensuring it reflects recent deletions/edits immediately.
       const headers = ["Data", "Esercente", "Importo", "Valuta", "Categoria"];
       const rows = expenses.map(e => [
         e.expense_date || "", 
@@ -180,7 +179,8 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
         </SheetTrigger>
       )}
       
-      <SheetContent className="bg-background border-l border-border/50 pt-safe-top pb-safe-bottom overflow-y-auto">
+      {/* Changed side to "bottom" for slide-up animation */}
+      <SheetContent side="bottom" className="bg-background border-t border-border/50 rounded-t-[2rem] h-[85vh] pt-safe-top pb-safe-bottom overflow-y-auto">
         <SheetHeader className="pb-6">
           <SheetTitle className="text-foreground text-xl font-semibold">Impostazioni</SheetTitle>
         </SheetHeader>

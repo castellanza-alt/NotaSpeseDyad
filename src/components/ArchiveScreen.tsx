@@ -90,12 +90,21 @@ export function ArchiveScreen() {
             SPESE DI {currentMonthName}
           </p>
           
-          {/* Huge Balance */}
-          <div className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110">
+          {/* Huge Balance with embedded Search Button */}
+          <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-110">
             <span className="text-xl font-semibold mr-1.5 opacity-60 text-foreground/50">€</span>
             <span className="text-5xl font-black tracking-tighter">
               <OdometerValue value={currentMonthTotal} />
             </span>
+            
+            {/* Search Button moved here */}
+            <button 
+              onClick={toggleSearchBar} 
+              className="absolute -right-8 top-1/2 -translate-y-1/2 p-2 rounded-full text-foreground/40 hover:text-primary transition-colors hover:bg-black/5"
+              aria-label="Cerca"
+            >
+              <Search className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -139,13 +148,11 @@ export function ArchiveScreen() {
       {/* Bottom Dock (Frosted Stone) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="relative px-6 pb-[max(env(safe-area-inset-bottom),20px)] pt-0 flex justify-center pointer-events-auto">
-          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-6 py-3 min-w-[300px] gap-6 backdrop-blur-[40px] shadow-lg">
-            <div className="flex items-center gap-3">
+          {/* Removed Search button from dock, adjusted width and gap */}
+          <div className="dock-pill dock-pill-row glass-stone items-center justify-between px-8 py-3 min-w-[260px] gap-8 backdrop-blur-[40px] shadow-lg">
+            <div className="flex items-center gap-6">
               <button onClick={toggleTheme} className="dock-button group">
                 <Moon className="w-5 h-5 group-hover:fill-current transition-all" />
-              </button>
-              <button onClick={toggleSearchBar} className="dock-button group">
-                <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
               <button onClick={() => setSettingsOpen(true)} className="dock-button group">
                 <Menu className="w-5 h-5 group-hover:rotate-90 transition-transform" />
@@ -159,7 +166,13 @@ export function ArchiveScreen() {
         </div>
       </nav>
 
-      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} showTrigger={false} />
+      {/* Passed expenses prop to SettingsSheet to ensure export consistency */}
+      <SettingsSheet 
+        open={settingsOpen} 
+        onOpenChange={setSettingsOpen} 
+        showTrigger={false} 
+        expenses={expenses}
+      />
 
       {showSuccess && (
         <div className="fixed top-44 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
