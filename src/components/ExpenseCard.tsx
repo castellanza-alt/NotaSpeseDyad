@@ -124,23 +124,11 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
           className
         )}
       >
-        {/* TOP ROW: Title Left, Calendar Right */}
+        {/* TOP ROW: Calendar Left, Title Right (SWAPPED) */}
         <div className="flex justify-between items-start w-full mb-1">
-          {/* Merchant Title (Left) */}
-          <div className="flex-1 pr-4 pt-2">
-            <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 text-left">
-              {expense.merchant || "Sconosciuto"}
-            </h3>
-            {/* Category Pill */}
-            <div className="inline-flex items-center justify-center px-2.5 py-1 mt-2 rounded-full bg-secondary/30 border border-border/50">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                {expense.category || "Spesa"}
-              </span>
-            </div>
-          </div>
-
-          {/* Calendar Widget (Moved to TOP RIGHT) */}
-          <div className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 bg-white dark:bg-card shrink-0">
+          
+          {/* Calendar Widget (Now Left) */}
+          <div className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 bg-white dark:bg-card shrink-0 mr-4">
               <div className="w-full h-6 bg-red-600 dark:bg-red-900 flex items-center justify-center">
                   <span className="text-[10px] font-black text-white uppercase tracking-wider leading-none mt-0.5">
                       {month}
@@ -152,6 +140,20 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
                   </span>
               </div>
           </div>
+
+          {/* Merchant Title (Right) */}
+          <div className="flex-1 pt-2 flex flex-col items-end">
+            <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 text-right">
+              {expense.merchant || "Sconosciuto"}
+            </h3>
+            {/* Category Pill */}
+            <div className="inline-flex items-center justify-center px-2.5 py-1 mt-2 rounded-full bg-secondary/30 border border-border/50">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                {expense.category || "Spesa"}
+              </span>
+            </div>
+          </div>
+
         </div>
 
         {/* BOTTOM RIGHT: Solid Flat Price */}
