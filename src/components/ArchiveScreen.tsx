@@ -8,7 +8,7 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
-import { format, addMonths, subMonths, isSameMonth, startOfMonth, eachMonthOfInterval } from "date-fns";
+import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval, startOfMonth } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -22,10 +22,39 @@ export function ArchiveScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
   
-  // Month Navigation State
+  // --- WHEEL STATE ---
   const [currentDate, setCurrentDate] = useState(new Date());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  // Generate a wide range of months for the wheel (e.g., +/- 24 months)
+  const monthsList = useMemo(() => {
+    const today = new Date();
+    const start = subMonths(today, 24);
+    const end = addMonths(today, 24);
+    return eachMonthOfInterval({ start, end });
+  }, []);
 
   const { theme, toggleTheme } = useTheme();
+
+  // Scroll to current month on mount
+  useEffect(() => {
+    if (scrollRef.current) {
+      const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
+      if (index !== -1) {
+        // Center the selected month
+        // Item width (2px line + 14px gap = ~16px per step visually, 
+        // but we use actual DOM measurement for precision)
+        // Let's assume a fixed width per tick container for simpler math: w-12 (48px)
+        const itemWidth = 48; 
+        const containerWidth = scrollRef.current.clientWidth;
+        const scrollPos = (index * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
+        
+        scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
+      }
+    }
+  }, []); // Run once on mount to set initial position
+
   
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -36,11 +65,8 @@ export function ArchiveScreen() {
     searchQuery: debouncedSearch
   });
 
-  // Filter expenses based on selected month (client-side for smooth UX)
   const filteredExpenses = useMemo(() => {
-    // If searching, show all matches regardless of month
     if (debouncedSearch) return expenses;
-
     return expenses.filter(expense => {
       if (!expense.expense_date) return false;
       return isSameMonth(new Date(expense.expense_date), currentDate);
@@ -70,68 +96,100 @@ export function ArchiveScreen() {
     if (showSearchBar) setSearchQuery("");
   };
 
-  // Generate Month Scroller Items (-2 to +2 months)
-  const monthScrollerItems = useMemo(() => {
-    const start = subMonths(currentDate, 2);
-    const end = addMonths(currentDate, 2);
-    return eachMonthOfInterval({ start, end });
-  }, [currentDate]);
+  // --- WHEEL LOGIC ---
+  const handleWheelScroll = () => {
+    if (!scrollRef.current) return;
+    
+    // Simple debounce/throttle could be added here if performance suffers
+    const container = scrollRef.current;
+    const center = container.scrollLeft + (container.clientWidth / 2);
+    const itemWidth = 48; // Must match the CSS width of the tick container
+    
+    // Calculate which index is at the center
+    const index = Math.floor(center / itemWidth);
+    
+    if (index >= 0 && index < monthsList.length) {
+      const newMonth = monthsList[index];
+      if (!isSameMonth(newMonth, currentDate)) {
+        setCurrentDate(newMonth);
+      }
+    }
+  };
 
-  // Dynamic spacer calculation
-  const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-72'; // Increased for taller header
+  const topSpacerHeight = showSearchBar ? 'h-[24rem]' : 'h-[20rem]';
 
   return (
     <div className="h-screen flex flex-col wallet-bg overflow-hidden relative">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER FADE */}
-      <div className="fixed top-0 left-0 right-0 h-80 z-20 pointer-events-none header-fade" />
+      {/* HEADER FADE & BACKGROUND */}
+      <div className="fixed top-0 left-0 right-0 h-96 z-20 pointer-events-none header-fade" />
 
-      {/* TOP RIGHT: Burger Menu (Minimal) */}
+      {/* BURGER MENU */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button 
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md hover:bg-background/80 transition-all active:scale-95"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/50 backdrop-blur-md hover:bg-background/80 transition-all active:scale-95 shadow-sm"
         >
           <Menu className="w-6 h-6 text-foreground" strokeWidth={2} />
         </button>
       </div>
 
-      {/* MAXI HEADER: Horizontal Scroller & Balance */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top mt-4 pointer-events-none">
+      {/* MAXI HEADER: WHEEL & BALANCE */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top mt-2 pointer-events-none">
         
-        {/* Month Roller */}
-        <div className="pointer-events-auto w-full overflow-x-auto scrollbar-hide flex items-center justify-center gap-6 px-10 py-4 mb-2 mask-linear-fade">
-          {monthScrollerItems.map((date, i) => {
-            const isCurrent = isSameMonth(date, currentDate);
-            return (
-              <button
-                key={i}
-                onClick={() => setCurrentDate(date)}
-                className={cn(
-                  "transition-all duration-300 flex flex-col items-center justify-center shrink-0",
-                  isCurrent ? "scale-110 opacity-100" : "scale-90 opacity-40 hover:opacity-70"
-                )}
-              >
-                <span className={cn(
-                  "text-sm font-bold uppercase tracking-widest mb-1",
-                  isCurrent ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {format(date, "MMMM", { locale: it })}
-                </span>
-                <span className={cn(
-                  "text-xs font-medium text-muted-foreground",
-                  isCurrent && "text-foreground"
-                )}>
-                  {format(date, "yyyy")}
-                </span>
-              </button>
-            );
-          })}
+        {/* 1. CURRENT MONTH NAME (Top of Wheel) */}
+        <div className="flex flex-col items-center mb-4 animate-fade-in">
+          <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground uppercase">
+            {format(currentDate, "yyyy")}
+          </h2>
+          <h1 className="text-3xl font-black text-foreground tracking-tight">
+            {format(currentDate, "MMMM", { locale: it })}
+          </h1>
+        </div>
+
+        {/* 2. HORIZONTAL WHEEL (Interactive) */}
+        <div className="relative w-full h-16 pointer-events-auto">
+          {/* Center Indicator (The "Needle") */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-primary z-10 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.2)]" />
+          
+          {/* Gradients to fade edges */}
+          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background/80 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background/80 to-transparent z-10 pointer-events-none" />
+
+          {/* Scrollable Container */}
+          <div 
+            ref={scrollRef}
+            onScroll={handleWheelScroll}
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-center px-[50%] snap-x snap-mandatory"
+            style={{ scrollBehavior: isScrolling ? 'auto' : 'smooth' }}
+            onTouchStart={() => setIsScrolling(true)}
+            onTouchEnd={() => setIsScrolling(false)}
+          >
+            {monthsList.map((date, i) => {
+              const isCurrent = isSameMonth(date, currentDate);
+              return (
+                <div 
+                  key={i} 
+                  className="flex-shrink-0 w-12 h-full flex flex-col items-center justify-center snap-center"
+                >
+                  {/* The Tick Line */}
+                  <div 
+                    className={cn(
+                      "w-[2px] rounded-full transition-all duration-200",
+                      isCurrent 
+                        ? "h-8 bg-primary opacity-0" // Hidden because of the center indicator overlaid above
+                        : "h-4 bg-muted-foreground/30"
+                    )} 
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
         
-        {/* Huge Balance (No Subtitles if 0) */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-125 mt-2 pointer-events-auto">
+        {/* 3. HUGE BALANCE */}
+        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-125 mt-6 pointer-events-auto">
           <span className="text-xl font-semibold mr-1.5 opacity-60 text-foreground/50">€</span>
           <span className="text-6xl font-black tracking-tighter">
             <OdometerValue value={currentMonthTotal} />
@@ -139,9 +197,9 @@ export function ArchiveScreen() {
         </div>
       </header>
 
-      {/* Search Bar (Slide down) */}
+      {/* SEARCH BAR (Slide down) */}
       {showSearchBar && (
-        <div className="fixed top-64 left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-80 left-0 right-0 z-30 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
@@ -159,7 +217,7 @@ export function ArchiveScreen() {
           </div>
         ) : filteredExpenses.length === 0 ? (
           // CLEAN EMPTY STATE
-          <div className="flex-1 flex flex-col items-center justify-center pt-20 animate-fade-in text-center px-10">
+          <div className="flex-1 flex flex-col items-center justify-center pt-32 animate-fade-in text-center px-10">
             <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
               <Search className="w-6 h-6 text-muted-foreground/50" />
             </div>
@@ -185,12 +243,12 @@ export function ArchiveScreen() {
       {/* FOOTER FADE */}
       <div className="fixed bottom-0 left-0 right-0 h-40 z-20 pointer-events-none footer-fade" />
 
-      {/* CONSOLE DI COMANDO (Floating Bottom Bar) */}
+      {/* CONSOLE DI COMANDO */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
           <div className="relative flex items-center justify-between px-8 py-3 rounded-[2.5rem] glass-stone shadow-2xl border border-white/10 min-w-[300px]">
             
-            {/* Left: Search */}
+            {/* Search */}
             <button 
               onClick={toggleSearchBar}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-black/5'}`}
@@ -198,7 +256,7 @@ export function ArchiveScreen() {
               <Search className="w-6 h-6" strokeWidth={2.5} />
             </button>
 
-            {/* Center: GIANT FAB (+25% bigger) */}
+            {/* GIANT FAB */}
             <div className="relative -top-10 mx-6">
               <button 
                 onClick={handleSelectPhoto} 
@@ -208,7 +266,7 @@ export function ArchiveScreen() {
               </button>
             </div>
 
-            {/* Right: Theme Toggle */}
+            {/* Theme */}
             <button 
               onClick={toggleTheme}
               className="w-12 h-12 rounded-full flex items-center justify-center text-muted-foreground hover:bg-black/5 transition-all active:scale-90"
@@ -224,13 +282,16 @@ export function ArchiveScreen() {
         </div>
       </nav>
 
-      {/* Settings Sheet (Includes Demo Data Generator) */}
       <SettingsSheet 
         open={settingsOpen} 
         onOpenChange={setSettingsOpen} 
         showTrigger={false} 
         expenses={expenses}
-        onDataGenerated={refetch}
+        onDataGenerated={() => {
+          refetch();
+          // Optional: Jump to the generated month (Feb 2026) if you want immediate feedback
+          // setCurrentDate(new Date(2026, 1, 1)); 
+        }}
       />
 
       {showSuccess && (
