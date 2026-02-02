@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ExpenseCard } from "./ExpenseCard";
 import type { Expense } from "@/hooks/useExpenses";
 import { Loader2 } from "lucide-react";
@@ -14,7 +15,7 @@ interface VirtualizedExpenseListProps {
   loadingMore: boolean;
   onLoadMore: () => void;
   paddingClassName?: string;
-  onScroll?: (scrollTop: number) => void;
+  onScroll?: (scrollTop: number) => void; // New Prop for Parallax
 }
 
 export function VirtualizedExpenseList({
@@ -29,19 +30,39 @@ export function VirtualizedExpenseList({
   paddingClassName = "h-48",
   onScroll
 }: VirtualizedExpenseListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const { scrollTop, scrollHeight, clientHeight } = target;
-    
-    // Pass scroll position for Parallax
-    onScroll?.(scrollTop);
+  // Height approx 175px + 12px Gap
+  const CARD_HEIGHT = 175;
+  const GAP = 12; 
+  const ITEM_SIZE = CARD_HEIGHT + GAP;
 
-    // Infinite Scroll Logic (Simple)
-    if (scrollHeight - scrollTop - clientHeight < 300 && hasMore && !loadingMore) {
+  const virtualizer = useVirtualizer({
+    count: expenses.length + (hasMore ? 1 : 0),
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ITEM_SIZE,
+    overscan: 3,
+  });
+
+  const items = virtualizer.getVirtualItems();
+
+  useEffect(() => {
+    const lastItem = items[items.length - 1];
+    if (!lastItem) return;
+
+    if (
+      lastItem.index >= expenses.length - 3 &&
+      hasMore &&
+      !loadingMore
+    ) {
       onLoadMore();
     }
+  }, [items, expenses.length, hasMore, loadingMore, onLoadMore]);
+
+  // Handle Scroll for Parallax
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    onScroll?.(target.scrollTop);
   };
 
   if (expenses.length === 0) {
@@ -59,34 +80,53 @@ export function VirtualizedExpenseList({
 
   return (
     <div
-      ref={scrollRef}
-      className="flex-1 overflow-y-auto w-full scrollbar-hide overflow-x-hidden"
+      ref={parentRef}
+      className="flex-1 overflow-auto w-full scrollbar-hide"
       onScroll={handleScroll}
-      style={{ WebkitOverflowScrolling: "touch" }} // Smooth scrolling on iOS
     >
-      {/* Spacer to push content below header */}
-      <div className={cn("w-full shrink-0", paddingClassName)} />
+      <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
 
-      <div className="relative w-full pb-40 px-0 space-y-3">
-        {expenses.map((expense) => (
-          <div key={expense.id} className="flex justify-center w-full">
-            <ExpenseCard
-              expense={expense}
-              onClick={() => onExpenseClick(expense)}
-              onDelete={() => onExpenseDelete(expense.id)}
-              onEdit={() => onExpenseEdit(expense)}
-            />
-          </div>
-        ))}
+      <div
+        className="relative w-full pb-40"
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+        }}
+      >
+        {items.map((virtualRow) => {
+          const isLoaderRow = virtualRow.index >= expenses.length;
+          const expense = expenses[virtualRow.index];
 
-        {loadingMore && (
-          <div className="flex items-center justify-center py-4 w-full">
-            <div className="flex items-center gap-2 text-muted-foreground/60 bg-muted/20 px-4 py-2 rounded-full">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-xs font-medium tracking-wide uppercase">Sincronizzazione</span>
+          return (
+            <div
+              key={virtualRow.key}
+              className="absolute top-0 left-0 w-full flex justify-center px-0 md:px-0 overflow-visible"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {isLoaderRow ? (
+                <div className="flex items-center justify-center h-full w-full">
+                  {loadingMore && (
+                    <div className="flex items-center gap-2 text-muted-foreground/60 bg-muted/20 px-4 py-2 rounded-full">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs font-medium tracking-wide uppercase">Sincronizzazione</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-full flex justify-center"> 
+                  <ExpenseCard
+                    expense={expense}
+                    onClick={() => onExpenseClick(expense)}
+                    onDelete={() => onExpenseDelete(expense.id)}
+                    onEdit={() => onExpenseEdit(expense)}
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );
