@@ -125,8 +125,8 @@ export function ArchiveScreen() {
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Reduced height to 16.5rem (approx 264px) */}
-      <div className="fixed top-0 left-0 right-0 h-[16.5rem] z-40 pointer-events-none">
+      {/* Reduced height to 18.5rem to end just below the balance */}
+      <div className="fixed top-0 left-0 right-0 h-[18.5rem] z-40 pointer-events-none">
         {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         {/* Sfumatura inferiore per ammorbidire il taglio */}
@@ -294,12 +294,12 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            <div className="relative mx-6">
+            <div className="relative mx-6 -translate-y-[15px]">
               <button 
                 onClick={handleSelectPhoto} 
-                className="w-14 h-14 rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[3px] border-background"
+                className="w-16 h-16 rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
               >
-                <Plus className="w-7 h-7 text-white drop-shadow-sm" strokeWidth={2.5} />
+                <Plus className="w-8 h-8 text-white drop-shadow-sm" strokeWidth={2.5} />
               </button>
             </div>
 
