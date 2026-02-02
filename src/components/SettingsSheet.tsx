@@ -19,7 +19,7 @@ interface SettingsSheetProps {
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   expenses: Expense[]; 
-  onDataGenerated?: () => void; // Callback to refresh list
+  onDataGenerated?: () => void;
 }
 
 export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses, onDataGenerated }: SettingsSheetProps) {
@@ -123,34 +123,39 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     if (!user) return;
     setGenerating(true);
     try {
+      // TARGET: FEBBRAIO 2026
       const demoExpenses = [
-        { merchant: "Trenitalia", category: "Trasporti", total: 45.50, day: 2 },
-        { merchant: "Ristorante Da Mario", category: "Cibo", total: 62.00, day: 5 },
-        { merchant: "Uber", category: "Trasporti", total: 12.30, day: 8 },
+        { merchant: "Frecciarossa", category: "Trasporti", total: 89.50, day: 2 },
+        { merchant: "Ristorante Milano", category: "Ristorazione", total: 142.00, day: 5 },
+        { merchant: "Taxi Go", category: "Trasporti", total: 18.50, day: 6 },
         { merchant: "Apple Store", category: "Shopping", total: 129.00, day: 10 },
-        { merchant: "Bar Centrale", category: "Cibo", total: 4.50, day: 12 },
-        { merchant: "Amazon", category: "Shopping", total: 34.99, day: 15 },
-        { merchant: "Benzinaio IP", category: "Trasporti", total: 80.00, day: 18 },
-        { merchant: "Supermercato", category: "Cibo", total: 156.45, day: 20 },
-        { merchant: "Taxi", category: "Trasporti", total: 25.00, day: 24 },
-        { merchant: "Libreria Feltrinelli", category: "Shopping", total: 22.50, day: 27 },
+        { merchant: "Caffè degli Artisti", category: "Ristorazione", total: 6.50, day: 12 },
+        { merchant: "Amazon EU", category: "Shopping", total: 45.99, day: 15 },
+        { merchant: "Distributore Q8", category: "Trasporti", total: 72.00, day: 18 },
+        { merchant: "Esselunga", category: "Spesa", total: 156.45, day: 20 },
+        { merchant: "Uber", category: "Trasporti", total: 25.00, day: 24 },
+        { merchant: "Libreria Mondadori", category: "Shopping", total: 32.50, day: 27 },
       ];
 
       for (const item of demoExpenses) {
+        // Construct date: 2026-02-DD
+        const dayStr = item.day.toString().padStart(2, '0');
+        const dateStr = `2026-02-${dayStr}`;
+
         await supabase.from("expenses").insert({
           user_id: user.id,
           merchant: item.merchant,
           category: item.category,
           total: item.total,
           currency: "EUR",
-          expense_date: `2026-02-${item.day.toString().padStart(2, '0')}`,
-          created_at: new Date().toISOString()
+          expense_date: dateStr,
+          created_at: new Date(dateStr).toISOString()
         });
       }
 
       toast({
         title: "Dati Generati",
-        description: "10 spese aggiunte per Febbraio 2026",
+        description: "10 spese create per Febbraio 2026",
       });
       onDataGenerated?.();
       setOpen(false);

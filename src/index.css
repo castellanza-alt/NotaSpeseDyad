@@ -1,20 +1,19 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* Light Theme - 'Premium Paper & Sunlight' */
+  /* Light Theme */
   :root,
   .light {
     --background: 40 10% 97%; 
     --foreground: 160 30% 20%; 
     
     --card: 0 0% 100%;
-    /* Card Surface: Subtle curvature */
-    --card-surface-top: 45 10% 98%;
+    --card-surface-top: 45 10% 99%;
     --card-surface-center: 0 0% 100%;
-    --card-surface-bottom: 45 15% 96%;
+    --card-surface-bottom: 45 15% 97%;
     
     --card-foreground: 160 30% 20%;
     
@@ -27,31 +26,29 @@
     --muted: 40 10% 94%;
     --muted-foreground: 160 5% 45%; 
     
-    /* Solid Price Color - Slate Green */
     --price-solid: 160 30% 25%; 
 
-    /* Metallic Bronze Vars (Used for FAB and Accents) */
-    --bronze-shine: 45 60% 90%;  /* Champagne */
-    --bronze-mid: 35 45% 65%;    /* Soft Gold */
-    --bronze-shadow: 25 50% 45%; /* Light Bronze */
+    --bronze-shine: 45 60% 90%;
+    --bronze-mid: 35 45% 65%;
+    --bronze-shadow: 25 50% 45%;
 
     --border: 40 10% 90%;
     --input: 40 10% 92%;
     --ring: 160 30% 25%;
 
     --radius: 2rem; 
-    --overlay-color: 40 10% 94%; /* Updated for darker bg match */
+    --overlay-color: 40 10% 97%;
   }
 
-  /* Dark Theme - 'Deep Charcoal & Forest' */
+  /* Dark Theme */
   .dark {
     --background: 220 14% 10%; 
     --foreground: 40 20% 95%; 
 
     --card: 220 14% 14%;
-    --card-surface-top: 220 14% 16%;
-    --card-surface-center: 220 14% 19%; 
-    --card-surface-bottom: 220 14% 14%;
+    --card-surface-top: 220 14% 17%;
+    --card-surface-center: 220 14% 20%; 
+    --card-surface-bottom: 220 14% 15%;
 
     --card-foreground: 40 20% 95%;
     
@@ -64,10 +61,8 @@
     --muted: 220 10% 18%;
     --muted-foreground: 220 10% 70%; 
 
-    /* Solid Price Color - Light Bronze/Off-White */
     --price-solid: 35 40% 75%;
 
-    /* Dark Mode Bronze */
     --bronze-shine: 40 70% 90%;
     --bronze-mid: 35 60% 60%;
     --bronze-shadow: 25 60% 35%;
@@ -84,15 +79,14 @@
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 }
 
-.pt-safe-top { padding-top: max(env(safe-area-inset-top, 20px), 52px); }
-.pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 34px); }
+.pt-safe-top { padding-top: max(env(safe-area-inset-top, 20px), 48px); }
+.pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 32px); }
 
 @layer utilities {
-  /* --- Organic Mesh Gradients (Atmospheric) --- */
   .wallet-bg {
     min-height: 100vh;
     width: 100%;
@@ -101,69 +95,48 @@
   }
   
   .light .wallet-bg {
-    /* Base: Richer Stone/Greige to make white cards pop */
-    background-color: #EEECE8; 
-    
-    /* Significantly more pigmented gradients for texture */
+    background-color: #F2F1EF; 
     background-image: 
-      /* Top Left: Deep Pale Sage */
-      radial-gradient(at 0% 0%, hsla(110, 25%, 82%, 1) 0px, transparent 65%),
-      
-      /* Top Right: Warm Sandy Beige */
-      radial-gradient(at 100% 0%, hsla(38, 45%, 84%, 1) 0px, transparent 65%),
-      
-      /* Bottom Left: Soft Sage */
-      radial-gradient(at 0% 100%, hsla(100, 25%, 86%, 1) 0px, transparent 60%),
-      
-      /* Bottom Right: Rich Sand */
-      radial-gradient(at 100% 100%, hsla(35, 40%, 85%, 1) 0px, transparent 60%);
-      
+      radial-gradient(at 0% 0%, hsla(110, 25%, 82%, 0.6) 0px, transparent 65%),
+      radial-gradient(at 100% 100%, hsla(35, 40%, 85%, 0.6) 0px, transparent 60%);
     background-attachment: fixed;
   }
   
   .dark .wallet-bg {
-    background-color: #121414; /* Deep Charcoal Base */
+    background-color: #121414;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(170, 50%, 15%, 0.7) 0px, transparent 60%),  /* Deep Teal/Petrol */
-      radial-gradient(at 100% 0%, hsla(30, 40%, 15%, 0.4) 0px, transparent 50%), /* Dark Bronze Glow */
-      radial-gradient(at 50% 100%, hsla(170, 40%, 12%, 0.5) 0px, transparent 60%); /* Deep Petrol Bottom */
+      radial-gradient(at 0% 0%, hsla(170, 50%, 15%, 0.5) 0px, transparent 60%),
+      radial-gradient(at 100% 0%, hsla(30, 40%, 15%, 0.3) 0px, transparent 50%);
     background-attachment: fixed;
   }
 
-  /* --- Tactile 3D Card (Enhanced Thickness) --- */
+  /* --- Tactile 3D Card --- */
   .chunky-card-3d {
     background: linear-gradient(
       to bottom, 
       hsl(var(--card-surface-top)), 
-      hsl(var(--card-surface-center)) 45%,
-      hsl(var(--card-surface-center)) 55%,
+      hsl(var(--card-surface-center)) 40%,
       hsl(var(--card-surface-bottom))
     );
-    
-    /* 
-       Updated 3D Highlight: 
-       Inset Shadow 1px Pure White 60% opacity 
-       for physical thickness simulation
-    */
+    /* Inset Highlight for crisp edges + Soft drop shadow */
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.6), 
-      inset 0 0 0 1px rgba(0,0,0,0.02),
-      0 12px 28px -6px rgba(0, 0, 0, 0.1),
-      0 4px 12px -2px rgba(0, 0, 0, 0.05);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9), 
+      0 8px 24px -6px rgba(0, 0, 0, 0.08),
+      0 2px 6px -1px rgba(0, 0, 0, 0.04);
       
-    border: none;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.03); /* Subtle physical border */
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .dark .chunky-card-3d {
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 
-      inset 0 0 0 1px rgba(255,255,255,0.05),
-      0 16px 36px -8px rgba(0, 0, 0, 0.5);
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 
+      0 12px 32px -8px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
   .chunky-card-3d:active {
-    transform: scale(0.98) translateY(2px);
+    transform: scale(0.98);
   }
 
   /* --- Solid Prices --- */
@@ -173,56 +146,32 @@
   
   .text-gradient-bronze-rich {
      @apply text-price-solid;
-     background: none;
-     -webkit-background-clip: border-box;
-     background-clip: border-box;
-     filter: none;
   }
 
   /* --- Frosted Materials --- */
   .glass-stone {
     background-color: hsl(var(--background) / 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.1);
   }
 
-  .dock-pill {
-    border-radius: 9999px;
-    z-index: 50;
-    min-height: 72px;
-    display: flex;
-    flex-direction: column;
-  }
-  .dock-pill-row { flex-direction: row !important; }
-
-  .dock-button {
-    @apply flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200;
-    color: hsl(var(--foreground));
-    
-    &:hover {
-      background-color: hsl(var(--foreground) / 0.05);
-    }
-    @apply active:scale-95;
-  }
-
-  /* --- Jewel FAB (Mandatory Bronze Gradient in Light Mode too) --- */
   .fab-glass-bronze {
     background: linear-gradient(
       135deg, 
       hsl(var(--bronze-mid)), 
       hsl(var(--bronze-shadow))
     );
-    border: 1px solid hsl(var(--bronze-shine) / 0.6);
+    border: 1px solid hsl(var(--bronze-shine) / 0.5);
     box-shadow: 
-      0 8px 20px -4px hsl(var(--bronze-shadow) / 0.4),
-      inset 0 1px 0 hsl(var(--bronze-shine) / 0.5);
+      0 12px 24px -6px hsl(var(--bronze-shadow) / 0.5),
+      inset 0 1px 0 hsl(var(--bronze-shine) / 0.6);
     
-    @apply flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300;
+    @apply flex items-center justify-center rounded-full transition-all duration-300;
     color: white;
 
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-2px) scale(1.02);
       filter: brightness(1.1);
     }
     @apply active:scale-95;
@@ -230,16 +179,17 @@
 
   /* --- Overlays --- */
   .header-fade {
-    background: linear-gradient(to bottom, hsl(var(--overlay-color)) 25%, transparent 100%);
+    background: linear-gradient(to bottom, hsl(var(--background)) 10%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
   }
   
   .footer-fade {
-    background: linear-gradient(to top, hsl(var(--overlay-color)) 25%, transparent 100%);
+    background: linear-gradient(to top, hsl(var(--background)) 10%, transparent 100%);
   }
 
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-  .animate-slide-down { animation: slide-down 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-  @keyframes slide-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-slide-down { animation: slide-down 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+  @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 }
