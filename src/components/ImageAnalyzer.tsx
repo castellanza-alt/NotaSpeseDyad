@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useToast } from "@/hooks/use-toast";
-import { useHaptic } from "@/hooks/useHaptic";
 
 interface ExpenseData {
   merchant: string;
@@ -33,7 +32,6 @@ const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || FALLBACK
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_KEY;
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
-  const { impact, success, error: triggerError } = useHaptic();
   const { session } = useAuth();
   const { profile } = useProfile();
   const { addExpense } = useExpenses();
@@ -101,7 +99,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         description: "Variabili d'ambiente mancanti.",
         variant: "destructive"
       });
-      triggerError();
       setAnalyzing(false);
       return;
     }
@@ -123,8 +120,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       const result = await response.json();
       
-      impact(); // Haptic on analysis complete
-      
       setExpenseData({
         merchant: result.data.merchant || "Sconosciuto",
         expense_date: result.data.date || new Date().toISOString().split("T")[0],
@@ -136,7 +131,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
     } catch (error: any) {
       console.error("Analysis error:", error);
-      triggerError();
       toast({
         title: "Errore Analisi",
         description: "Impossibile analizzare l'immagine.",
@@ -174,11 +168,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   };
 
   async function handleSend() {
-    impact();
     if (!expenseData || !session) return;
     
     if (!SUPABASE_PROJECT_ID || !ANON_KEY) {
-      triggerError();
       toast({ title: "Errore", description: "Configurazione mancante", variant: "destructive" });
       return;
     }
@@ -232,13 +224,11 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       await addExpense(dbPayload);
 
-      success(); // Success vibration
       setSent(true);
       setTimeout(onSuccess, 1500);
 
     } catch (error: any) {
       console.error("Send error:", error);
-      triggerError();
       toast({ 
         title: "Errore invio", 
         description: "Riprova.", 
@@ -257,7 +247,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
-          <button onClick={() => { impact(); onClose(); }} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </header>
 
         <div className="flex-1 overflow-auto p-5 space-y-4">

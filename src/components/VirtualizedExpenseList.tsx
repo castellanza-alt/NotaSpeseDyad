@@ -10,12 +10,11 @@ interface VirtualizedExpenseListProps {
   lastAddedId: string | null;
   onExpenseClick: (expense: Expense) => void;
   onExpenseDelete: (id: string) => void;
-  onExpenseEdit: (expense: Expense) => void;
+  onExpenseEdit: (expense: Expense) => void; // New prop
   hasMore: boolean;
   loadingMore: boolean;
   onLoadMore: () => void;
   paddingClassName?: string;
-  onScroll?: (scrollTop: number) => void; // New Prop for Parallax
 }
 
 export function VirtualizedExpenseList({
@@ -27,12 +26,11 @@ export function VirtualizedExpenseList({
   hasMore,
   loadingMore,
   onLoadMore,
-  paddingClassName = "h-48",
-  onScroll
+  paddingClassName = "h-48"
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Height approx 175px + 12px Gap
+  // Height approx 175px + 12px Gap (reduced gap for tighter feel)
   const CARD_HEIGHT = 175;
   const GAP = 12; 
   const ITEM_SIZE = CARD_HEIGHT + GAP;
@@ -59,12 +57,6 @@ export function VirtualizedExpenseList({
     }
   }, [items, expenses.length, hasMore, loadingMore, onLoadMore]);
 
-  // Handle Scroll for Parallax
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    onScroll?.(target.scrollTop);
-  };
-
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-center pt-20">
@@ -83,7 +75,6 @@ export function VirtualizedExpenseList({
       ref={parentRef}
       className="flex-1 overflow-auto w-full scrollbar-hide"
       style={{ contain: "strict" }}
-      onScroll={handleScroll}
     >
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
 
