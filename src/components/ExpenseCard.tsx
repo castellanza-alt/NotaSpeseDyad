@@ -47,7 +47,9 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
 
   // Organic Rotation Calculation
   const { rotation, offsetX } = useMemo(() => {
-    const seed = expense.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    // Fallback safe if id is somehow missing
+    const seedStr = expense.id || "default";
+    const seed = seedStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const randRot = Math.sin(seed) * 10000;
     const rotVal = (randRot - Math.floor(randRot)) * 6 - 3; 
     const randX = Math.cos(seed) * 10000;
@@ -66,6 +68,8 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
     if (!cardRef.current) return;
     
     const rect = cardRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return; // Prevent division by zero
+
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     
@@ -76,7 +80,10 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
     const rotateX = ((y - centerY) / centerY) * -8; 
     const rotateY = ((x - centerX) / centerX) * 8;
 
-    setTilt({ x: rotateX, y: rotateY });
+    // Check for NaN just in case
+    if (!isNaN(rotateX) && !isNaN(rotateY)) {
+        setTilt({ x: rotateX, y: rotateY });
+    }
   };
 
   const onMouseMove = (e: MouseEvent) => {
@@ -186,7 +193,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
         className={cn(
           "chunky-card-3d group relative flex flex-col p-5 w-full h-full", 
           "rounded-[2.5rem] cursor-pointer bg-card z-20",
-          "will-change-transform", // Performance optimization
+          // Removed will-change-transform to avoid rendering glitches
           className
         )}
       >

@@ -27,7 +27,8 @@ export function ArchiveScreen() {
   // PARALLAX REFS
   const bgRef = useRef<HTMLDivElement>(null);
   
-  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1)); 
+  // Default date to TODAY to prevent empty list on load
+  const [currentDate, setCurrentDate] = useState(() => new Date()); 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
@@ -36,7 +37,7 @@ export function ArchiveScreen() {
   const ITEM_WIDTH = 120; 
 
   const monthsList = useMemo(() => {
-    const center = new Date(2026, 1, 1);
+    const center = new Date(); // Center on today
     const start = subMonths(center, 12);
     const end = addMonths(center, 12);
     return eachMonthOfInterval({ start, end });
@@ -132,17 +133,17 @@ export function ArchiveScreen() {
     <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* PARALLAX BACKGROUND LAYER */}
+      {/* PARALLAX BACKGROUND LAYER - z-0 */}
       <div 
         ref={bgRef}
         className="fixed inset-0 wallet-bg z-0 will-change-transform"
-        style={{ height: '120vh' }} // Taller than screen to allow movement
+        style={{ height: '120vh' }}
       />
 
-      {/* HEADER BACKGROUND & FADE */}
+      {/* HEADER BACKGROUND & FADE - z-10 */}
       <div className="fixed top-0 left-0 right-0 h-[26rem] z-10 pointer-events-none header-fade opacity-100" />
 
-      {/* BURGER MENU */}
+      {/* BURGER MENU - z-50 */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button 
           onClick={() => { impact(); setSettingsOpen(true); }}
@@ -152,7 +153,7 @@ export function ArchiveScreen() {
         </button>
       </div>
 
-      {/* MAXI HEADER */}
+      {/* MAXI HEADER - z-40 */}
       <header className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-safe-top pointer-events-none">
         
         {/* YEAR */}
@@ -249,8 +250,8 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* LIST CONTAINER */}
-      <div className="flex-1 flex flex-col h-full w-full relative z-0">
+      {/* LIST CONTAINER - Changed to z-10 to sit above background */}
+      <div className="flex-1 flex flex-col h-full w-full relative z-10">
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-32">
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
@@ -279,7 +280,7 @@ export function ArchiveScreen() {
 
       <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
 
-      {/* NAVIGATION */}
+      {/* NAVIGATION - z-50 */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
           <div className="relative flex items-center justify-between px-6 py-2 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
@@ -323,7 +324,7 @@ export function ArchiveScreen() {
         onDataGenerated={() => {
           success();
           refetch();
-          setCurrentDate(new Date(2026, 1, 1));
+          setCurrentDate(new Date(2026, 1, 1)); // Jump to demo data date
           setTimeout(() => {
             if (scrollRef.current) {
                const index = monthsList.findIndex(m => isSameMonth(m, new Date(2026, 1, 1)));
