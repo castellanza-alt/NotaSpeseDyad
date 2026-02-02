@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import type { Expense } from "@/hooks/useExpenses";
 import { cn } from "@/lib/utils";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Eye } from "lucide-react";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -82,26 +82,32 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
     touchStartX.current = null;
   };
 
-  const resetSwipe = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSwipeOffset(0);
-  };
-
   return (
     <div className="relative w-full max-w-[90%] mx-auto mb-3 min-h-[175px]">
       
       {/* BACKGROUND ACTIONS (Revealed on Swipe) */}
       <div className="absolute inset-0 flex justify-end items-center px-4 rounded-[2.5rem] bg-transparent">
         <div className="flex flex-col gap-3 pl-4">
+          {/* VIEW BUTTON (First/Top) */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); onClick?.(); setSwipeOffset(0); }}
+            className="w-12 h-12 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+          
+          {/* EDIT BUTTON (Middle) */}
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit?.(); setSwipeOffset(0); }}
-            className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-white shadow-lg z-10"
+            className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
           >
             <Pencil className="w-5 h-5" />
           </button>
+          
+          {/* DELETE BUTTON (Bottom) */}
           <button 
             onClick={(e) => { e.stopPropagation(); onDelete?.(); setSwipeOffset(0); }}
-            className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg z-10"
+            className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
           >
             <Trash2 className="w-5 h-5" />
           </button>
@@ -110,7 +116,10 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
 
       {/* FOREGROUND CARD */}
       <div
-        onClick={() => { if(swipeOffset === 0) onClick?.(); else setSwipeOffset(0); }}
+        onClick={() => { 
+          // Clicking the card body ONLY closes the swipe, does NOT open details anymore
+          setSwipeOffset(0); 
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
