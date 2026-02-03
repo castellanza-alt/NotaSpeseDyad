@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2, Check, MapPin } from "lucide-react";
+import { X, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -16,10 +16,6 @@ interface ExpenseData {
   currency: string;
   category: string;
   items: any[];
-  vat_number?: string | null;
-  address?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
 }
 
 interface ImageAnalyzerProps {
@@ -126,11 +122,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         total: result.data.total || 0,
         currency: result.data.currency || "EUR",
         category: result.data.category || "",
-        items: result.data.items || [],
-        vat_number: result.data.vat_number || null,
-        address: result.data.address || null,
-        latitude: result.data.latitude || null,
-        longitude: result.data.longitude || null
+        items: result.data.items || []
       });
 
     } catch (error: any) {
@@ -154,9 +146,14 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Permettiamo all'utente di scrivere liberamente, la validazione avviene al salvataggio
+    // Accettiamo numeri, punti e virgole
     const val = e.target.value;
     if (/^[0-9.,]*$/.test(val)) {
       setTotalString(val);
+      
+      // Tentiamo di parsare il valore rimuovendo i punti delle migliaia e cambiando la virgola in punto
+      // Es: "1.000,50" -> "1000.50"
       const cleanVal = val.replace(/\./g, '').replace(',', '.');
       const parsed = parseFloat(cleanVal) || 0;
       
@@ -183,6 +180,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       await supabase.storage.from("receipts").upload(fileName, blob, { upsert: true });
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
+      // Assicuriamoci che il totale sia corretto prima dell'invio
       const cleanVal = totalString.replace(/\./g, '').replace(',', '.');
       const finalTotal = parseFloat(cleanVal) || 0;
 
@@ -217,11 +215,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         items: expenseData.items,
         image_url: publicUrl,
         sent_to_email: recipientEmails.join(", "),
-        sent_at: new Date().toISOString(),
-        vat_number: expenseData.vat_number,
-        address: expenseData.address,
-        latitude: expenseData.latitude,
-        longitude: expenseData.longitude
+        sent_at: new Date().toISOString()
       };
 
       await addExpense(dbPayload);
@@ -245,6 +239,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
+      {/* Sfondo card solido per leggibilità */}
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
@@ -280,6 +275,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 />
               </div>
               
+              {/* Griglia modificata: gap-1 per separazione minima */}
               <div className="grid grid-cols-2 gap-1">
                 <div className="w-full min-w-0">
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
@@ -311,13 +307,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                   className="rounded-xl h-12 text-base bg-secondary/30" 
                 />
               </div>
-
-              {expenseData.address && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-secondary/20 border border-border/50">
-                   <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                   <p className="text-xs text-muted-foreground break-all">{expenseData.address}</p>
-                </div>
-              )}
             </div>
           )}
         </div>
