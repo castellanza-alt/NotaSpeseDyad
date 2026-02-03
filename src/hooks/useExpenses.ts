@@ -18,6 +18,10 @@ export interface Expense {
   sent_at: string | null;
   created_at: string;
   updated_at: string;
+  vat_number?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 const PAGE_SIZE = 30;

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
+import { Moon, Menu, Plus, Check, Search, Sun, Map as MapIcon, PlayCircle } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptic } from "@/hooks/use-haptic";
 import { SettingsSheet } from "./SettingsSheet";
@@ -9,15 +9,19 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
+import { MonthlyRecap } from "./MonthlyRecap";
 import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export function ArchiveScreen() {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showRecap, setShowRecap] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -138,7 +142,21 @@ export function ArchiveScreen() {
       </div>
 
       {/* BURGER MENU */}
-      <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
+      <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top flex gap-3">
+        <button
+          onClick={() => { haptic('light'); setShowRecap(true); }}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm text-pink-500"
+        >
+          <PlayCircle className="w-5 h-5" strokeWidth={2} />
+        </button>
+
+        <button
+          onClick={() => { haptic('light'); navigate('/map'); }}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
+        >
+          <MapIcon className="w-5 h-5 text-foreground/80" strokeWidth={2} />
+        </button>
+
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
@@ -323,10 +341,10 @@ export function ArchiveScreen() {
         </div>
       </nav>
 
-      <SettingsSheet 
-        open={settingsOpen} 
-        onOpenChange={setSettingsOpen} 
-        showTrigger={false} 
+      <SettingsSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        showTrigger={false}
         expenses={expenses}
         onDataGenerated={() => {
           refetch();
@@ -342,6 +360,8 @@ export function ArchiveScreen() {
           }, 100);
         }}
       />
+
+      <MonthlyRecap isOpen={showRecap} onClose={() => setShowRecap(false)} />
 
       {showSuccess && (
         <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-scale-in">
