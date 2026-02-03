@@ -9,6 +9,12 @@ import { useTheme } from '@/hooks/useTheme';
 // Public token for demo/dev purposes.
 const MAPBOX_TOKEN = "pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2x0eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4In0.xxxxxxxxx"; 
 
+// Workaround for TypeScript type mismatch between react-map-gl v7 and installed @types
+// The installed types seem to be for v6, but we are using v7 features.
+const MapAny = Map as any;
+const NavigationControlAny = NavigationControl as any;
+const MarkerAny = Marker as any;
+
 export function ExpenseMap() {
   const navigate = useNavigate();
   const { expenses } = useExpenses();
@@ -55,21 +61,21 @@ export function ExpenseMap() {
             </p>
          </div>
       ) : (
-        <Map
+        <MapAny
           initialViewState={initialViewState}
           style={{width: '100%', height: '100%'}}
           mapStyle={mapStyle}
           mapboxAccessToken={MAPBOX_TOKEN}
         >
-          <NavigationControl position="bottom-right" />
+          <NavigationControlAny position="bottom-right" />
 
           {markers.map((expense) => (
-            <Marker
+            <MarkerAny
               key={expense.id}
               longitude={expense.longitude || 0}
               latitude={expense.latitude || 0}
               anchor="bottom"
-              onClick={e => {
+              onClick={(e: any) => {
                 e.originalEvent.stopPropagation();
                 setPopupInfo(expense);
               }}
@@ -77,7 +83,7 @@ export function ExpenseMap() {
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg border-2 border-white cursor-pointer hover:scale-110 transition-transform">
                 <span className="text-[10px] text-white font-bold">€</span>
               </div>
-            </Marker>
+            </MarkerAny>
           ))}
 
           {popupInfo && (
@@ -98,7 +104,7 @@ export function ExpenseMap() {
               </div>
             </Popup>
           )}
-        </Map>
+        </MapAny>
       )}
 
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-yellow-100 text-yellow-800 text-xs px-4 py-2 rounded-lg shadow-lg max-w-[90%] text-center">
