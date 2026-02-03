@@ -29,6 +29,10 @@ export type Database = {
           total: number | null
           updated_at: string
           user_id: string
+          vat_number: string | null
+          address: string | null
+          latitude: number | null
+          longitude: number | null
         }
         Insert: {
           category?: string | null
@@ -44,6 +48,10 @@ export type Database = {
           total?: number | null
           updated_at?: string
           user_id: string
+          vat_number?: string | null
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
         }
         Update: {
           category?: string | null
@@ -59,13 +67,17 @@ export type Database = {
           total?: number | null
           updated_at?: string
           user_id?: string
+          vat_number?: string | null
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
-          default_emails: string[] | null /* Changed from default_email: string | null */
+          default_emails: string[] | null
           display_name: string | null
           id: string
           is_default_email: boolean | null
@@ -74,7 +86,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          default_emails?: string[] | null /* Changed from default_email: string | null */
+          default_emails?: string[] | null
           display_name?: string | null
           id?: string
           is_default_email?: boolean | null
@@ -83,7 +95,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          default_emails?: string[] | null /* Changed from default_email: string | null */
+          default_emails?: string[] | null
           display_name?: string | null
           id?: string
           is_default_email?: boolean | null
