@@ -21,8 +21,6 @@ export function ExpenseMap() {
     ? "mapbox://styles/mapbox/dark-v11" 
     : "mapbox://styles/mapbox/light-v11";
 
-  // Use simple props to avoid type conflicts with strict TS settings
-  // Typecasting usually fixes this if library types are finicky
   const initialViewState = {
     longitude: markers[0]?.longitude || 12.4964,
     latitude: markers[0]?.latitude || 41.9028,
