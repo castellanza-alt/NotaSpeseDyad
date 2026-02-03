@@ -53,6 +53,7 @@ export function ArchiveScreen() {
         const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
         if (index !== -1) {
           const containerWidth = scrollRef.current.clientWidth;
+          // Calcolo per centrare l'elemento: (Index * Width) - (MetaSchermo) + (MetaOggetto)
           const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
           scrollRef.current.scrollTo({ left: scrollPos, behavior: 'instant' });
         }
@@ -107,7 +108,9 @@ export function ArchiveScreen() {
     if (!scrollRef.current) return;
     
     const container = scrollRef.current;
+    // Troviamo il centro dello schermo
     const center = container.scrollLeft + (container.clientWidth / 2);
+    // Indice = Centro / LarghezzaOggetto
     const index = Math.floor(center / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
@@ -118,19 +121,27 @@ export function ArchiveScreen() {
     }
   };
 
+  // SPACER CALCULATION:
+  // Base header height is ~14rem + 15px extra padding.
+  // Spacer adjustments:
+  // - Standard: 14.5rem + 22px (Increased by 7px from 15px)
+  // - With Search: 18.5rem + 22px
   const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+22px)]' : 'h-[calc(14.5rem+22px)]';
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER FROSTED GLASS BACKGROUND */}
+      {/* 1. HEADER FROSTED GLASS BACKGROUND */}
+      {/* Height remains +15px as requested */}
       <div className="fixed top-0 left-0 right-0 h-[calc(14rem+15px)] z-40 pointer-events-none">
+        {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
+        {/* Sfumatura inferiore per ammorbidire il taglio */}
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
-      {/* TOP RIGHT MENU ACTIONS */}
+      {/* BURGER MENU */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top flex gap-3">
         <button
           onClick={() => { haptic('light'); setShowRecap(true); }}
@@ -156,6 +167,8 @@ export function ArchiveScreen() {
 
       {/* MAXI HEADER CONTENT */}
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
+        
+        {/* YEAR */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
           <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
@@ -163,15 +176,21 @@ export function ArchiveScreen() {
         </div>
 
         {/* RULER INTERFACE */}
+        {/* Height reduced by 25% (h-24 -> h-[4.5rem]) */}
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
+          
+          {/* MASCHERE LATERALI SFUMATE */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
           
+          {/* INDICATORE CENTRALE */}
+          {/* Lowered bottom to 5 (20px) to match shorter items */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-5 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
              <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
+          {/* SCROLL CONTAINER */}
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
@@ -187,6 +206,7 @@ export function ArchiveScreen() {
                 <div 
                   key={i} 
                   style={{ width: `${ITEM_WIDTH}px` }}
+                  // Item height reduced (h-20 -> h-[3.75rem] / 60px)
                   className="shrink-0 h-[3.75rem] snap-center flex flex-col justify-end group relative"
                 >
                   <button 
@@ -226,6 +246,7 @@ export function ArchiveScreen() {
         </div>
         
         {/* HUGE BALANCE */}
+        {/* Scaled down to 90% */}
         <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 mt-0 pointer-events-auto">
           <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
           <span className="text-6xl font-black tracking-tighter tabular-nums">
@@ -235,6 +256,7 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
+      {/* Position adjusted: 14.5rem + 22px */}
       {showSearchBar && (
         <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
@@ -294,7 +316,7 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* Pulsante Centrale Float */}
+            {/* Pulsante Centrale Float (Wrapper h-0 per non espandere la pillola) */}
             <div className="relative w-[74px] h-0 mx-4 flex items-center justify-center">
               <button
                 onClick={() => { haptic('light'); handleSelectPhoto(); }}
