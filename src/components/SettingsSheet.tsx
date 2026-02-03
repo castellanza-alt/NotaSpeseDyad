@@ -18,11 +18,11 @@ interface SettingsSheetProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
-  expenses?: Expense[];
+  expenses: Expense[]; 
   onDataGenerated?: () => void;
 }
 
-export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses = [], onDataGenerated }: SettingsSheetProps) {
+export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger = true, expenses, onDataGenerated }: SettingsSheetProps) {
   const { profile, updateProfile } = useProfile();
   const { user } = useAuth();
   const { toast } = useToast();
