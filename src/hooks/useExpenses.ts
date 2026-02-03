@@ -53,6 +53,8 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       if (isInitial) setLoading(true);
       else setLoadingMore(true);
       
+      // If searching, we fetch a larger batch and filter client-side for better UX
+      // This allows searching formatted dates, amounts, etc.
       const isSearching = searchQuery.trim().length > 0;
       
       let query = supabase
@@ -64,6 +66,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       if (limit) {
         query = query.limit(limit);
       } else if (isSearching) {
+        // When searching, fetch recent 200 items to filter
         query = query.limit(SEARCH_LIMIT);
       } else if (paginated) {
         const start = isInitial ? 0 : expenses.length;
@@ -75,14 +78,17 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
       let resultData = data || [];
 
+      // Perform Client-Side Filtering if searching
       if (isSearching && resultData.length > 0) {
         const lowerQ = searchQuery.toLowerCase().trim();
         resultData = resultData.filter(e => {
+          // Fields to search
           const merchant = e.merchant?.toLowerCase() || "";
           const category = e.category?.toLowerCase() || "";
           const totalStr = e.total?.toString() || "";
           const totalComma = totalStr.replace('.', ',');
           
+          // Format date to search by "Lunedi", "Gennaio", "2024", etc.
           let dateStr = "";
           let dayStr = "";
           if (e.expense_date) {
@@ -104,6 +110,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
       if (isInitial) {
         setExpenses(resultData);
+        // If searching, hasMore is false (we don't support pagination during search yet for simplicity)
         setHasMore(isSearching ? false : (data?.length || 0) === PAGE_SIZE && !limit);
       } else {
         setExpenses(prev => [...prev, ...resultData]);
@@ -118,22 +125,15 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   }, [user, limit, paginated, searchQuery, expenses.length]);
 
   useEffect(() => {
+    // Reset and fetch when search query changes
     fetchExpenses(true);
   }, [user, searchQuery]); 
 
   async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;
-    
-    // Explicitly casting payload to any to avoid strict type mismatch with generated Supabase types
-    // specifically for optional fields like vat_number/address and the items JSON/any mismatch
-    const payload: any = { 
-      ...expense, 
-      user_id: user.id 
-    };
-
     const { data, error } = await supabase
       .from("expenses")
-      .insert(payload)
+      .insert({ ...expense, user_id: user.id })
       .select()
       .single();
 
