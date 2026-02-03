@@ -110,6 +110,43 @@
     background-attachment: fixed;
   }
 
+  /* --- Parallax & Mesh Utilities (New) --- */
+  .parallax-wrapper {
+    perspective: 1px;
+    transform-style: preserve-3d;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  .parallax-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    transform: translateZ(-1px) scale(2);
+    transform-origin: center center;
+    pointer-events: none;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  .mesh-gradient-light {
+    background-color: #F2F1EF; 
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(110, 25%, 82%, 0.6) 0px, transparent 65%),
+      radial-gradient(at 100% 100%, hsla(35, 40%, 85%, 0.6) 0px, transparent 60%);
+  }
+
+  .mesh-gradient-dark {
+    background-color: #121414;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(170, 50%, 15%, 0.5) 0px, transparent 60%),
+      radial-gradient(at 100% 0%, hsla(30, 40%, 15%, 0.3) 0px, transparent 50%);
+  }
+
   /* --- Tactile 3D Card --- */
   .chunky-card-3d {
     background: linear-gradient(

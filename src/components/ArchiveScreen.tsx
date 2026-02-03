@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
 import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { useHaptic } from "@/hooks/use-haptic";
 import { SettingsSheet } from "./SettingsSheet";
 import { ImageAnalyzer } from "./ImageAnalyzer";
 import { OdometerValue } from "./OdometerValue";
@@ -23,11 +24,12 @@ export function ArchiveScreen() {
   const [showSearchBar, setShowSearchBar] = useState(false);
   
   // START DATE: Febbraio 2026
-  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1)); 
+  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const { theme, toggleTheme } = useTheme();
+  const { trigger: haptic } = useHaptic();
 
   // RULER CONFIGURATION
   const ITEM_WIDTH = 120; // Larghezza fissa di ogni blocco mese in pixel
@@ -88,10 +90,12 @@ export function ArchiveScreen() {
     setSelectedImage(null);
     refetch();
     setShowSuccess(true);
+    haptic('success');
     setTimeout(() => setShowSuccess(false), 2500);
-  }, [refetch]);
+  }, [refetch, haptic]);
 
   const toggleSearchBar = () => {
+    haptic('light');
     setShowSearchBar(prev => !prev);
     if (showSearchBar) setSearchQuery("");
   };
@@ -121,7 +125,7 @@ export function ArchiveScreen() {
   const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+22px)]' : 'h-[calc(14.5rem+22px)]';
 
   return (
-    <div className="h-screen flex flex-col wallet-bg overflow-hidden relative font-sans">
+    <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* 1. HEADER FROSTED GLASS BACKGROUND */}
@@ -135,8 +139,8 @@ export function ArchiveScreen() {
 
       {/* BURGER MENU */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
-        <button 
-          onClick={() => setSettingsOpen(true)}
+        <button
+          onClick={() => { haptic('light'); setSettingsOpen(true); }}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
         >
           <Menu className="w-5 h-5 text-foreground/80" strokeWidth={2} />
@@ -296,16 +300,16 @@ export function ArchiveScreen() {
 
             {/* Pulsante Centrale Float (Wrapper h-0 per non espandere la pillola) */}
             <div className="relative w-[74px] h-0 mx-4 flex items-center justify-center">
-              <button 
-                onClick={handleSelectPhoto} 
+              <button
+                onClick={() => { haptic('light'); handleSelectPhoto(); }}
                 className="absolute bottom-[-15px] w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
               >
                 <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
               </button>
             </div>
 
-            <button 
-              onClick={toggleTheme}
+            <button
+              onClick={() => { haptic('light'); toggleTheme(); }}
               className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
             >
               {theme === 'dark' ? (

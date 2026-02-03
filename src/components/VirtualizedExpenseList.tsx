@@ -4,6 +4,8 @@ import { ExpenseCard } from "./ExpenseCard";
 import type { Expense } from "@/hooks/useExpenses";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/hooks/useTheme";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface VirtualizedExpenseListProps {
   expenses: Expense[];
@@ -29,6 +31,8 @@ export function VirtualizedExpenseList({
   paddingClassName = "h-48"
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+  const { trigger: haptic } = useHaptic();
 
   // Height approx 175px + 12px Gap (reduced gap for tighter feel)
   const CARD_HEIGHT = 175;
@@ -73,9 +77,12 @@ export function VirtualizedExpenseList({
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto w-full scrollbar-hide"
+      className="parallax-wrapper flex-1 w-full scrollbar-hide"
       style={{ contain: "strict" }}
     >
+      {/* Parallax Background Layer */}
+      <div className={cn("parallax-bg", theme === 'dark' ? "mesh-gradient-dark" : "mesh-gradient-light")} />
+
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
 
       <div
@@ -107,12 +114,12 @@ export function VirtualizedExpenseList({
                   )}
                 </div>
               ) : (
-                <div className="w-full h-full flex justify-center"> 
+                <div className="w-full h-full flex justify-center">
                   <ExpenseCard
                     expense={expense}
-                    onClick={() => onExpenseClick(expense)}
-                    onDelete={() => onExpenseDelete(expense.id)}
-                    onEdit={() => onExpenseEdit(expense)}
+                    onClick={() => { haptic('light'); onExpenseClick(expense); }}
+                    onDelete={() => { haptic('warning'); onExpenseDelete(expense.id); }}
+                    onEdit={() => { haptic('light'); onExpenseEdit(expense); }}
                   />
                 </div>
               )}
