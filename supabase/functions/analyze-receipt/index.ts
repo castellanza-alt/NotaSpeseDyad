@@ -54,15 +54,19 @@ serve(async (req) => {
     // Extract base64 data from data URL
     const base64Data = image.split(",")[1] || image;
 
-    const prompt = `Analizza questo scontrino fiscale. Estrai i dati in formato JSON rigoroso.
+    const prompt = `Analizza questo scontrino fiscale con estrema precisione. Estrai i dati in formato JSON.
+    
     Campi richiesti:
     - merchant (nome negozio)
     - date (formato YYYY-MM-DD)
     - total (numero decimale, usa il punto)
     - currency (es. EUR)
     - category (es. Ristorazione, Trasporti, Spesa, Lavoro, Altro)
+    - vat_number (Partita IVA del venditore, solo numeri/codice)
+    - address (Indirizzo completo del negozio: Via, Numero, Città, CAP)
     - items (lista di oggetti con name, quantity, price)
 
+    IMPORTANTE: Cerca attentamente l'indirizzo fisico del punto vendita (solitamente in alto o in fondo allo scontrino).
     Se un campo non è leggibile, lascialo vuoto o a 0. Non inventare dati.`;
 
     console.log("[analyze-receipt] Sending request to Gemini (model: gemini-flash-latest)...");
@@ -127,6 +131,8 @@ serve(async (req) => {
       total: typeof data.total === "number" ? data.total : (parseFloat(data.total) || 0),
       currency: data.currency || "EUR",
       category: data.category || "Altro",
+      vat_number: data.vat_number || "",
+      address: data.address || "",
       items: Array.isArray(data.items) ? data.items : [],
     };
 

@@ -15,6 +15,8 @@ interface ExpenseData {
   total: number;
   currency: string;
   category: string;
+  vat_number?: string;
+  address?: string;
   items: any[];
 }
 
@@ -122,6 +124,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         total: result.data.total || 0,
         currency: result.data.currency || "EUR",
         category: result.data.category || "",
+        vat_number: result.data.vat_number || "",
+        address: result.data.address || "",
         items: result.data.items || []
       });
 
@@ -138,6 +142,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         total: 0, 
         currency: "EUR", 
         category: "", 
+        vat_number: "",
+        address: "",
         items: [] 
       });
     } finally {
@@ -146,17 +152,11 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Permettiamo all'utente di scrivere liberamente, la validazione avviene al salvataggio
-    // Accettiamo numeri, punti e virgole
     const val = e.target.value;
     if (/^[0-9.,]*$/.test(val)) {
       setTotalString(val);
-      
-      // Tentiamo di parsare il valore rimuovendo i punti delle migliaia e cambiando la virgola in punto
-      // Es: "1.000,50" -> "1000.50"
       const cleanVal = val.replace(/\./g, '').replace(',', '.');
       const parsed = parseFloat(cleanVal) || 0;
-      
       if (expenseData) {
         setExpenseData({ ...expenseData, total: parsed });
       }
@@ -180,7 +180,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       await supabase.storage.from("receipts").upload(fileName, blob, { upsert: true });
       const { data: { publicUrl } } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
-      // Assicuriamoci che il totale sia corretto prima dell'invio
       const cleanVal = totalString.replace(/\./g, '').replace(',', '.');
       const finalTotal = parseFloat(cleanVal) || 0;
 
@@ -212,6 +211,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         total: emailPayload.total,
         currency: expenseData.currency,
         category: expenseData.category,
+        vat_number: expenseData.vat_number,
+        address: expenseData.address,
         items: expenseData.items,
         image_url: publicUrl,
         sent_to_email: recipientEmails.join(", "),
@@ -239,7 +240,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
-      {/* Sfondo card solido per leggibilità */}
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
         <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
           <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
@@ -274,10 +274,19 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                   className="rounded-xl h-12 text-base bg-secondary/30" 
                 />
               </div>
+
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Indirizzo</Label>
+                <Input 
+                  value={expenseData.address || ""} 
+                  onChange={(e) => setExpenseData({...expenseData, address: e.target.value})} 
+                  className="rounded-xl h-12 text-base bg-secondary/30"
+                  placeholder="Via Roma 1, Milano..." 
+                />
+              </div>
               
-              {/* Griglia modificata: gap-1 per separazione minima */}
-              <div className="grid grid-cols-2 gap-1">
-                <div className="w-full min-w-0">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
                   <Input 
                     type="date" 
@@ -286,7 +295,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                     className="rounded-xl h-12 text-base bg-secondary/30 w-full" 
                   />
                 </div>
-                <div className="w-full min-w-0">
+                <div>
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Totale (€)</Label>
                   <Input 
                     type="text" 
@@ -298,15 +307,27 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                   />
                 </div>
               </div>
-              
-              <div>
-                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
-                <Input 
-                  value={expenseData.category || ""} 
-                  onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                  className="rounded-xl h-12 text-base bg-secondary/30" 
-                />
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">P.IVA</Label>
+                  <Input 
+                    value={expenseData.vat_number || ""} 
+                    onChange={(e) => setExpenseData({...expenseData, vat_number: e.target.value})} 
+                    className="rounded-xl h-12 text-base bg-secondary/30"
+                    placeholder="12345678901" 
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
+                  <Input 
+                    value={expenseData.category || ""} 
+                    onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
+                    className="rounded-xl h-12 text-base bg-secondary/30" 
+                  />
+                </div>
               </div>
+              
             </div>
           )}
         </div>
@@ -324,7 +345,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                   Invio in corso...
                 </>
               ) : (
-                "Invia ad Amministrazione"
+                "Conferma e Salva"
               )}
             </Button>
           </div>
