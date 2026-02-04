@@ -173,18 +173,44 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
 
   const handleGenerateDemoData = async () => {
     if (!user) return;
+    
+    // RESTRICTION: Only Admin
+    if (user.email !== 'admin@preview.dev') {
+        toast({
+            title: "Accesso Negato",
+            description: "Solo l'account Administrator può generare i dati demo.",
+            variant: "destructive"
+        });
+        return;
+    }
+
     setGenerating(true);
     try {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth(); // 0-indexed
+
+      // Dati coerenti con le categorie richieste
       const demoExpenses = [
-        { merchant: "Frecciarossa", category: "Trasporti", total: 89.50, day: 2 },
-        { merchant: "Ristorante Milano", category: "Ristorazione", total: 142.00, day: 5 },
-        { merchant: "Taxi Go", category: "Trasporti", total: 18.50, day: 6 },
-        { merchant: "Apple Store", category: "Shopping", total: 129.00, day: 10 },
+        { merchant: "Trenitalia S.p.A.", category: "Spese trasporti", total: 89.90, day: 2 },
+        { merchant: "Hotel Splendid Roma", category: "Alloggio Oltre Comune", total: 145.00, day: 2 },
+        { merchant: "Ristorante La Carbonara", category: "Vitto Oltre Comune", total: 45.50, day: 2 },
+        { merchant: "Taxi Roma Capitale", category: "Taxi", total: 22.00, day: 3 },
+        { merchant: "Ristorante Da Vittorio", category: "Spese Rappresentanza", total: 230.00, day: 5 },
+        { merchant: "Bar Centrale Milano", category: "Vitto Comune", total: 12.50, day: 8 },
+        { merchant: "Uber", category: "Taxi", total: 18.40, day: 10 },
+        { merchant: "Starbucks London", category: "Vitto Estero", total: 14.50, day: 12 }, 
+        { merchant: "Hilton London", category: "Alloggio Estero", total: 320.00, day: 12 },
+        { merchant: "Cancelleria Ufficio", category: "Altri Costi", total: 42.00, day: 15 },
+        { merchant: "Italo Treno", category: "Spese trasporti", total: 65.00, day: 20 },
+        { merchant: "Trattoria Milanese", category: "Vitto Comune", total: 35.00, day: 22 },
       ];
 
       for (const item of demoExpenses) {
-        const dayStr = item.day.toString().padStart(2, '0');
-        const dateStr = `2026-02-${dayStr}`;
+        // Usa una data fissa nel mese corrente (mezzogiorno per evitare problemi di timezone)
+        const safeDay = Math.min(item.day, 28); 
+        const date = new Date(year, month, safeDay, 12, 0, 0);
+        const dateStr = format(date, "yyyy-MM-dd");
 
         await supabase.from("expenses").insert({
           user_id: user.id,
@@ -193,18 +219,19 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
           total: item.total,
           currency: "EUR",
           expense_date: dateStr,
-          created_at: new Date(dateStr).toISOString()
+          created_at: new Date().toISOString()
         });
       }
 
       toast({
-        title: "Dati Generati",
-        description: "Spese demo create per Febbraio 2026",
+        title: "Dati Admin Generati",
+        description: `Create ${demoExpenses.length} note spese per il mese corrente.`,
       });
       onDataGenerated?.();
       setOpen(false);
     } catch (error) {
       console.error("Error generating data:", error);
+      toast({ title: "Errore", description: "Impossibile generare dati", variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -399,9 +426,9 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
                     )}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-foreground">Genera Dati Demo</p>
+                    <p className="text-sm font-medium text-foreground">Genera Dati Demo (Admin)</p>
                     <p className="text-xs text-muted-foreground">
-                      Crea dati test (Feb 2026)
+                      Crea dati test nel mese corrente
                     </p>
                   </div>
                 </div>
