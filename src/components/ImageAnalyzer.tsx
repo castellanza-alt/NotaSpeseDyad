@@ -281,9 +281,9 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 />
               </div>
 
-              {/* Data e Totale Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              {/* Data e Totale Flex Row */}
+              <div className="flex gap-4">
+                <div className="space-y-2 w-[35%]">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Data</Label>
                   <Input 
                     type="date" 
@@ -292,7 +292,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                     className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm w-full" 
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 w-[42%]">
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Totale</Label>
                   <div className="relative">
                     <Input 
