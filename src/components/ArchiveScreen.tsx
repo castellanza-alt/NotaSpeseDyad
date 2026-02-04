@@ -9,6 +9,7 @@ import { OdometerValue } from "./OdometerValue";
 import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
+import { MonthlyReport } from "./MonthlyReport";
 import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -227,13 +228,23 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* HUGE BALANCE */}
-        {/* Scaled down to 90% */}
-        <div className="relative flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 mt-0 pointer-events-auto">
-          <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
-          <span className="text-6xl font-black tracking-tighter tabular-nums">
-            <OdometerValue value={currentMonthTotal} />
-          </span>
+        {/* HUGE BALANCE WITH REPORT TRIGGER */}
+        <div className="relative z-50 mt-0 pointer-events-auto">
+          <MonthlyReport 
+            expenses={filteredExpenses} 
+            currentDate={currentDate} 
+            total={currentMonthTotal}
+          >
+            <div 
+              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => haptic('light')}
+            >
+              <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
+              <span className="text-6xl font-black tracking-tighter tabular-nums">
+                <OdometerValue value={currentMonthTotal} />
+              </span>
+            </div>
+          </MonthlyReport>
         </div>
       </header>
 
