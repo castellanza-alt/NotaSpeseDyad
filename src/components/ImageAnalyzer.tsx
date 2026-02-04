@@ -111,14 +111,24 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       const result = await response.json();
       
-      // MAPPING DEI DATI DALL'IA (nuovo formato: amount, description, category)
-      // La data non viene restituita dal nuovo prompt, usiamo la data odierna
+      // LOGGING ESTREMO LATO CLIENT
+      console.log("DATI RICEVUTI DA SUPABASE (Raw):", result);
+      
+      if (!result.success || !result.data) {
+        console.warn("Dati incompleti o errore API:", result);
+        throw new Error("Dati non validi");
+      }
+
+      const receivedData = result.data;
+      console.log("Mapping dati frontend:", receivedData);
+
+      // MAPPING DEI DATI DALL'IA
       setExpenseData({
-        merchant: result.data.description || "Sconosciuto",
+        merchant: receivedData.description || "Sconosciuto",
         expense_date: new Date().toISOString().split("T")[0],
-        total: result.data.amount || 0,
+        total: receivedData.amount || 0,
         currency: "EUR",
-        category: result.data.category || "",
+        category: receivedData.category || "",
         vat_number: "",
         address: "",
         items: []
