@@ -39,7 +39,6 @@ serve(async (req) => {
       );
     }
 
-    // Corretto recupero della chiave API (MAIUSCOLO come da standard Supabase Secrets)
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
       console.error("[analyze-receipt] Missing GEMINI_API_KEY");
@@ -55,16 +54,16 @@ serve(async (req) => {
     // Extract base64 data from data URL
     const base64Data = image.split(",")[1] || image;
 
-    // PROMPT MIGLIORATO
+    // PROMPT
     const prompt = `Analizza questa immagine di scontrino o fattura con la massima precisione possibile.
     Il tuo compito è fare OCR ed estrarre i dati strutturati.
     
     FOCUS PARTICOLARE SU:
     1. TOTALE: Cerca la cifra finale più alta che rappresenta il pagamento totale. Cerca parole come "TOTALE", "IMPORTO PAGATO", "TOTALE COMPLESSIVO".
     2. DATA: Cerca date nel formato GG/MM/AAAA, AAAA-MM-GG o simili.
-    3. ESERCENTE: Il nome del negozio è quasi sempre in alto al centro, spesso in grassetto o con un logo.
+    3. ESERCENTE: Il nome del negozio è quasi sempre in alto al centro.
     
-    Restituisci ESCLUSIVAMENTE un oggetto JSON valido (senza markdown 'json', senza commenti) con questa struttura:
+    Restituisci ESCLUSIVAMENTE un oggetto JSON valido con questa struttura:
     {
       "merchant": "Nome Negozio",
       "date": "YYYY-MM-DD",
@@ -80,11 +79,11 @@ serve(async (req) => {
     
     Se un campo è illeggibile, lascialo vuoto ("") o 0.`;
 
-    console.log("[analyze-receipt] Sending request to gemini-flash-latest...");
+    console.log("[analyze-receipt] Sending request to gemini-1.5-flash...");
 
-    // STRICTLY USING gemini-flash-latest AS REQUESTED
+    // MODIFICA CRUCIALE: Uso "gemini-1.5-flash" che è MOLTO più veloce di "flash-latest"
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -105,7 +104,7 @@ serve(async (req) => {
             },
           ],
           generationConfig: {
-            temperature: 0.1, // Bassa temperatura per risposte più deterministiche
+            temperature: 0.1,
             maxOutputTokens: 1024,
             responseMimeType: "application/json",
           },

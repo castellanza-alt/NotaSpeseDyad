@@ -73,8 +73,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           const canvas = document.createElement("canvas");
           let { width, height } = img;
           
-          // Aumentato maxDim per permettere più dettaglio
-          const maxDim = 1280; 
+          // OTTIMIZZAZIONE: Ridotto maxDim a 1024 per velocizzare l'upload
+          const maxDim = 1024; 
           if (width > maxDim || height > maxDim) {
             if (width > height) { height = (height / width) * maxDim; width = maxDim; }
             else { width = (width / height) * maxDim; height = maxDim; }
@@ -82,8 +82,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          // Aumentata qualità da 0.5 a 0.8 per migliorare l'OCR
-          resolve(canvas.toDataURL("image/jpeg", 0.8));
+          // OTTIMIZZAZIONE: Qualità 0.7 è il compromesso perfetto tra leggibilità OCR e velocità
+          resolve(canvas.toDataURL("image/jpeg", 0.7));
         };
         img.src = e.target?.result as string;
       };
@@ -161,7 +161,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     
     setSending(true);
     try {
-      // Ricomprimiamo l'immagine originale per l'upload (può essere la stessa qualità)
+      // Ricomprimiamo l'immagine originale per l'upload
       const base64Image = await compressImage(imageFile);
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
