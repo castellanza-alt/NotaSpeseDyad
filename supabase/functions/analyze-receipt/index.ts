@@ -13,11 +13,13 @@ interface AnalyzeRequest {
 function parseGeminiResponse(rawText: string) {
   console.log("[analyze-receipt] Parsing raw text:", rawText);
 
-  // 1. TENTATIVO JSON (Regex pulita)
+  // 1. TENTATIVO JSON (Regex Aggressiva)
+  // Estrae tutto ciò che è compreso tra la prima parentesi graffa aperta e l'ultima chiusa
   try {
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const cleanJson = jsonMatch[0];
+      console.log("[analyze-receipt] JSON estratto via Regex:", cleanJson);
       return JSON.parse(cleanJson);
     }
   } catch (e) {
@@ -36,7 +38,7 @@ function parseGeminiResponse(rawText: string) {
       };
     }
   }
-  throw new Error("Formato risposta non riconosciuto");
+  throw new Error("Formato risposta non riconosciuto (Né JSON valido né Pipe)");
 }
 
 serve(async (req) => {
@@ -46,71 +48,60 @@ serve(async (req) => {
   }
 
   try {
-    // 1. VERIFICA API KEY (Case Insensitive Check)
-    // Controlliamo sia MAIUSCOLO che minuscolo per evitare errori banali
+    // 1. VERIFICA API KEY
     const API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("gemini_api_key");
     
     if (!API_KEY) {
-      console.error("[analyze-receipt] ERRORE CRITICO: Nessuna API Key trovata nei Secrets.");
-      throw new Error("Configurazione Server incompleta (API Key mancante).");
-    }
-
-    // Auth Check (Opzionale ma raccomandato)
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      // Non blocchiamo per ora per facilitare il debug, ma logghiamo
-      console.warn("[analyze-receipt] Warning: Manca header Authorization");
+      console.error("[analyze-receipt] ERRORE CRITICO: API Key mancante.");
+      throw new Error("Configurazione Server incompleta.");
     }
 
     const { image }: AnalyzeRequest = await req.json();
     if (!image) throw new Error("Payload immagine vuoto.");
 
-    // 2. GESTIONE BASE64 E MIME TYPE
-    // Il frontend invia "data:image/jpeg;base64,..."
-    // Dobbiamo separare header e dati
+    // 2. GESTIONE BASE64
     let mimeType = "image/jpeg";
     let base64Data = image;
 
     if (image.includes(",")) {
       const parts = image.split(",");
       base64Data = parts[1];
-      
-      // Estrai il mime type reale se presente
       const mimeMatch = parts[0].match(/:(.*?);/);
-      if (mimeMatch) {
-        mimeType = mimeMatch[1];
-        console.log(`[analyze-receipt] Mime-Type rilevato: ${mimeType}`);
-      }
+      if (mimeMatch) mimeType = mimeMatch[1];
     }
 
-    // HEIC CHECK: Se è HEIC, lo logghiamo. Gemini potrebbe supportarlo, ma è rischioso.
-    if (mimeType.toLowerCase().includes("heic")) {
-      console.warn("[analyze-receipt] ATTENZIONE: Rilevato formato HEIC. Potrebbe causare errori se non convertito.");
-      // Forziamo mime jpeg nel tentativo di ingannare il parser se i dati sono stati convertiti ma l'header no
-      // Oppure lo lasciamo passare sperando in Gemini. Per sicurezza usiamo jpeg se siamo incerti.
-    }
-
-    // 3. PROMPT E LOGICA
-    const prompt = `Sei un estrattore dati per note spese. Analizza l'immagine.
+    // 3. PROMPT RIGIDO E CATEGORIE
+    const prompt = `Analizza lo scontrino e estrai i dati.
     
-    LOGICA GEOGRAFICA (Cruciale):
-    - Cerca indirizzi o riferimenti a città nello scontrino.
-    - SE trovi "Milano" o indirizzi di Milano -> Usa categorie che finiscono con "...Comune" (es. "Vitto Comune", "Alloggio Comune").
-    - SE trovi città DIVERSE da Milano -> Usa categorie che finiscono con "...Oltre Comune" (es. "Vitto Oltre Comune", "Alloggio Oltre Comune").
-    - SE trovi valuta non Euro o riferimenti esteri -> Usa "...Estero".
+    CATEGORIE AMMESSE (USARE SOLO QUESTE):
+    - Vitto Oltre Comune
+    - Alloggio Oltre Comune
+    - Vitto Estero
+    - Alloggio Estero
+    - Vitto Comune
+    - Alloggio Comune
+    - Taxi
+    - Spese trasporti
+    - Spese Rappresentanza
+    - Altri Costi
 
-    FORMATO OUTPUT (Priorità Assoluta JSON):
-    Restituisci ESCLUSIVAMENTE un oggetto JSON valido:
+    LOGICA GEOGRAFICA (COMUNE DI RIFERIMENTO: MILANO):
+    - Se l'indirizzo/città è MILANO -> Usa categorie "...Comune".
+    - Se l'indirizzo/città NON è Milano (es. Roma, Napoli, Monza) -> Usa categorie "...Oltre Comune".
+    - Se Valuta estera o indirizzo estero -> Usa categorie "...Estero".
+
+    FORMATO OUTPUT OBBLIGATORIO (JSON):
+    Restituisci SOLO un oggetto JSON valido nel seguente formato, senza markdown (no \`\`\`), senza commenti:
     {"amount": 12.50, "category": "Vitto Comune", "description": "Nome Esercente"}
 
-    FALLBACK:
-    Se fallisci il JSON, usa: IMPORTO|CATEGORIA|DESCRIZIONE`;
+    Se non riesci a generare il JSON, usa il formato di emergenza: IMPORTO|CATEGORIA|DESCRIZIONE`;
 
-    console.log("[analyze-receipt] Chiamata a Gemini 1.5 Flash in corso...");
+    console.log("[analyze-receipt] Chiamata a gemini-flash-latest...");
 
-    // 4. CHIAMATA GEMINI (Con Error Handling Avanzato)
+    // 4. CHIAMATA GEMINI (ENDPOINT AGGIORNATO)
+    // URL Corretto: gemini-flash-latest
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,16 +121,15 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
-      // Leggiamo il corpo dell'errore per capire PERCHÉ fallisce (es. 400 Image too large, 403 Key invalid)
       const errorBody = await response.text();
       console.error(`[analyze-receipt] GEMINI API ERROR (${response.status}):`, errorBody);
-      throw new Error(`Errore AI Provider: ${response.status} - ${errorBody.substring(0, 100)}...`);
+      throw new Error(`Errore AI Provider: ${response.status} - ${errorBody.substring(0, 150)}...`);
     }
 
     const result = await response.json();
     const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
-    console.log("[analyze-receipt] Risposta Grezza AI:", rawText);
+    console.log("[analyze-receipt] Risposta Grezza:", rawText);
 
     // Parsing
     const data = parseGeminiResponse(rawText);
@@ -156,19 +146,15 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    // 5. CATCH-ALL PER EVITARE 500 GENERICI
-    // Logghiamo l'errore completo nel sistema di log di Supabase
     console.error("[analyze-receipt] SERVER_ERROR_CAUGHT:", error);
-    
-    // Restituiamo un 500 "controllato" con messaggio JSON
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: error.message || "Errore sconosciuto nel server",
-        details: "Controlla i log della Edge Function per i dettagli."
+        details: "Controlla i log della Edge Function."
       }),
       { 
-        status: 500, // Manteniamo 500 per segnalare il fallimento al client
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
