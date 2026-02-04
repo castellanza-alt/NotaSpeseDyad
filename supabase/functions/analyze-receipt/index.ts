@@ -35,20 +35,19 @@ serve(async (req) => {
     // Extract base64
     const base64Data = image.split(",")[1] || image;
 
-    // 3. PROMPT OTTIMIZZATO (ZERO CHIACCHIERE)
-    // Richiediamo struttura piatta per velocità massima
-    const prompt = `Analizza l'immagine dello scontrino/fattura.
-    Estrai ESCLUSIVAMENTE questi dati in formato JSON puro:
-    1. "merchant": Nome esercente o breve descrizione.
-    2. "date": Data (YYYY-MM-DD).
-    3. "total": Importo totale (numero decimale, usa il punto).
-    4. "currency": Valuta (es. EUR).
-    5. "category": Scegli tra: Ristorazione, Trasporti, Shopping, Lavoro, Altro.
-    6. "address": Indirizzo o città (default "Milano" se non trovato).
-    7. "items": Array vuoto [].
+    // 3. PROMPT RIGIDO (SYSTEM INSTRUCTION)
+    // Richiediamo struttura piatta per velocità massima e conformità user request
+    const prompt = `Analizza l'immagine e restituisci SOLO un oggetto JSON.
+    Categorie Ammesse: Vitto Oltre Comune, Alloggio Oltre Comune, Vitto Estero, Alloggio Estero, Vitto Comune, Alloggio Comune, Taxi, Spese trasporti, Spese Rappresentanza, Altri Costi.
     
-    Rispondi SOLO con il JSON. Nessun markdown, nessun commento, niente backticks.
-    Se un dato non c'è, usa null o stringa vuota.`;
+    Logica: 
+    - Se lo scontrino è di Milano, usa le voci "Comune". 
+    - Se è fuori Milano, usa "Oltre Comune". 
+    - Se è estero, usa "Estero".
+    
+    Formato: {"amount": float, "category": string, "description": string}.
+    
+    Non aggiungere testo, commenti o blocchi markdown (es. \`\`\`json). Restituisci solo il raw JSON.`;
 
     console.log("[analyze-receipt] Sending request to gemini-1.5-flash...");
     
@@ -57,6 +56,7 @@ serve(async (req) => {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
+      // Usiamo gemini-1.5-flash come richiesto (versione stabile di flash-latest)
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
@@ -72,7 +72,7 @@ serve(async (req) => {
             }],
             generationConfig: {
               temperature: 0.1,
-              maxOutputTokens: 500, // Ridotto per velocità
+              maxOutputTokens: 500,
               responseMimeType: "application/json"
             },
           }),
@@ -90,10 +90,9 @@ serve(async (req) => {
       const result = await response.json();
       const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
       
-      // 5. LOGGING RAW RESPONSE
       console.log("[analyze-receipt] Gemini Raw Response:", rawText);
 
-      // 6. PARSING ROBUSTO
+      // 6. PULIZIA OUTPUT (Anti-Error)
       // Rimuove markdown code blocks (```json ... ```) se presenti
       let cleanJson = rawText
         .replace(/```json/g, "")
@@ -115,18 +114,15 @@ serve(async (req) => {
         throw new Error("Risposta IA non valida (JSON corrotto)");
       }
 
-      // Normalizzazione Dati
+      // Normalizzazione Dati (Mapping richiesto)
+      // Il prompt restituisce: amount, category, description
       const sanitizedData = {
-        merchant: data.merchant || "Sconosciuto",
-        date: data.date || new Date().toISOString().split("T")[0],
-        total: typeof data.total === "number" ? data.total : (parseFloat(String(data.total).replace(',', '.')) || 0),
-        currency: data.currency || "EUR",
-        category: data.category || "Altro",
-        address: data.address || "Milano", // Default requested
-        items: []
+        amount: typeof data.amount === "number" ? data.amount : (parseFloat(String(data.amount).replace(',', '.')) || 0),
+        category: data.category || "Altri Costi",
+        description: data.description || "Spesa"
       };
 
-      console.log("[analyze-receipt] Success. Total:", sanitizedData.total);
+      console.log("[analyze-receipt] Success. Amount:", sanitizedData.amount);
 
       return new Response(
         JSON.stringify({ success: true, data: sanitizedData }),

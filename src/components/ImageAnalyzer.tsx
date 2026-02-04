@@ -55,6 +55,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     return () => URL.revokeObjectURL(url);
   }, [imageFile]);
 
+  // Sync totalString with expenseData.total whenever it changes (e.g. from analysis)
   useEffect(() => {
     if (expenseData && expenseData.total !== undefined) {
       const val = expenseData.total 
@@ -82,7 +83,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          // OTTIMIZZAZIONE: Qualità 0.7 è il compromesso perfetto tra leggibilità OCR e velocità
           resolve(canvas.toDataURL("image/jpeg", 0.7));
         };
         img.src = e.target?.result as string;
@@ -111,15 +111,17 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       const result = await response.json();
       
+      // MAPPING DEI DATI DALL'IA (nuovo formato: amount, description, category)
+      // La data non viene restituita dal nuovo prompt, usiamo la data odierna
       setExpenseData({
-        merchant: result.data.merchant || "Sconosciuto",
-        expense_date: result.data.date || new Date().toISOString().split("T")[0],
-        total: result.data.total || 0,
-        currency: result.data.currency || "EUR",
+        merchant: result.data.description || "Sconosciuto",
+        expense_date: new Date().toISOString().split("T")[0],
+        total: result.data.amount || 0,
+        currency: "EUR",
         category: result.data.category || "",
-        vat_number: result.data.vat_number || "",
-        address: result.data.address || "",
-        items: result.data.items || []
+        vat_number: "",
+        address: "",
+        items: []
       });
 
     } catch (error: any) {
@@ -146,6 +148,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    // Permettiamo numeri, punti e virgole
     if (/^[0-9.,]*$/.test(val)) {
       setTotalString(val);
       const cleanVal = val.replace(/\./g, '').replace(',', '.');
@@ -161,7 +164,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     
     setSending(true);
     try {
-      // Ricomprimiamo l'immagine originale per l'upload
       const base64Image = await compressImage(imageFile);
       const fileName = `${session.user.id}/${Date.now()}.jpg`;
       const blob = await (await fetch(base64Image)).blob();
@@ -178,7 +180,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         date: expenseData.expense_date 
       };
 
-      // Usa anche qui l'URL hardcodato
       const emailResponse = await fetch(`${PROJECT_URL}/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
@@ -257,7 +258,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           {!analyzing && expenseData && !sent && (
             <div className="space-y-3 animate-slide-up">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Esercente</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Esercente (Descrizione)</Label>
                 <Input 
                   value={expenseData.merchant || ""} 
                   onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
@@ -265,16 +266,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 />
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Indirizzo</Label>
-                <Input 
-                  value={expenseData.address || ""} 
-                  onChange={(e) => setExpenseData({...expenseData, address: e.target.value})} 
-                  className="rounded-xl h-12 text-base bg-secondary/30"
-                  placeholder="Via Roma 1, Milano..." 
-                />
-              </div>
-              
+              {/* Data e Totale sulla stessa riga */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
@@ -298,24 +290,13 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">P.IVA</Label>
-                  <Input 
-                    value={expenseData.vat_number || ""} 
-                    onChange={(e) => setExpenseData({...expenseData, vat_number: e.target.value})} 
-                    className="rounded-xl h-12 text-base bg-secondary/30"
-                    placeholder="12345678901" 
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
-                  <Input 
-                    value={expenseData.category || ""} 
-                    onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                    className="rounded-xl h-12 text-base bg-secondary/30" 
-                  />
-                </div>
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
+                <Input 
+                  value={expenseData.category || ""} 
+                  onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
+                  className="rounded-xl h-12 text-base bg-secondary/30" 
+                />
               </div>
               
             </div>
