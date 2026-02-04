@@ -39,9 +39,10 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("gemini_api_key");
+    // Corretto recupero della chiave API (MAIUSCOLO come da standard Supabase Secrets)
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
-      console.error("[analyze-receipt] Missing gemini_api_key");
+      console.error("[analyze-receipt] Missing GEMINI_API_KEY");
       throw new Error("La chiave API di Gemini non è configurata.");
     }
 
@@ -77,11 +78,11 @@ serve(async (req) => {
     - Cerca l'indirizzo in alto o in fondo allo scontrino.
     - Se un campo non è leggibile, lascialo come stringa vuota o 0.`;
 
-    console.log("[analyze-receipt] Sending request to Gemini Pro...");
+    console.log("[analyze-receipt] Sending request to gemini-flash-latest...");
 
-    // REVERTED TO STANDARD GEMINI-PRO
+    // STRICTLY USING gemini-flash-latest AS REQUESTED
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -104,7 +105,7 @@ serve(async (req) => {
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 1024,
-            // RIMOSSO responseMimeType per compatibilità con gemini-pro standard
+            responseMimeType: "application/json",
           },
         }),
       }
@@ -121,7 +122,7 @@ serve(async (req) => {
 
     const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
-    // Logica di estrazione JSON robusta (necessaria perché gemini-pro è prolisso)
+    // Logica di estrazione JSON robusta
     let jsonString = rawText;
     const firstBrace = rawText.indexOf('{');
     const lastBrace = rawText.lastIndexOf('}');
