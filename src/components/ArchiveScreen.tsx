@@ -43,21 +43,25 @@ export function ArchiveScreen() {
     return eachMonthOfInterval({ start, end });
   }, []);
 
-  // Scroll to current month on mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (scrollRef.current) {
-        const index = monthsList.findIndex(m => isSameMonth(m, currentDate));
-        if (index !== -1) {
-          const containerWidth = scrollRef.current.clientWidth;
-          // Calcolo per centrare l'elemento: (Index * Width) - (MetaSchermo) + (MetaOggetto)
-          const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
-          scrollRef.current.scrollTo({ left: scrollPos, behavior: 'instant' });
-        }
+  // Scroll to current month on mount or change
+  const scrollToMonth = (targetDate: Date) => {
+    if (scrollRef.current) {
+      const index = monthsList.findIndex(m => isSameMonth(m, targetDate));
+      if (index !== -1) {
+        const containerWidth = scrollRef.current.clientWidth;
+        const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
+        scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
       }
+    }
+  };
+
+  useEffect(() => {
+    // Initial scroll
+    const timer = setTimeout(() => {
+       scrollToMonth(currentDate);
     }, 50);
     return () => clearTimeout(timer);
-  }, []); 
+  }, []); // Run only on mount initially
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -104,37 +108,37 @@ export function ArchiveScreen() {
   const handleWheelScroll = () => {
     if (!scrollRef.current) return;
     
+    // Se l'utente non sta interagendo attivamente, potremmo evitare aggiornamenti troppo frequenti
+    // ma qui serve per aggiornare il mese mentre scorre
     const container = scrollRef.current;
-    // Troviamo il centro dello schermo
     const center = container.scrollLeft + (container.clientWidth / 2);
-    // Indice = Centro / LarghezzaOggetto
     const index = Math.floor(center / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
       const newMonth = monthsList[index];
+      // Aggiorna solo se è diverso per evitare re-render
       if (!isSameMonth(newMonth, currentDate)) {
         setCurrentDate(newMonth);
       }
     }
   };
 
-  // SPACER CALCULATION:
-  // Base header height is ~14rem + 15px extra padding.
-  // Spacer adjustments:
-  // - Standard: 14.5rem + 22px (Increased by 7px from 15px)
-  // - With Search: 18.5rem + 22px
+  // Funzione chiamata dal Report Full Screen per cambiare mese
+  const handleReportMonthChange = (newDate: Date) => {
+    setCurrentDate(newDate);
+    // Sincronizza anche la barra in alto (Ruler)
+    scrollToMonth(newDate);
+  };
+
   const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+22px)]' : 'h-[calc(14.5rem+22px)]';
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* 1. HEADER FROSTED GLASS BACKGROUND */}
-      {/* Height remains +15px as requested */}
+      {/* HEADER BACKGROUND */}
       <div className="fixed top-0 left-0 right-0 h-[calc(14rem+15px)] z-40 pointer-events-none">
-        {/* Strato sfocatura e colore diluito */}
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
-        {/* Sfumatura inferiore per ammorbidire il taglio */}
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
@@ -148,7 +152,7 @@ export function ArchiveScreen() {
         </button>
       </div>
 
-      {/* MAXI HEADER CONTENT */}
+      {/* HEADER CONTENT */}
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
         {/* YEAR */}
@@ -158,27 +162,19 @@ export function ArchiveScreen() {
           </span>
         </div>
 
-        {/* RULER INTERFACE */}
-        {/* Height reduced by 25% (h-24 -> h-[4.5rem]) */}
+        {/* RULER */}
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
-          
-          {/* MASCHERE LATERALI SFUMATE */}
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
           
-          {/* INDICATORE CENTRALE */}
-          {/* Lowered bottom to 5 (20px) to match shorter items */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-5 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
              <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
-          {/* SCROLL CONTAINER */}
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
-            onTouchStart={() => setIsUserScrolling(true)}
-            onTouchEnd={() => setTimeout(() => setIsUserScrolling(false), 500)}
             className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
           >
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
@@ -189,16 +185,10 @@ export function ArchiveScreen() {
                 <div 
                   key={i} 
                   style={{ width: `${ITEM_WIDTH}px` }}
-                  // Item height reduced (h-20 -> h-[3.75rem] / 60px)
                   className="shrink-0 h-[3.75rem] snap-center flex flex-col justify-end group relative"
                 >
                   <button 
-                    onClick={() => {
-                        if (scrollRef.current) {
-                            const scrollPos = (i * ITEM_WIDTH) - (scrollRef.current.clientWidth / 2) + (ITEM_WIDTH / 2);
-                            scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
-                        }
-                    }}
+                    onClick={() => scrollToMonth(date)}
                     className="w-full h-full flex flex-col justify-end"
                   >
                     <div className="w-full h-10 flex items-end justify-between px-1 mb-2">
@@ -228,12 +218,13 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* HUGE BALANCE WITH REPORT TRIGGER */}
+        {/* MONTHLY REPORT TRIGGER */}
         <div className="relative z-50 mt-0 pointer-events-auto">
           <MonthlyReport 
             expenses={filteredExpenses} 
             currentDate={currentDate} 
             total={currentMonthTotal}
+            onMonthChange={handleReportMonthChange} // Passiamo la funzione
           >
             <div 
               className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 cursor-pointer hover:opacity-80 transition-opacity"
@@ -249,7 +240,6 @@ export function ArchiveScreen() {
       </header>
 
       {/* SEARCH BAR */}
-      {/* Position adjusted: 14.5rem + 22px */}
       {showSearchBar && (
         <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
@@ -261,7 +251,7 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* LIST CONTAINER WITH MASK */}
+      {/* LIST */}
       <div 
         className="flex-1 flex flex-col h-full w-full relative z-0"
         style={{
@@ -294,14 +284,12 @@ export function ArchiveScreen() {
         )}
       </div>
 
-      {/* FOOTER FADE */}
       <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
 
-      {/* CONSOLE DI COMANDO */}
+      {/* DOCK */}
       <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
         <div className="flex justify-center pointer-events-auto">
           <div className="relative flex items-center justify-between px-6 py-1 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
-            
             <button 
               onClick={toggleSearchBar}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
@@ -309,7 +297,6 @@ export function ArchiveScreen() {
               <Search className="w-5 h-5" strokeWidth={2} />
             </button>
 
-            {/* Pulsante Centrale Float (Wrapper h-0 per non espandere la pillola) */}
             <div className="relative w-[74px] h-0 mx-4 flex items-center justify-center">
               <button
                 onClick={() => { haptic('light'); handleSelectPhoto(); }}
@@ -329,7 +316,6 @@ export function ArchiveScreen() {
                 <Sun className="w-5 h-5" strokeWidth={2} />
               )}
             </button>
-
           </div>
         </div>
       </nav>
@@ -341,16 +327,9 @@ export function ArchiveScreen() {
         expenses={expenses}
         onDataGenerated={() => {
           refetch();
-          setCurrentDate(new Date(2026, 1, 1));
-          setTimeout(() => {
-            if (scrollRef.current) {
-               const index = monthsList.findIndex(m => isSameMonth(m, new Date(2026, 1, 1)));
-               if(index !== -1) {
-                   const scrollPos = (index * ITEM_WIDTH) - (scrollRef.current.clientWidth / 2) + (ITEM_WIDTH / 2);
-                   scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
-               }
-            }
-          }, 100);
+          const target = new Date(2026, 1, 1);
+          setCurrentDate(target);
+          setTimeout(() => scrollToMonth(target), 100);
         }}
       />
 

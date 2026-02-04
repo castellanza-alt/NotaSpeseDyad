@@ -1,17 +1,20 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Expense } from "@/hooks/useExpenses";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Map as MapIcon, TrendingDown, TrendingUp, Share2 } from "lucide-react";
-import { format } from "date-fns";
+import { Map as MapIcon, TrendingDown, TrendingUp, Share2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
 import { it } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { OdometerValue } from "./OdometerValue";
+import { cn } from "@/lib/utils";
 
 interface MonthlyReportProps {
   expenses: Expense[];
   currentDate: Date;
   total: number;
   children: React.ReactNode;
+  onMonthChange: (date: Date) => void; // Nuova prop per navigare
 }
 
 const COLORS = [
@@ -23,12 +26,12 @@ const COLORS = [
   "#64748b", // Slate (Default)
 ];
 
-export function MonthlyReport({ expenses, currentDate, total, children }: MonthlyReportProps) {
+export function MonthlyReport({ expenses, currentDate, total, children, onMonthChange }: MonthlyReportProps) {
   const { toast } = useToast();
+  const [open, setOpen] = useState(false);
 
   // Raggruppa le spese per categoria
   const categoryData = useMemo(() => {
-    // Qui usiamo il Map nativo di JS, quindi l'import sopra è stato rinominato in MapIcon
     const map = new Map<string, number>();
     
     expenses.forEach(e => {
@@ -42,17 +45,14 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
       .sort((a, b) => b.value - a.value);
   }, [expenses]);
 
-  // Logica di Export (CSV + Email)
   const handleExport = async () => {
     const monthName = format(currentDate, "MMMM yyyy", { locale: it });
     
-    // 1. Costruzione riepilogo testuale per email body
     const summaryText = `Report Spese - ${monthName}\n\n` +
       `Totale: €${total.toLocaleString("it-IT", { minimumFractionDigits: 2 })}\n\n` +
       `Dettaglio Categorie:\n` +
       categoryData.map(c => `- ${c.name}: €${c.value.toLocaleString("it-IT", { minimumFractionDigits: 2 })}`).join("\n");
 
-    // 2. Costruzione CSV
     const csvContent = [
       "Data,Esercente,Categoria,Importo",
       ...expenses.map(e => {
@@ -63,7 +63,6 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
 
     const file = new File([csvContent], `report_${format(currentDate, "yyyy_MM")}.csv`, { type: "text/csv" });
 
-    // Usa Web Share API se disponibile (Mobile nativo)
     if (navigator.share && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
@@ -75,55 +74,89 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
         console.error("Errore condivisione", err);
       }
     } else {
-      // Fallback: Mailto link per desktop (senza allegato diretto, ma con testo)
       const subject = encodeURIComponent(`Report Spese: ${monthName}`);
       const body = encodeURIComponent(summaryText);
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      
-      toast({
-        title: "Report generato",
-        description: "Apertura client email...",
-      });
+      toast({ title: "Report generato", description: "Apertura client email..." });
     }
   };
 
-  // Mockup trend (in futuro collegare a mese precedente reale)
+  // Navigazione Mesi
+  const prevMonth = () => onMonthChange(subMonths(currentDate, 1));
+  const nextMonth = () => onMonthChange(addMonths(currentDate, 1));
+
+  // Mockup trend (logica futura)
   const trendPercentage = -12; 
   const isPositiveTrend = trendPercentage < 0; 
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button className="outline-none ring-offset-background transition-transform active:scale-95 cursor-pointer">
           {children}
         </button>
-      </PopoverTrigger>
+      </DialogTrigger>
       
-      <PopoverContent 
-        className="w-[90vw] max-w-[380px] p-0 overflow-hidden rounded-[2rem] border-border/50 shadow-2xl bg-card/95 backdrop-blur-xl animate-scale-in"
-        align="center"
-        sideOffset={15}
+      {/* Full Screen Dialog Content */}
+      <DialogContent 
+        className="w-screen h-screen max-w-none rounded-none border-0 p-0 bg-background flex flex-col overflow-hidden animate-scale-in"
+        showCloseButton={false} // Usiamo il nostro bottone custom
       >
-        {/* Header */}
-        <div className="p-5 pb-4 border-b border-border/30 bg-secondary/10">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {format(currentDate, "MMMM yyyy", { locale: it })}
-              </p>
-              <h3 className="text-xl font-bold text-foreground mt-0.5">Analisi Mensile</h3>
-            </div>
-            
-            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${isPositiveTrend ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-              {isPositiveTrend ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
-              <span>{Math.abs(trendPercentage)}%</span>
+        <DialogTitle className="sr-only">Report Mensile</DialogTitle>
+        
+        {/* HEADER CUSTOM */}
+        <div className="flex items-center justify-between px-6 pt-safe-top pb-4 bg-background/80 backdrop-blur-md border-b border-border/30 z-20">
+          <div className="flex flex-col">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Analisi Spese
+            </span>
+            <div className="flex items-center gap-2 mt-1">
+               <button onClick={prevMonth} className="p-1 -ml-1 hover:bg-secondary rounded-full transition-colors">
+                 <ChevronLeft className="w-6 h-6 text-foreground" />
+               </button>
+               <span className="text-xl font-bold text-foreground capitalize w-32 text-center">
+                 {format(currentDate, "MMMM", { locale: it })}
+               </span>
+               <button onClick={nextMonth} className="p-1 hover:bg-secondary rounded-full transition-colors">
+                 <ChevronRight className="w-6 h-6 text-foreground" />
+               </button>
             </div>
           </div>
+
+          <button 
+            onClick={() => setOpen(false)}
+            className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-90"
+          >
+            <X className="w-5 h-5" strokeWidth={2.5} />
+          </button>
         </div>
 
-        <div className="p-5 space-y-6">
-          {/* Grafico */}
-          <div className="h-[180px] w-full relative">
+        {/* CONTENUTO SCROLLABILE */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-safe-bottom">
+          
+          {/* BIG TOTAL */}
+          <div className="text-center pt-4">
+            <p className="text-muted-foreground text-sm font-medium mb-1">Saldo Totale</p>
+            <div className="flex items-baseline justify-center text-foreground">
+              <span className="text-2xl font-medium mr-1 text-muted-foreground">€</span>
+              <span className="text-6xl font-black tracking-tighter tabular-nums">
+                <OdometerValue value={total} />
+              </span>
+            </div>
+            {/* Trend Pill */}
+            <div className="flex justify-center mt-3">
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold",
+                  isPositiveTrend ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                )}>
+                {isPositiveTrend ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+                <span>{Math.abs(trendPercentage)}% vs mese scorso</span>
+              </div>
+            </div>
+          </div>
+
+          {/* GRAFICO GRANDE */}
+          <div className="h-[280px] w-full relative -mx-2">
             {categoryData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -131,9 +164,9 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
                     data={categoryData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
-                    paddingAngle={5}
+                    innerRadius={80}
+                    outerRadius={110}
+                    paddingAngle={4}
                     dataKey="value"
                     stroke="none"
                   >
@@ -144,62 +177,65 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
                   <Tooltip 
                     formatter={(value: number) => `€${value.toFixed(2)}`}
                     contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: 'none', 
+                      borderRadius: '16px', 
+                      border: '1px solid var(--border)', 
                       backgroundColor: 'hsl(var(--card))',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      color: 'hsl(var(--foreground))'
+                      boxShadow: '0 10px 40px -10px rgba(0,0,0,0.2)',
+                      color: 'hsl(var(--foreground))',
+                      fontWeight: 'bold'
                     }}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                Nessun dato
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2 opacity-50">
+                 <div className="w-16 h-16 rounded-full border-4 border-muted border-t-transparent animate-spin" />
+                 <p className="text-sm">Nessun dato per questo mese</p>
               </div>
             )}
-            
-            {/* Totale Centro */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Totale</span>
-              <span className="text-lg font-bold text-foreground">€{Math.round(total)}</span>
+          </div>
+
+          {/* LISTA CATEGORIE */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
+              Dettaglio Categorie
+            </h4>
+            <div className="grid gap-3">
+              {categoryData.map((cat, index) => (
+                <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-3 h-3 rounded-full shadow-sm ring-2 ring-background" 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }} 
+                    />
+                    <span className="font-semibold text-foreground">{cat.name}</span>
+                  </div>
+                  <span className="font-mono font-medium text-foreground">
+                    €{cat.value.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Legenda */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {categoryData.slice(0, 4).map((cat, index) => (
-              <div key={index} className="flex items-center gap-2.5">
-                <div 
-                  className="w-2.5 h-2.5 rounded-full shrink-0" 
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }} 
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-medium truncate text-foreground/90">{cat.name}</span>
-                  <span className="text-[10px] text-muted-foreground">€{cat.value.toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
+          {/* AZIONI */}
+          <div className="grid grid-cols-2 gap-4 pt-4">
+             <button className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-colors border border-blue-500/10">
+                <MapIcon className="w-6 h-6 mb-1" />
+                <span className="text-sm font-bold">Mappa</span>
+             </button>
+             <button 
+                onClick={handleExport}
+                className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-emerald-500/10"
+             >
+                <Share2 className="w-6 h-6 mb-1" />
+                <span className="text-sm font-bold">Esporta</span>
+             </button>
           </div>
 
-          {/* Azioni */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-secondary/30 hover:bg-secondary/50 transition-colors border border-border/30">
-              <MapIcon className="w-5 h-5 text-blue-500" />
-              <span className="text-xs font-medium">Mappa</span>
-            </button>
-            
-            <button 
-              onClick={handleExport}
-              className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-secondary/30 hover:bg-secondary/50 transition-colors border border-border/30"
-            >
-              <Share2 className="w-5 h-5 text-primary" />
-              <span className="text-xs font-medium">Condividi</span>
-            </button>
-          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
