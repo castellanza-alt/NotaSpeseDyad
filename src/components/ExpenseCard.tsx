@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import type { Expense } from "@/hooks/useExpenses";
 import { cn } from "@/lib/utils";
-import { Trash2, Pencil, Eye } from "lucide-react";
+import { Trash2, Pencil, Eye, Check, X } from "lucide-react";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -54,6 +54,9 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null); // Track vertical too
   const isScrolling = useRef<boolean>(false); // Lock status
+  
+  // DESKTOP CONFIRM LOGIC
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   
   const SWIPE_THRESHOLD = -100; // Amount to swipe to lock open
   const MAX_SWIPE = -160;
@@ -153,6 +156,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
             setSwipeOffset(0); 
           }
         }}
+        onMouseLeave={() => setIsConfirmingDelete(false)}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -169,20 +173,42 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
       >
         {/* DESKTOP HOVER ACTIONS (Only visible on MD+ screens on hover) */}
         <div className="hidden md:flex absolute -top-2 -right-2 gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
-          <button 
-            onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-            className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-            title="Modifica"
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-            className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-            title="Elimina"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {isConfirmingDelete ? (
+            <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm p-1.5 rounded-full border border-red-500/20 pl-3 shadow-xl animate-scale-in">
+              <span className="text-[10px] font-bold text-red-500 uppercase mr-1">Sicuro?</span>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete?.(); setIsConfirmingDelete(false); }}
+                className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                title="Conferma"
+              >
+                <Check className="w-4 h-4" strokeWidth={3} />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsConfirmingDelete(false); }}
+                className="w-7 h-7 rounded-full bg-secondary text-foreground flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                title="Annulla"
+              >
+                <X className="w-4 h-4" strokeWidth={3} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
+                className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                title="Modifica"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsConfirmingDelete(true); }}
+                className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                title="Elimina"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* TOP ROW */}
