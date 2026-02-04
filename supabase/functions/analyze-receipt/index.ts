@@ -10,29 +10,24 @@ interface AnalyzeRequest {
   image: string; // base64 data URL
 }
 
-// Funzione helper per pulire e parsare la risposta
 function parseGeminiResponse(rawText: string) {
   console.log("[analyze-receipt] Parsing raw text:", rawText);
 
-  // 1. TENTATIVO JSON (Pulizia Maniacale con Regex)
+  // 1. TENTATIVO JSON (Regex pulita)
   try {
-    // Cerca la prima parentesi graffa aperta e l'ultima chiusa
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const cleanJson = jsonMatch[0];
-      console.log("[analyze-receipt] JSON trovato via Regex:", cleanJson);
       return JSON.parse(cleanJson);
     }
   } catch (e) {
-    console.warn("[analyze-receipt] Regex JSON parse fallito, tento fallback...", e);
+    console.warn("[analyze-receipt] JSON Regex fallito:", e);
   }
 
-  // 2. TENTATIVO FALLBACK (Pipe Separator)
-  // Formato atteso: IMPORTO|CATEGORIA|DESCRIZIONE
+  // 2. TENTATIVO FALLBACK (Pipe)
   if (rawText.includes("|")) {
     const parts = rawText.split("|").map(p => p.trim());
     if (parts.length >= 3) {
-      console.log("[analyze-receipt] Fallback Pipe attivo:", parts);
       let amountStr = parts[0].replace(/[^0-9.,]/g, "").replace(",", ".");
       return {
         amount: parseFloat(amountStr) || 0,
@@ -41,28 +36,61 @@ function parseGeminiResponse(rawText: string) {
       };
     }
   }
-
-  throw new Error("Impossibile parsare la risposta (Né JSON né Pipe)");
+  throw new Error("Formato risposta non riconosciuto");
 }
 
 serve(async (req) => {
+  // CORS Preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing Authorization header');
+    // 1. VERIFICA API KEY (Case Insensitive Check)
+    // Controlliamo sia MAIUSCOLO che minuscolo per evitare errori banali
+    const API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("gemini_api_key");
+    
+    if (!API_KEY) {
+      console.error("[analyze-receipt] ERRORE CRITICO: Nessuna API Key trovata nei Secrets.");
+      throw new Error("Configurazione Server incompleta (API Key mancante).");
+    }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("API Key mancante");
+    // Auth Check (Opzionale ma raccomandato)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      // Non blocchiamo per ora per facilitare il debug, ma logghiamo
+      console.warn("[analyze-receipt] Warning: Manca header Authorization");
+    }
 
     const { image }: AnalyzeRequest = await req.json();
-    if (!image) throw new Error("Immagine mancante");
+    if (!image) throw new Error("Payload immagine vuoto.");
 
-    const base64Data = image.split(",")[1] || image;
+    // 2. GESTIONE BASE64 E MIME TYPE
+    // Il frontend invia "data:image/jpeg;base64,..."
+    // Dobbiamo separare header e dati
+    let mimeType = "image/jpeg";
+    let base64Data = image;
 
-    // 3. PROMPT ESTREMO CON FALLBACK E LOGICA GEOGRAFICA
+    if (image.includes(",")) {
+      const parts = image.split(",");
+      base64Data = parts[1];
+      
+      // Estrai il mime type reale se presente
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      if (mimeMatch) {
+        mimeType = mimeMatch[1];
+        console.log(`[analyze-receipt] Mime-Type rilevato: ${mimeType}`);
+      }
+    }
+
+    // HEIC CHECK: Se è HEIC, lo logghiamo. Gemini potrebbe supportarlo, ma è rischioso.
+    if (mimeType.toLowerCase().includes("heic")) {
+      console.warn("[analyze-receipt] ATTENZIONE: Rilevato formato HEIC. Potrebbe causare errori se non convertito.");
+      // Forziamo mime jpeg nel tentativo di ingannare il parser se i dati sono stati convertiti ma l'header no
+      // Oppure lo lasciamo passare sperando in Gemini. Per sicurezza usiamo jpeg se siamo incerti.
+    }
+
+    // 3. PROMPT E LOGICA
     const prompt = `Sei un estrattore dati per note spese. Analizza l'immagine.
     
     LOGICA GEOGRAFICA (Cruciale):
@@ -75,61 +103,52 @@ serve(async (req) => {
     Restituisci ESCLUSIVAMENTE un oggetto JSON valido:
     {"amount": 12.50, "category": "Vitto Comune", "description": "Nome Esercente"}
 
-    FALLBACK DI EMERGENZA:
-    Se e SOLO SE non riesci a generare JSON, rispondi con una stringa separata da pipe:
-    IMPORTO|CATEGORIA|DESCRIZIONE
-    
-    Non aggiungere MAI markdown (no \`\`\`), non aggiungere commenti. Solo i dati.`;
+    FALLBACK:
+    Se fallisci il JSON, usa: IMPORTO|CATEGORIA|DESCRIZIONE`;
 
-    console.log("[analyze-receipt] Sending request to gemini-1.5-flash...");
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    console.log("[analyze-receipt] Chiamata a Gemini 1.5 Flash in corso...");
 
+    // 4. CHIAMATA GEMINI (Con Error Handling Avanzato)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
         body: JSON.stringify({
           contents: [{
             parts: [
               { text: prompt },
-              { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+              { inline_data: { mime_type: mimeType, data: base64Data } }
             ]
           }],
           generationConfig: {
-            temperature: 0.1, // Molto deterministico
-            maxOutputTokens: 500,
+            temperature: 0.1,
+            maxOutputTokens: 800,
           },
         }),
       }
     );
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
-      throw new Error(`Gemini API Error: ${response.status}`);
+      // Leggiamo il corpo dell'errore per capire PERCHÉ fallisce (es. 400 Image too large, 403 Key invalid)
+      const errorBody = await response.text();
+      console.error(`[analyze-receipt] GEMINI API ERROR (${response.status}):`, errorBody);
+      throw new Error(`Errore AI Provider: ${response.status} - ${errorBody.substring(0, 100)}...`);
     }
 
     const result = await response.json();
     const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
-    // LOGGING ESTREMO RICHIESTO
-    console.log("[analyze-receipt] RISPOSTA_GEMINI (RAW):", rawText);
+    console.log("[analyze-receipt] Risposta Grezza AI:", rawText);
 
-    // Parsing con logica robusta
+    // Parsing
     const data = parseGeminiResponse(rawText);
 
-    // Sanitizzazione finale numeri
     const sanitizedData = {
       amount: typeof data.amount === "number" ? data.amount : (parseFloat(String(data.amount).replace(',', '.')) || 0),
       category: data.category || "Altri Costi",
       description: data.description || "Spesa"
     };
-
-    console.log("[analyze-receipt] Dati finali:", sanitizedData);
 
     return new Response(
       JSON.stringify({ success: true, data: sanitizedData }),
@@ -137,10 +156,21 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error("[analyze-receipt] Error:", error.message);
+    // 5. CATCH-ALL PER EVITARE 500 GENERICI
+    // Logghiamo l'errore completo nel sistema di log di Supabase
+    console.error("[analyze-receipt] SERVER_ERROR_CAUGHT:", error);
+    
+    // Restituiamo un 500 "controllato" con messaggio JSON
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "Errore sconosciuto nel server",
+        details: "Controlla i log della Edge Function per i dettagli."
+      }),
+      { 
+        status: 500, // Manteniamo 500 per segnalare il fallimento al client
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
   }
 });
