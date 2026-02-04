@@ -276,34 +276,40 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 <Input 
                   value={expenseData.merchant || ""} 
                   onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
-                  className="rounded-2xl h-14 px-4 text-lg font-medium bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm"
+                  className="rounded-2xl h-14 px-4 text-lg font-medium bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm appearance-none"
                   placeholder="Nome Esercente"
                 />
               </div>
 
-              {/* Data e Totale Flex Row */}
-              <div className="flex gap-4">
-                <div className="space-y-2 w-[35%]">
+              {/* Data e Totale Flex Row - FORZATURA IOS */}
+              <div className="flex gap-4 w-full">
+                
+                {/* DATA: 35% */}
+                <div className="space-y-2 flex-none" style={{ width: '35%' }}>
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Data</Label>
                   <Input 
                     type="date" 
                     value={expenseData.expense_date || ""} 
                     onChange={(e) => setExpenseData({...expenseData, expense_date: e.target.value})} 
-                    className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm w-full" 
+                    className="w-full rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm min-w-0 appearance-none" 
+                    style={{ WebkitAppearance: 'none' }}
                   />
                 </div>
-                <div className="space-y-2 w-[42%]">
+
+                {/* TOTALE: 42% */}
+                <div className="space-y-2 flex-none" style={{ width: '42%' }}>
                   <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Totale</Label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Input 
                       type="text" 
                       inputMode="decimal"
                       placeholder="0,00"
                       value={totalString}
                       onChange={handleAmountChange} 
-                      className="rounded-2xl h-14 pl-4 pr-10 text-lg font-bold text-right bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm w-full" 
+                      className="w-full rounded-2xl h-14 pl-4 pr-10 text-lg font-bold text-right bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm min-w-0 appearance-none" 
+                      style={{ WebkitAppearance: 'none' }}
                     />
-                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
+                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">€</span>
                   </div>
                 </div>
               </div>
@@ -314,7 +320,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
                 <Input 
                   value={expenseData.category || ""} 
                   onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                  className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm"
+                  className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm appearance-none"
                   placeholder="Categoria Spesa"
                 />
               </div>
