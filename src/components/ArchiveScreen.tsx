@@ -168,10 +168,8 @@ export function ArchiveScreen() {
 
   const NavigationRail = () => (
     <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/50 bg-background/95 backdrop-blur">
-      {/* Logo Placeholder */}
-      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mb-12 shadow-md">
-        N
-      </div>
+      {/* Spacer for top alignment without Logo */}
+      <div className="h-4" />
 
       <div className="flex flex-col gap-6 w-full items-center">
         <button 
@@ -209,36 +207,12 @@ export function ArchiveScreen() {
 
   const DesktopSidebar = () => (
     <div className="hidden md:flex flex-col w-[25%] h-screen fixed left-[80px] top-0 z-40 p-8 border-r border-border/50 bg-background/50 backdrop-blur-sm">
-      <h1 className="text-3xl font-black tracking-tight text-foreground mb-1">
+      <h1 className="text-3xl font-black tracking-tight text-foreground mb-6">
         Nota Spese
       </h1>
-      <p className="text-sm text-muted-foreground mb-10">Gestione archivio</p>
 
-      {/* Month Selector List */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide mb-8">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
-        {monthsList.map((date, i) => {
-          const isCurrent = isSameMonth(date, currentDate);
-          return (
-            <button
-              key={i}
-              onClick={() => setCurrentDate(date)}
-              className={cn(
-                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm",
-                isCurrent 
-                  ? "bg-primary text-primary-foreground font-bold shadow-md" 
-                  : "hover:bg-secondary text-muted-foreground"
-              )}
-            >
-              <span>{format(date, "MMMM yyyy", { locale: it })}</span>
-              {isCurrent && <Check className="w-4 h-4" />}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Balance Card */}
-      <div className="mt-auto">
+      {/* Balance Card - MOVED TOP */}
+      <div className="mb-8">
         <MonthlyReport 
             expenses={filteredExpenses} 
             currentDate={currentDate} 
@@ -259,6 +233,29 @@ export function ArchiveScreen() {
             </div>
           </div>
         </MonthlyReport>
+      </div>
+
+      {/* Month Selector List - MOVED BOTTOM & REVERSED */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
+        {[...monthsList].reverse().map((date, i) => {
+          const isCurrent = isSameMonth(date, currentDate);
+          return (
+            <button
+              key={i}
+              onClick={() => setCurrentDate(date)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm",
+                isCurrent 
+                  ? "bg-primary text-primary-foreground font-bold shadow-md" 
+                  : "hover:bg-secondary text-muted-foreground"
+              )}
+            >
+              <span>{format(date, "MMMM yyyy", { locale: it })}</span>
+              {isCurrent && <Check className="w-4 h-4" />}
+            </button>
+          )
+        })}
       </div>
     </div>
   );

@@ -106,12 +106,12 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
       </DialogTrigger>
       
       <DialogContent 
-        className="w-screen h-screen max-w-none rounded-none border-0 p-0 bg-background flex flex-col overflow-hidden animate-scale-in [&>button]:hidden"
+        className="w-screen h-screen max-w-none rounded-none border-0 p-0 bg-background flex flex-col overflow-hidden animate-scale-in [&>button]:hidden md:w-[90vw] md:max-w-5xl md:h-[85vh] md:rounded-3xl md:border md:border-border/20 md:shadow-2xl md:fixed md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%]"
       >
         <DialogTitle className="sr-only">Report Mensile</DialogTitle>
         
         {/* HEADER CUSTOM */}
-        <div className="flex items-center justify-between px-6 pt-safe-top pb-4 bg-background/80 backdrop-blur-md border-b border-border/30 z-20">
+        <div className="flex items-center justify-between px-6 pt-safe-top pb-4 bg-background/80 backdrop-blur-md border-b border-border/30 z-20 md:pt-4">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
               {viewMode === 'map' ? 'Geolocalizzazione' : 'Analisi Spese'}
@@ -141,14 +141,14 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
         <div className="flex-1 overflow-hidden relative">
           
           {viewMode === 'map' ? (
-            <div className="w-full h-full p-4 pb-32">
+            <div className="w-full h-full p-4 pb-32 md:pb-4">
                <ExpenseMap expenses={expenses} />
                
                {/* Floating Toggle Back */}
                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
                  <button 
                     onClick={() => setViewMode('report')}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-foreground text-background shadow-xl font-bold hover:scale-105 transition-transform"
+                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-foreground text-background shadow-xl font-bold hover:scale-110 transition-transform"
                  >
                     <ListFilter className="w-5 h-5" />
                     Torna al Report
@@ -156,7 +156,7 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
                </div>
             </div>
           ) : (
-            <div className="w-full h-full overflow-y-auto p-6 space-y-8 pb-safe-bottom">
+            <div className="w-full h-full overflow-y-auto p-6 space-y-8 pb-safe-bottom md:pb-6">
               {/* BIG TOTAL */}
               <div className="text-center pt-4">
                 <p className="text-muted-foreground text-sm font-medium mb-1">Saldo Totale</p>
@@ -224,7 +224,7 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
                 <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
                   Dettaglio Categorie
                 </h4>
-                <div className="grid gap-3">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                   {categoryData.map((cat, index) => (
                     <div key={index} className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
                       <div className="flex items-center gap-3">
@@ -232,7 +232,7 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
                           className="w-3 h-3 rounded-full shadow-sm ring-2 ring-background" 
                           style={{ backgroundColor: COLORS[index % COLORS.length] }} 
                         />
-                        <span className="font-semibold text-foreground">{cat.name}</span>
+                        <span className="font-semibold text-foreground truncate">{cat.name}</span>
                       </div>
                       <span className="font-mono font-medium text-foreground">
                         €{cat.value.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
@@ -243,17 +243,17 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
               </div>
 
               {/* AZIONI */}
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="grid grid-cols-2 gap-4 pt-4 md:flex md:justify-center">
                  <button 
                     onClick={() => setViewMode('map')}
-                    className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-colors border border-blue-500/10 active:scale-95"
+                    className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-blue-500/5 hover:bg-blue-500/10 text-blue-600 transition-colors border border-blue-500/10 active:scale-95 md:w-32"
                  >
                     <MapIcon className="w-6 h-6 mb-1" />
                     <span className="text-sm font-bold">Mappa</span>
                  </button>
                  <button 
                     onClick={handleExport}
-                    className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-emerald-500/10 active:scale-95"
+                    className="flex flex-col items-center justify-center gap-2 p-5 rounded-3xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 transition-colors border border-emerald-500/10 active:scale-95 md:w-32"
                  >
                     <Share2 className="w-6 h-6 mb-1" />
                     <span className="text-sm font-bold">Esporta</span>
