@@ -55,28 +55,30 @@ serve(async (req) => {
     // Extract base64 data from data URL
     const base64Data = image.split(",")[1] || image;
 
-    const prompt = `Sei un esperto contabile. Analizza questo scontrino fiscale o fattura.
-    Estrai i dati ESCLUSIVAMENTE in formato JSON puro, senza markdown, senza commenti.
+    // PROMPT MIGLIORATO
+    const prompt = `Analizza questa immagine di scontrino o fattura con la massima precisione possibile.
+    Il tuo compito è fare OCR ed estrarre i dati strutturati.
     
-    Struttura JSON richiesta:
+    FOCUS PARTICOLARE SU:
+    1. TOTALE: Cerca la cifra finale più alta che rappresenta il pagamento totale. Cerca parole come "TOTALE", "IMPORTO PAGATO", "TOTALE COMPLESSIVO".
+    2. DATA: Cerca date nel formato GG/MM/AAAA, AAAA-MM-GG o simili.
+    3. ESERCENTE: Il nome del negozio è quasi sempre in alto al centro, spesso in grassetto o con un logo.
+    
+    Restituisci ESCLUSIVAMENTE un oggetto JSON valido (senza markdown 'json', senza commenti) con questa struttura:
     {
-      "merchant": "nome del negozio o azienda",
+      "merchant": "Nome Negozio",
       "date": "YYYY-MM-DD",
-      "total": 0.00,
+      "total": 12.50,
       "currency": "EUR",
-      "category": "Una tra: Ristorazione, Trasporti, Spesa, Lavoro, Shopping, Altro",
-      "vat_number": "solo cifre o codice fiscale",
-      "address": "indirizzo completo se presente",
+      "category": "Ristorazione | Spesa | Trasporti | Shopping | Altro",
+      "vat_number": "Partita IVA (solo numeri)",
+      "address": "Indirizzo completo",
       "items": [
-        { "name": "nome prodotto", "quantity": 1, "price": 0.00 }
+         { "name": "prodotto", "quantity": 1, "price": 1.00 }
       ]
     }
-
-    Regole:
-    - Se la data non c'è, usa la data di oggi.
-    - Se il totale ha la virgola, convertilo in punto (es. 10,50 -> 10.50).
-    - Cerca l'indirizzo in alto o in fondo allo scontrino.
-    - Se un campo non è leggibile, lascialo come stringa vuota o 0.`;
+    
+    Se un campo è illeggibile, lascialo vuoto ("") o 0.`;
 
     console.log("[analyze-receipt] Sending request to gemini-flash-latest...");
 
@@ -103,7 +105,7 @@ serve(async (req) => {
             },
           ],
           generationConfig: {
-            temperature: 0.1,
+            temperature: 0.1, // Bassa temperatura per risposte più deterministiche
             maxOutputTokens: 1024,
             responseMimeType: "application/json",
           },
