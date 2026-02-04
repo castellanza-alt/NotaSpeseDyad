@@ -43,33 +43,61 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
   const { rotation, offsetX } = useMemo(() => {
     const seed = expense.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const randRot = Math.sin(seed) * 10000;
-    const rotVal = (randRot - Math.floor(randRot)) * 6 - 3; // Reduced rotation slightly for swipe stability
+    const rotVal = (randRot - Math.floor(randRot)) * 6 - 3; 
     const randX = Math.cos(seed) * 10000;
-    const xVal = (randX - Math.floor(randX)) * 20 - 10; // Reduced X offset
+    const xVal = (randX - Math.floor(randX)) * 20 - 10; 
     return { rotation: rotVal, offsetX: xVal };
   }, [expense.id]);
 
   // SWIPE LOGIC
   const [swipeOffset, setSwipeOffset] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null); // Track vertical too
+  const isScrolling = useRef<boolean>(false); // Lock status
+  
   const SWIPE_THRESHOLD = -100; // Amount to swipe to lock open
   const MAX_SWIPE = -160;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+    isScrolling.current = false; // Reset scroll lock
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const currentX = e.targetTouches[0].clientX;
-    const diff = currentX - touchStartX.current;
+    if (touchStartX.current === null || touchStartY.current === null) return;
     
+    // If we determined this is a vertical scroll, stop processing swipe
+    if (isScrolling.current) return;
+
+    const currentX = e.targetTouches[0].clientX;
+    const currentY = e.targetTouches[0].clientY;
+    
+    const diffX = currentX - touchStartX.current;
+    const diffY = currentY - touchStartY.current;
+
+    // AXIS LOCKING LOGIC:
+    // If vertical movement is greater than horizontal, assume user is scrolling list.
+    // Also ignore tiny horizontal movements (deadzone of 10px) to prevent jitter.
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+      isScrolling.current = true;
+      return;
+    }
+
+    // Deadzone check: don't start swiping until we move at least 15px horizontally
+    // unless we are already open (swipeOffset < 0)
+    if (Math.abs(diffX) < 15 && swipeOffset === 0) return;
+
     // Only allow left swipe
-    if (diff < 0) {
-      setSwipeOffset(Math.max(diff, MAX_SWIPE));
+    if (diffX < 0) {
+      // Prevent scrolling page while swiping card
+      if (e.cancelable && Math.abs(diffX) > Math.abs(diffY)) {
+        // e.preventDefault(); // React synthetic events might complain, usually handled by css touch-action
+      }
+      setSwipeOffset(Math.max(diffX, MAX_SWIPE));
     } else if (swipeOffset < 0) {
       // Allow closing if already open
-      setSwipeOffset(Math.min(diff + SWIPE_THRESHOLD, 0));
+      setSwipeOffset(Math.min(diffX + SWIPE_THRESHOLD, 0));
     }
   };
 
@@ -80,6 +108,8 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
       setSwipeOffset(0); // Snap close
     }
     touchStartX.current = null;
+    touchStartY.current = null;
+    isScrolling.current = false;
   };
 
   return (
@@ -130,7 +160,8 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
         onTouchEnd={handleTouchEnd}
         style={{ 
           transform: `rotate(${rotation}deg) translateX(${offsetX + swipeOffset}px)`,
-          transition: touchStartX.current ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+          transition: touchStartX.current ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          touchAction: 'pan-y' // IMPORTANT: Allows browser to handle vertical scroll, we handle horizontal
         }}
         className={cn(
           "chunky-card-3d group relative flex flex-col p-5 w-full h-full", 
