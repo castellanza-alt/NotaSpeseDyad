@@ -26,8 +26,9 @@ interface ImageAnalyzerProps {
   onSuccess: () => void;
 }
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// URL del progetto Supabase hardcodato per garantire che le chiamate vadano sempre in produzione
+const PROJECT_URL = "https://iqwbspfvgekhzowqembf.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxd2JzcGZ2Z2VraHpvd3FlbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MDgzMzAsImV4cCI6MjA4NTA4NDMzMH0.-uclokjFwtnKHKDa1EQsBKzDgFgXOruRNybwRi6BITw";
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
   const { session } = useAuth();
@@ -56,7 +57,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
   useEffect(() => {
     if (expenseData && expenseData.total !== undefined) {
-      // Formatta con puntini delle migliaia e virgola decimale per il display iniziale
       const val = expenseData.total 
         ? expenseData.total.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         : "";
@@ -90,21 +90,12 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   }
 
   async function analyzeReceipt() {
-    if (!SUPABASE_URL || !ANON_KEY) {
-      console.error("Missing Env Vars");
-      toast({
-        title: "Errore Configurazione",
-        description: "Variabili d'ambiente mancanti.",
-        variant: "destructive"
-      });
-      setAnalyzing(false);
-      return;
-    }
-
     try {
       const base64Image = await compressImage(imageFile);
       
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-receipt`, {
+      console.log("Calling Edge Function at:", `${PROJECT_URL}/functions/v1/analyze-receipt`);
+      
+      const response = await fetch(`${PROJECT_URL}/functions/v1/analyze-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +124,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       console.error("Analysis error:", error);
       toast({
         title: "Errore Analisi",
-        description: "Impossibile analizzare l'immagine.",
+        description: "Impossibile analizzare l'immagine. Verifica la connessione.",
         variant: "destructive"
       });
       setExpenseData({ 
@@ -166,11 +157,6 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
   async function handleSend() {
     if (!expenseData || !session) return;
     
-    if (!SUPABASE_URL || !ANON_KEY) {
-      toast({ title: "Errore", description: "Configurazione mancante", variant: "destructive" });
-      return;
-    }
-
     setSending(true);
     try {
       const base64Image = await compressImage(imageFile);
@@ -189,7 +175,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         date: expenseData.expense_date 
       };
 
-      const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-expense-email`, {
+      // Usa anche qui l'URL hardcodato
+      const emailResponse = await fetch(`${PROJECT_URL}/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
