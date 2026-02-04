@@ -90,10 +90,6 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
 
     // Only allow left swipe
     if (diffX < 0) {
-      // Prevent scrolling page while swiping card
-      if (e.cancelable && Math.abs(diffX) > Math.abs(diffY)) {
-        // e.preventDefault(); // React synthetic events might complain, usually handled by css touch-action
-      }
       setSwipeOffset(Math.max(diffX, MAX_SWIPE));
     } else if (swipeOffset < 0) {
       // Allow closing if already open
@@ -115,7 +111,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
   return (
     <div className="relative w-full max-w-[90%] mx-auto mb-3 min-h-[175px]">
       
-      {/* BACKGROUND ACTIONS (Revealed on Swipe) */}
+      {/* BACKGROUND ACTIONS (Revealed on Swipe) - MOBILE */}
       <div 
         className={cn(
           "absolute inset-0 flex justify-end items-center px-4 rounded-[2.5rem] bg-transparent transition-opacity duration-200",
@@ -123,7 +119,6 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
         )}
       >
         <div className="flex flex-col gap-3 pl-4">
-          {/* VIEW BUTTON (First/Top) */}
           <button 
             onClick={(e) => { e.stopPropagation(); onClick?.(); setSwipeOffset(0); }}
             className="w-12 h-12 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
@@ -131,7 +126,6 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
             <Eye className="w-5 h-5" />
           </button>
           
-          {/* EDIT BUTTON (Middle) */}
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit?.(); setSwipeOffset(0); }}
             className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
@@ -139,7 +133,6 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
             <Pencil className="w-5 h-5" />
           </button>
           
-          {/* DELETE BUTTON (Bottom) */}
           <button 
             onClick={(e) => { e.stopPropagation(); onDelete?.(); setSwipeOffset(0); }}
             className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-white shadow-lg z-10 hover:scale-110 transition-transform"
@@ -153,7 +146,12 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
       <div
         onClick={() => { 
           // Clicking the card body ONLY closes the swipe, does NOT open details anymore
-          setSwipeOffset(0); 
+          // UNLESS swipe is 0, then we can treat it as a click (handled by parent usually, but we can trigger onClick)
+          if (swipeOffset === 0) {
+            onClick?.();
+          } else {
+            setSwipeOffset(0); 
+          }
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -161,7 +159,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
         style={{ 
           transform: `rotate(${rotation}deg) translateX(${offsetX + swipeOffset}px)`,
           transition: touchStartX.current ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
-          touchAction: 'pan-y' // IMPORTANT: Allows browser to handle vertical scroll, we handle horizontal
+          touchAction: 'pan-y' 
         }}
         className={cn(
           "chunky-card-3d group relative flex flex-col p-5 w-full h-full", 
@@ -169,10 +167,28 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
           className
         )}
       >
-        {/* TOP ROW: Calendar Left, Title Right (SWAPPED) */}
+        {/* DESKTOP HOVER ACTIONS (Only visible on MD+ screens on hover) */}
+        <div className="hidden md:flex absolute -top-2 -right-2 gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
+            className="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+            title="Modifica"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+            className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+            title="Elimina"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* TOP ROW */}
         <div className="flex justify-between items-start w-full mb-1">
           
-          {/* Calendar Widget (Now Left) */}
+          {/* Calendar Widget */}
           <div className="flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl overflow-hidden shadow-sm ring-1 ring-black/5 bg-white dark:bg-card shrink-0 mr-4">
               <div className="w-full h-6 bg-red-600 dark:bg-red-900 flex items-center justify-center">
                   <span className="text-[10px] font-black text-white uppercase tracking-wider leading-none mt-0.5">
@@ -186,7 +202,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
               </div>
           </div>
 
-          {/* Merchant Title (Right) */}
+          {/* Merchant Title */}
           <div className="flex-1 pt-2 flex flex-col items-end">
             <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 text-right">
               {expense.merchant || "Sconosciuto"}
@@ -201,7 +217,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
 
         </div>
 
-        {/* BOTTOM RIGHT: Solid Flat Price */}
+        {/* BOTTOM RIGHT: Price */}
         <div className="flex-1 flex items-end justify-end mt-4">
           <div className={cn(
             "font-black tracking-tighter flex items-baseline gap-1",

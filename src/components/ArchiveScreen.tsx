@@ -10,9 +10,10 @@ import { ExpenseDetail } from "./ExpenseDetail";
 import { SearchBar } from "./SearchBar";
 import { VirtualizedExpenseList } from "./VirtualizedExpenseList";
 import { MonthlyReport } from "./MonthlyReport";
-import { format, addMonths, subMonths, isSameMonth, eachMonthOfInterval } from "date-fns";
+import { format, isSameMonth } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ArchiveScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,8 +29,9 @@ export function ArchiveScreen() {
   const [columns, setColumns] = useState(1);
   const [isDesktop, setIsDesktop] = useState(false);
   
-  // START DATE: Febbraio 2026
-  const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1));
+  // START DATE: Current Date or loaded from data
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [availableMonths, setAvailableMonths] = useState<Date[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -69,19 +71,61 @@ export function ArchiveScreen() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fetch available months from DB
+  const fetchAvailableMonths = useCallback(async () => {
+    const { data } = await supabase
+      .from('expenses')
+      .select('expense_date')
+      .not('expense_date', 'is', null)
+      .order('expense_date', { ascending: false });
 
-  // Range: +/- 12 mesi dalla data target
-  const monthsList = useMemo(() => {
-    const center = new Date(2026, 1, 1);
-    const start = subMonths(center, 12);
-    const end = addMonths(center, 12);
-    return eachMonthOfInterval({ start, end });
+    if (data && data.length > 0) {
+      const uniqueMonths = new Set<string>();
+      data.forEach(e => {
+        if (!e.expense_date) return;
+        const date = new Date(e.expense_date);
+        // Normalize to 1st of month: YYYY-MM-01
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+        uniqueMonths.add(key);
+      });
+      
+      const dates = Array.from(uniqueMonths).map(dateStr => new Date(dateStr));
+      
+      // Sort descending (Recent first)
+      dates.sort((a, b) => b.getTime() - a.getTime());
+      
+      setAvailableMonths(dates);
+      
+      // Set current date to most recent if not already set specifically
+      // Or if current date is not in list (e.g. initial load)
+      // We'll just stick to the first one for initial load if needed, but let's respect state
+      // Logic: If current date has no expenses, maybe switch to the most recent one?
+      // For now, let's just populate the list.
+      if (dates.length > 0) {
+          // Check if current date is in the list
+          const found = dates.find(d => isSameMonth(d, currentDate));
+          if (!found) {
+              setCurrentDate(dates[0]);
+          }
+      }
+    } else {
+      // Fallback if no data
+      setAvailableMonths([new Date()]);
+    }
+  }, [currentDate]);
+
+  useEffect(() => {
+    fetchAvailableMonths();
   }, []);
 
   // Scroll to current month on mount or change (Mobile Only)
   const scrollToMonth = (targetDate: Date) => {
-    if (scrollRef.current) {
-      const index = monthsList.findIndex(m => isSameMonth(m, targetDate));
+    if (scrollRef.current && availableMonths.length > 0) {
+      // Find index in availableMonths
+      // Note: availableMonths is sorted DESC (Recent -> Old)
+      // But Ruler typically renders Left -> Right (Old -> Recent) or Recent -> Old?
+      // Let's render Ruler in the same order as array.
+      const index = availableMonths.findIndex(m => isSameMonth(m, targetDate));
       if (index !== -1) {
         const containerWidth = scrollRef.current.clientWidth;
         const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
@@ -97,7 +141,7 @@ export function ArchiveScreen() {
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [isDesktop]);
+  }, [isDesktop, availableMonths, currentDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -130,10 +174,11 @@ export function ArchiveScreen() {
   const handleSuccess = useCallback(() => {
     setSelectedImage(null);
     refetch();
+    fetchAvailableMonths(); // Refresh month list in case a new month was created
     setShowSuccess(true);
     haptic('success');
     setTimeout(() => setShowSuccess(false), 2500);
-  }, [refetch, haptic]);
+  }, [refetch, fetchAvailableMonths, haptic]);
 
   const toggleSearchBar = () => {
     haptic('light');
@@ -148,8 +193,8 @@ export function ArchiveScreen() {
     const center = container.scrollLeft + (container.clientWidth / 2);
     const index = Math.floor(center / ITEM_WIDTH);
     
-    if (index >= 0 && index < monthsList.length) {
-      const newMonth = monthsList[index];
+    if (index >= 0 && index < availableMonths.length) {
+      const newMonth = availableMonths[index];
       if (!isSameMonth(newMonth, currentDate)) {
         setCurrentDate(newMonth);
       }
@@ -235,10 +280,10 @@ export function ArchiveScreen() {
         </MonthlyReport>
       </div>
 
-      {/* Month Selector List - MOVED BOTTOM & REVERSED */}
+      {/* Month Selector List - Dynamic from DB */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
-        {[...monthsList].reverse().map((date, i) => {
+        {availableMonths.map((date, i) => {
           const isCurrent = isSameMonth(date, currentDate);
           return (
             <button
@@ -293,7 +338,7 @@ export function ArchiveScreen() {
           </span>
         </div>
 
-        {/* RULER */}
+        {/* RULER - Dynamic */}
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
@@ -310,7 +355,7 @@ export function ArchiveScreen() {
           >
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
             
-            {monthsList.map((date, i) => {
+            {availableMonths.map((date, i) => {
               const isCurrent = isSameMonth(date, currentDate);
               return (
                 <div 
@@ -465,9 +510,7 @@ export function ArchiveScreen() {
         expenses={expenses}
         onDataGenerated={() => {
           refetch();
-          const target = new Date(2026, 1, 1);
-          setCurrentDate(target);
-          if(!isDesktop) setTimeout(() => scrollToMonth(target), 100);
+          fetchAvailableMonths();
         }}
       />
 
