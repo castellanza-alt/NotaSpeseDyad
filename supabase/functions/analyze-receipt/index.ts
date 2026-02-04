@@ -39,11 +39,10 @@ serve(async (req) => {
       );
     }
 
-    // NOTA: Usiamo la chiave in minuscolo come richiesto da Supabase dashboard in alcuni casi
     const GEMINI_API_KEY = Deno.env.get("gemini_api_key");
     if (!GEMINI_API_KEY) {
       console.error("[analyze-receipt] Missing gemini_api_key");
-      throw new Error("La chiave API di Gemini non è configurata nelle impostazioni del progetto.");
+      throw new Error("La chiave API di Gemini non è configurata.");
     }
 
     const { image }: AnalyzeRequest = await req.json();
@@ -78,11 +77,11 @@ serve(async (req) => {
     - Cerca l'indirizzo in alto o in fondo allo scontrino.
     - Se un campo non è leggibile, lascialo come stringa vuota o 0.`;
 
-    console.log("[analyze-receipt] Sending request to Gemini 1.5 Flash...");
+    console.log("[analyze-receipt] Sending request to Gemini Pro...");
 
-    // UPDATED: Use gemini-1.5-flash for better stability and JSON adherence
+    // REVERTED TO STANDARD GEMINI-PRO
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -105,7 +104,7 @@ serve(async (req) => {
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 1024,
-            responseMimeType: "application/json",
+            // RIMOSSO responseMimeType per compatibilità con gemini-pro standard
           },
         }),
       }
@@ -122,9 +121,7 @@ serve(async (req) => {
 
     const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
-    // ROBUST JSON EXTRACTION
-    // Sometimes Gemini wraps code in ```json ... ``` or adds text before/after.
-    // We look for the first '{' and the last '}' to extract just the object.
+    // Logica di estrazione JSON robusta (necessaria perché gemini-pro è prolisso)
     let jsonString = rawText;
     const firstBrace = rawText.indexOf('{');
     const lastBrace = rawText.lastIndexOf('}');
@@ -138,15 +135,12 @@ serve(async (req) => {
       data = JSON.parse(jsonString);
     } catch (parseError) {
       console.error("[analyze-receipt] JSON Parse error. Raw text was:", rawText);
-      console.error("[analyze-receipt] Extracted string was:", jsonString);
       throw new Error("Impossibile leggere i dati dallo scontrino (JSON non valido).");
     }
 
-    // Sanitize and default values
     const sanitizedData = {
       merchant: data.merchant || "Sconosciuto",
       date: data.date || new Date().toISOString().split("T")[0],
-      // Ensure total is a number
       total: typeof data.total === "number" ? data.total : (parseFloat(String(data.total).replace(',', '.')) || 0),
       currency: data.currency || "EUR",
       category: data.category || "Altro",
