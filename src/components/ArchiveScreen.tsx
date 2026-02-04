@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check, Search, Sun } from "lucide-react";
+import { Moon, Menu, Plus, Check, Search, Sun, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptic } from "@/hooks/use-haptic";
 import { SettingsSheet } from "./SettingsSheet";
@@ -24,6 +24,10 @@ export function ArchiveScreen() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
   
+  // RESPONSIVE STATE
+  const [columns, setColumns] = useState(1);
+  const [isDesktop, setIsDesktop] = useState(false);
+  
   // START DATE: Febbraio 2026
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1));
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -34,6 +38,38 @@ export function ArchiveScreen() {
   // RULER CONFIGURATION
   const ITEM_WIDTH = 120; // Larghezza fissa di ogni blocco mese in pixel
 
+  // Responsive Handler
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+      
+      let cols = 1;
+      let desktop = false;
+
+      if (width < 768) {
+        cols = 1; // Mobile
+        desktop = false;
+      } else if (width >= 768 && width <= 1024 && !isLandscape) {
+        cols = 2; // Tablet Verticale
+        desktop = true; // Sidebar mode starts at tablet
+      } else {
+        cols = 3; // Desktop or Tablet Landscape
+        desktop = true;
+      }
+
+      setColumns(cols);
+      setIsDesktop(desktop);
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+
   // Range: +/- 12 mesi dalla data target
   const monthsList = useMemo(() => {
     const center = new Date(2026, 1, 1);
@@ -42,7 +78,7 @@ export function ArchiveScreen() {
     return eachMonthOfInterval({ start, end });
   }, []);
 
-  // Scroll to current month on mount or change
+  // Scroll to current month on mount or change (Mobile Only)
   const scrollToMonth = (targetDate: Date) => {
     if (scrollRef.current) {
       const index = monthsList.findIndex(m => isSameMonth(m, targetDate));
@@ -55,12 +91,13 @@ export function ArchiveScreen() {
   };
 
   useEffect(() => {
-    // Initial scroll
-    const timer = setTimeout(() => {
-       scrollToMonth(currentDate);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []); // Run only on mount initially
+    if (!isDesktop) {
+      const timer = setTimeout(() => {
+         scrollToMonth(currentDate);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isDesktop]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -105,7 +142,7 @@ export function ArchiveScreen() {
   };
 
   const handleWheelScroll = () => {
-    if (!scrollRef.current) return;
+    if (!scrollRef.current || isDesktop) return;
     
     const container = scrollRef.current;
     const center = container.scrollLeft + (container.clientWidth / 2);
@@ -119,27 +156,128 @@ export function ArchiveScreen() {
     }
   };
 
-  // Funzione chiamata dal Report Full Screen per cambiare mese
   const handleReportMonthChange = (newDate: Date) => {
     setCurrentDate(newDate);
-    scrollToMonth(newDate);
+    if (!isDesktop) scrollToMonth(newDate);
   };
 
-  // INCREASED SPACER: Aumentato per prevenire overlap con l'header
+  // Dynamic spacer based on header size (Mobile Only)
   const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-[18rem]';
 
+  // --- DESKTOP COMPONENTS ---
+
+  const NavigationRail = () => (
+    <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/50 bg-background/95 backdrop-blur">
+      {/* Logo Placeholder */}
+      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mb-12 shadow-md">
+        N
+      </div>
+
+      <div className="flex flex-col gap-6 w-full items-center">
+        <button 
+          onClick={() => { haptic('light'); handleSelectPhoto(); }}
+          className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+
+        <button 
+           onClick={toggleSearchBar}
+           className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary", showSearchBar ? "bg-secondary text-primary" : "text-muted-foreground")}
+        >
+          <Search className="w-5 h-5" />
+        </button>
+
+        <button 
+           onClick={toggleTheme}
+           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary text-muted-foreground"
+        >
+          {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        </button>
+      </div>
+
+      <div className="mt-auto flex flex-col gap-6 items-center">
+        <button 
+           onClick={() => setSettingsOpen(true)}
+           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary text-muted-foreground"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const DesktopSidebar = () => (
+    <div className="hidden md:flex flex-col w-[25%] h-screen fixed left-[80px] top-0 z-40 p-8 border-r border-border/50 bg-background/50 backdrop-blur-sm">
+      <h1 className="text-3xl font-black tracking-tight text-foreground mb-1">
+        Nota Spese
+      </h1>
+      <p className="text-sm text-muted-foreground mb-10">Gestione archivio</p>
+
+      {/* Month Selector List */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide mb-8">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
+        {monthsList.map((date, i) => {
+          const isCurrent = isSameMonth(date, currentDate);
+          return (
+            <button
+              key={i}
+              onClick={() => setCurrentDate(date)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm",
+                isCurrent 
+                  ? "bg-primary text-primary-foreground font-bold shadow-md" 
+                  : "hover:bg-secondary text-muted-foreground"
+              )}
+            >
+              <span>{format(date, "MMMM yyyy", { locale: it })}</span>
+              {isCurrent && <Check className="w-4 h-4" />}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Balance Card */}
+      <div className="mt-auto">
+        <MonthlyReport 
+            expenses={filteredExpenses} 
+            currentDate={currentDate} 
+            total={currentMonthTotal}
+            onMonthChange={handleReportMonthChange}
+        >
+          <div className="w-full bg-card p-6 rounded-3xl border border-border/50 shadow-sm text-left group hover:border-primary/50 transition-colors cursor-pointer">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Saldo Mensile</p>
+            <div className="flex items-baseline text-gradient-bronze-rich">
+                <span className="text-2xl font-medium mr-1 opacity-60">€</span>
+                <span className="text-4xl font-black tracking-tighter tabular-nums">
+                  <OdometerValue value={currentMonthTotal} />
+                </span>
+            </div>
+            <div className="flex items-center gap-2 mt-4 text-xs font-medium text-primary">
+               <LayoutDashboard className="w-4 h-4" />
+               Vedi Report Completo
+            </div>
+          </div>
+        </MonthlyReport>
+      </div>
+    </div>
+  );
+
+
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
+    <div className="h-screen flex flex-col md:flex-row bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER BACKGROUND - Increased height to match new spacer visually */}
-      <div className="fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
+      {/* --- MOBILE COMPONENTS (Hidden on MD) --- */}
+      
+      {/* HEADER BACKGROUND */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
-      {/* BURGER MENU (Top Right) */}
-      <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
+      {/* BURGER MENU */}
+      <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
@@ -148,8 +286,8 @@ export function ArchiveScreen() {
         </button>
       </div>
 
-      {/* HEADER CONTENT */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
+      {/* MOBILE HEADER CONTENT */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
         {/* YEAR */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
@@ -214,22 +352,15 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* ACTION ROW: Theme - Total - Search */}
+        {/* ACTION ROW */}
         <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
-          
-          {/* Left: Theme Toggle (Symmetrical to Search) */}
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md hover:bg-background/60 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
           >
-            {theme === 'dark' ? (
-              <Moon className="w-5 h-5" strokeWidth={2} />
-            ) : (
-              <Sun className="w-5 h-5" strokeWidth={2} />
-            )}
+            {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
 
-          {/* Center: Total & Report */}
           <MonthlyReport 
             expenses={filteredExpenses} 
             currentDate={currentDate} 
@@ -247,20 +378,35 @@ export function ArchiveScreen() {
             </div>
           </MonthlyReport>
 
-          {/* Right: Search Toggle (Aligned with Burger Menu above) */}
           <button 
             onClick={toggleSearchBar}
             className={`w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md border border-foreground/5 shadow-sm transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10 border-primary/20' : 'text-muted-foreground hover:bg-background/60'}`}
           >
             <Search className="w-5 h-5" strokeWidth={2} />
           </button>
-
         </div>
       </header>
+      
+      {/* MOBILE FAB */}
+      <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+        <button
+          onClick={() => { haptic('light'); handleSelectPhoto(); }}
+          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-background"
+        >
+          <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
+        </button>
+      </div>
 
-      {/* SEARCH BAR (Dropdown) */}
+      {/* --- DESKTOP STRUCTURE --- */}
+      <NavigationRail />
+      <DesktopSidebar />
+
+      {/* SEARCH BAR (Absolute for both modes, but pos differ) */}
       {showSearchBar && (
-        <div className="fixed top-[18.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className={cn(
+           "fixed z-[60] flex justify-center animate-slide-down",
+           isDesktop ? "top-8 left-[calc(25%+80px)] right-0" : "top-[18.5rem] left-0 right-0 px-6"
+        )}>
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
@@ -270,14 +416,21 @@ export function ArchiveScreen() {
         </div>
       )}
 
-      {/* LIST */}
-      <div 
-        className="flex-1 flex flex-col h-full w-full relative z-0"
-        style={{
-          maskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)'
-        }}
-      >
+      {/* LIST CONTAINER */}
+      <div className={cn(
+        "flex-1 flex flex-col h-full w-full relative z-0 transition-all duration-300",
+        isDesktop ? "ml-[calc(80px+25%)]" : ""
+      )}>
+        {/* Mobile Top Mask */}
+        {!isDesktop && (
+          <div className="absolute top-0 left-0 right-0 h-full pointer-events-none z-10"
+             style={{
+               maskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)',
+               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)'
+             }} 
+          />
+        )}
+        
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-32">
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
@@ -298,22 +451,15 @@ export function ArchiveScreen() {
             hasMore={hasMore}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
-            paddingClassName={topSpacerHeight}
+            paddingClassName={isDesktop ? "h-24" : topSpacerHeight}
+            columns={columns}
           />
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
-
-      {/* FLOATING ACTION BUTTON (Center Bottom) */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-        <button
-          onClick={() => { haptic('light'); handleSelectPhoto(); }}
-          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-background"
-        >
-          <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
-        </button>
-      </div>
+      {!isDesktop && (
+        <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
+      )}
 
       <SettingsSheet 
         open={settingsOpen} 
@@ -324,7 +470,7 @@ export function ArchiveScreen() {
           refetch();
           const target = new Date(2026, 1, 1);
           setCurrentDate(target);
-          setTimeout(() => scrollToMonth(target), 100);
+          if(!isDesktop) setTimeout(() => scrollToMonth(target), 100);
         }}
       />
 
