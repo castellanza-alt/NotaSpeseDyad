@@ -39,9 +39,10 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    // NOTA: Usiamo la chiave in minuscolo come richiesto da Supabase dashboard in alcuni casi
+    const GEMINI_API_KEY = Deno.env.get("gemini_api_key");
     if (!GEMINI_API_KEY) {
-      console.error("[analyze-receipt] Missing GEMINI_API_KEY");
+      console.error("[analyze-receipt] Missing gemini_api_key");
       throw new Error("La chiave API di Gemini non è configurata nelle impostazioni del progetto.");
     }
 
@@ -54,26 +55,34 @@ serve(async (req) => {
     // Extract base64 data from data URL
     const base64Data = image.split(",")[1] || image;
 
-    const prompt = `Analizza questo scontrino fiscale con estrema precisione. Estrai i dati in formato JSON.
+    const prompt = `Sei un esperto contabile. Analizza questo scontrino fiscale o fattura.
+    Estrai i dati ESCLUSIVAMENTE in formato JSON puro, senza markdown, senza commenti.
     
-    Campi richiesti:
-    - merchant (nome negozio)
-    - date (formato YYYY-MM-DD)
-    - total (numero decimale, usa il punto)
-    - currency (es. EUR)
-    - category (es. Ristorazione, Trasporti, Spesa, Lavoro, Altro)
-    - vat_number (Partita IVA del venditore, solo numeri/codice)
-    - address (Indirizzo completo del negozio: Via, Numero, Città, CAP)
-    - items (lista di oggetti con name, quantity, price)
+    Struttura JSON richiesta:
+    {
+      "merchant": "nome del negozio o azienda",
+      "date": "YYYY-MM-DD",
+      "total": 0.00,
+      "currency": "EUR",
+      "category": "Una tra: Ristorazione, Trasporti, Spesa, Lavoro, Shopping, Altro",
+      "vat_number": "solo cifre o codice fiscale",
+      "address": "indirizzo completo se presente",
+      "items": [
+        { "name": "nome prodotto", "quantity": 1, "price": 0.00 }
+      ]
+    }
 
-    IMPORTANTE: Cerca attentamente l'indirizzo fisico del punto vendita (solitamente in alto o in fondo allo scontrino).
-    Se un campo non è leggibile, lascialo vuoto o a 0. Non inventare dati.`;
+    Regole:
+    - Se la data non c'è, usa la data di oggi.
+    - Se il totale ha la virgola, convertilo in punto (es. 10,50 -> 10.50).
+    - Cerca l'indirizzo in alto o in fondo allo scontrino.
+    - Se un campo non è leggibile, lascialo come stringa vuota o 0.`;
 
-    console.log("[analyze-receipt] Sending request to Gemini (model: gemini-flash-latest)...");
+    console.log("[analyze-receipt] Sending request to Gemini 1.5 Flash...");
 
-    // Utilizziamo esattamente il modello richiesto: gemini-flash-latest
+    // UPDATED: Use gemini-1.5-flash for better stability and JSON adherence
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -105,36 +114,48 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[analyze-receipt] Gemini API error details:", errorText);
-      throw new Error(`Errore API Gemini: ${response.status} - Controlla i log su Supabase.`);
+      throw new Error(`Errore API Gemini: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
     console.log("[analyze-receipt] Gemini response received");
 
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
-    // Clean up potential markdown formatting just in case
-    const cleanedText = text.replace(/```json|```/g, "").trim();
+    // ROBUST JSON EXTRACTION
+    // Sometimes Gemini wraps code in ```json ... ``` or adds text before/after.
+    // We look for the first '{' and the last '}' to extract just the object.
+    let jsonString = rawText;
+    const firstBrace = rawText.indexOf('{');
+    const lastBrace = rawText.lastIndexOf('}');
+    
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      jsonString = rawText.substring(firstBrace, lastBrace + 1);
+    }
 
     let data;
     try {
-      data = JSON.parse(cleanedText);
+      data = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error("[analyze-receipt] JSON Parse error:", cleanedText);
-      throw new Error("Impossibile leggere la risposta dell'AI (JSON non valido).");
+      console.error("[analyze-receipt] JSON Parse error. Raw text was:", rawText);
+      console.error("[analyze-receipt] Extracted string was:", jsonString);
+      throw new Error("Impossibile leggere i dati dallo scontrino (JSON non valido).");
     }
 
     // Sanitize and default values
     const sanitizedData = {
       merchant: data.merchant || "Sconosciuto",
       date: data.date || new Date().toISOString().split("T")[0],
-      total: typeof data.total === "number" ? data.total : (parseFloat(data.total) || 0),
+      // Ensure total is a number
+      total: typeof data.total === "number" ? data.total : (parseFloat(String(data.total).replace(',', '.')) || 0),
       currency: data.currency || "EUR",
       category: data.category || "Altro",
       vat_number: data.vat_number || "",
       address: data.address || "",
       items: Array.isArray(data.items) ? data.items : [],
     };
+    
+    console.log("[analyze-receipt] Success. Total found:", sanitizedData.total);
 
     return new Response(
       JSON.stringify({ success: true, data: sanitizedData }),
