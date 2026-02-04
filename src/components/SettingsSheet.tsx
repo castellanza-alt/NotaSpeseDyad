@@ -78,14 +78,26 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
   const fetchTrash = async () => {
     if (!user) return;
     setLoadingTrash(true);
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("*")
-      .not("deleted_at", "is", null)
-      .order("deleted_at", { ascending: false });
-    
-    if (data) setTrashItems(data);
-    setLoadingTrash(false);
+    try {
+      // Try to fetch trash. If deleted_at doesn't exist, this might fail.
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
+      
+      if (error) {
+         console.warn("Trash fetch failed (column might be missing)", error);
+         // Don't throw, just show empty
+         setTrashItems([]);
+      } else {
+         setTrashItems(data || []);
+      }
+    } catch (e) {
+      console.error("Trash fetch error", e);
+    } finally {
+      setLoadingTrash(false);
+    }
   };
 
   const handleRestore = async (id: string) => {

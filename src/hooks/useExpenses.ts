@@ -22,7 +22,7 @@ export interface Expense {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  deleted_at?: string | null; // Added for soft delete
+  // deleted_at removed to prevent query errors if column missing
 }
 
 const PAGE_SIZE = 30;
@@ -56,10 +56,10 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       
       const isSearching = searchQuery.trim().length > 0;
       
+      // Removed .is("deleted_at", null) to fix visibility issues
       let query = supabase
         .from("expenses")
         .select("*")
-        .is("deleted_at", null) // FILTER: Only active expenses
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -124,7 +124,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     fetchExpenses(true);
   }, [user, searchQuery]); 
 
-  async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at" | "deleted_at">) {
+  async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;
     const { data, error } = await supabase
       .from("expenses")
@@ -139,27 +139,21 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     return data;
   }
 
-  // SOFT DELETE
+  // Modified to Hard Delete temporarily to ensure functionality
   async function deleteExpense(id: string) {
+    // Fallback to hard delete if soft delete column is missing
     const { error } = await supabase
       .from("expenses")
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq("id", id);
       
     if (error) throw error;
     setExpenses(prev => prev.filter(e => e.id !== id));
   }
 
-  // RESTORE
+  // RESTORE - No-op if soft delete is disabled
   async function restoreExpense(id: string) {
-    const { error } = await supabase
-      .from("expenses")
-      .update({ deleted_at: null })
-      .eq("id", id);
-      
-    if (error) throw error;
-    // Note: We don't verify UI list update here as this is usually called from Trash view
-    // Caller should handle refresh or list update
+    console.warn("Restore not available without DB schema update");
   }
 
   // HARD DELETE

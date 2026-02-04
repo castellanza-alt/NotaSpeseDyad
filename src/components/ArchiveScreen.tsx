@@ -73,11 +73,11 @@ export function ArchiveScreen() {
 
   // Fetch available months from DB
   const fetchAvailableMonths = useCallback(async () => {
+    // Removed deleted_at check to avoid errors
     const { data } = await supabase
       .from('expenses')
       .select('expense_date')
       .not('expense_date', 'is', null)
-      .is('deleted_at', null) // Filter out deleted expenses for month calculation
       .order('expense_date', { ascending: false });
 
     if (data && data.length > 0) {
@@ -117,10 +117,6 @@ export function ArchiveScreen() {
   // Scroll to current month on mount or change (Mobile Only)
   const scrollToMonth = (targetDate: Date) => {
     if (scrollRef.current && availableMonths.length > 0) {
-      // Find index in availableMonths
-      // Note: availableMonths is sorted DESC (Recent -> Old)
-      // But Ruler typically renders Left -> Right (Old -> Recent) or Recent -> Old?
-      // Let's render Ruler in the same order as array.
       const index = availableMonths.findIndex(m => isSameMonth(m, targetDate));
       if (index !== -1) {
         const containerWidth = scrollRef.current.clientWidth;
@@ -202,14 +198,12 @@ export function ArchiveScreen() {
     if (!isDesktop) scrollToMonth(newDate);
   };
 
-  // Dynamic spacer based on header size (Mobile Only)
   const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-[18rem]';
 
   // --- DESKTOP COMPONENTS ---
 
   const NavigationRail = () => (
     <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/50 bg-background/95 backdrop-blur">
-      {/* Spacer for top alignment without Logo */}
       <div className="h-4" />
 
       <div className="flex flex-col gap-6 w-full items-center">
@@ -252,7 +246,6 @@ export function ArchiveScreen() {
         Nota Spese
       </h1>
 
-      {/* Balance Card - MOVED TOP */}
       <div className="mb-8">
         <MonthlyReport 
             expenses={filteredExpenses} 
@@ -276,7 +269,6 @@ export function ArchiveScreen() {
         </MonthlyReport>
       </div>
 
-      {/* Month Selector List - Dynamic from DB */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
         {availableMonths.map((date, i) => {
@@ -306,15 +298,13 @@ export function ArchiveScreen() {
     <div className="h-screen flex flex-col md:flex-row bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* --- MOBILE COMPONENTS (Hidden on MD) --- */}
+      {/* --- MOBILE COMPONENTS --- */}
       
-      {/* HEADER BACKGROUND */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
-      {/* BURGER MENU */}
       <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
@@ -324,17 +314,13 @@ export function ArchiveScreen() {
         </button>
       </div>
 
-      {/* MOBILE HEADER CONTENT */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
-        
-        {/* YEAR */}
         <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
           <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
-        {/* RULER - Dynamic */}
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
@@ -390,7 +376,6 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* ACTION ROW */}
         <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
@@ -425,7 +410,6 @@ export function ArchiveScreen() {
         </div>
       </header>
       
-      {/* MOBILE FAB */}
       <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
         <button
           onClick={() => { haptic('light'); handleSelectPhoto(); }}
@@ -439,7 +423,6 @@ export function ArchiveScreen() {
       <NavigationRail />
       <DesktopSidebar />
 
-      {/* SEARCH BAR (Absolute for both modes, but pos differ) */}
       {showSearchBar && (
         <div className={cn(
            "fixed z-[60] flex justify-center animate-slide-down",
@@ -459,7 +442,6 @@ export function ArchiveScreen() {
         "flex-1 flex flex-col h-full relative z-0 transition-all duration-300",
         isDesktop ? "ml-[calc(80px_+_25%)] w-[calc(100%_-_80px_-_25%)]" : "w-full"
       )}>
-        {/* Mobile Top Mask */}
         {!isDesktop && (
           <div className="absolute top-0 left-0 right-0 h-full pointer-events-none z-10"
              style={{
