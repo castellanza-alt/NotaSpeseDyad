@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Expense } from "@/hooks/useExpenses";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Map, TrendingDown, TrendingUp, Share2, Mail } from "lucide-react";
+import { Map as MapIcon, TrendingDown, TrendingUp, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
 
   // Raggruppa le spese per categoria
   const categoryData = useMemo(() => {
+    // Qui usiamo il Map nativo di JS, quindi l'import sopra è stato rinominato in MapIcon
     const map = new Map<string, number>();
     
     expenses.forEach(e => {
@@ -185,7 +186,7 @@ export function MonthlyReport({ expenses, currentDate, total, children }: Monthl
           {/* Azioni */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-secondary/30 hover:bg-secondary/50 transition-colors border border-border/30">
-              <Map className="w-5 h-5 text-blue-500" />
+              <MapIcon className="w-5 h-5 text-blue-500" />
               <span className="text-xs font-medium">Mappa</span>
             </button>
             
