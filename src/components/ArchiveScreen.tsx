@@ -27,7 +27,6 @@ export function ArchiveScreen() {
   // START DATE: Febbraio 2026
   const [currentDate, setCurrentDate] = useState(() => new Date(2026, 1, 1));
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const { theme, toggleTheme } = useTheme();
   const { trigger: haptic } = useHaptic();
@@ -108,15 +107,12 @@ export function ArchiveScreen() {
   const handleWheelScroll = () => {
     if (!scrollRef.current) return;
     
-    // Se l'utente non sta interagendo attivamente, potremmo evitare aggiornamenti troppo frequenti
-    // ma qui serve per aggiornare il mese mentre scorre
     const container = scrollRef.current;
     const center = container.scrollLeft + (container.clientWidth / 2);
     const index = Math.floor(center / ITEM_WIDTH);
     
     if (index >= 0 && index < monthsList.length) {
       const newMonth = monthsList[index];
-      // Aggiorna solo se è diverso per evitare re-render
       if (!isSameMonth(newMonth, currentDate)) {
         setCurrentDate(newMonth);
       }
@@ -126,7 +122,6 @@ export function ArchiveScreen() {
   // Funzione chiamata dal Report Full Screen per cambiare mese
   const handleReportMonthChange = (newDate: Date) => {
     setCurrentDate(newDate);
-    // Sincronizza anche la barra in alto (Ruler)
     scrollToMonth(newDate);
   };
 
@@ -142,7 +137,7 @@ export function ArchiveScreen() {
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
-      {/* BURGER MENU */}
+      {/* BURGER MENU (Top Right) */}
       <div className="fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
@@ -218,13 +213,27 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* MONTHLY REPORT TRIGGER */}
-        <div className="relative z-50 mt-0 pointer-events-auto">
+        {/* ACTION ROW: Theme - Total - Search */}
+        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
+          
+          {/* Left: Theme Toggle (Symmetrical to Search) */}
+          <button
+            onClick={() => { haptic('light'); toggleTheme(); }}
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md hover:bg-background/60 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
+          >
+            {theme === 'dark' ? (
+              <Moon className="w-5 h-5" strokeWidth={2} />
+            ) : (
+              <Sun className="w-5 h-5" strokeWidth={2} />
+            )}
+          </button>
+
+          {/* Center: Total & Report */}
           <MonthlyReport 
             expenses={filteredExpenses} 
             currentDate={currentDate} 
             total={currentMonthTotal}
-            onMonthChange={handleReportMonthChange} // Passiamo la funzione
+            onMonthChange={handleReportMonthChange}
           >
             <div 
               className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 cursor-pointer hover:opacity-80 transition-opacity"
@@ -236,10 +245,19 @@ export function ArchiveScreen() {
               </span>
             </div>
           </MonthlyReport>
+
+          {/* Right: Search Toggle (Aligned with Burger Menu above) */}
+          <button 
+            onClick={toggleSearchBar}
+            className={`w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md border border-foreground/5 shadow-sm transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10 border-primary/20' : 'text-muted-foreground hover:bg-background/60'}`}
+          >
+            <Search className="w-5 h-5" strokeWidth={2} />
+          </button>
+
         </div>
       </header>
 
-      {/* SEARCH BAR */}
+      {/* SEARCH BAR (Dropdown) */}
       {showSearchBar && (
         <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
@@ -286,39 +304,15 @@ export function ArchiveScreen() {
 
       <div className="fixed bottom-0 left-0 right-0 h-32 z-20 pointer-events-none footer-fade opacity-90" />
 
-      {/* DOCK */}
-      <nav className="fixed bottom-8 left-0 right-0 z-50 pointer-events-none">
-        <div className="flex justify-center pointer-events-auto">
-          <div className="relative flex items-center justify-between px-6 py-1 rounded-[2rem] glass-stone shadow-xl shadow-black/5 min-w-[280px]">
-            <button 
-              onClick={toggleSearchBar}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10' : 'text-muted-foreground/70 hover:bg-foreground/5'}`}
-            >
-              <Search className="w-5 h-5" strokeWidth={2} />
-            </button>
-
-            <div className="relative w-[74px] h-0 mx-4 flex items-center justify-center">
-              <button
-                onClick={() => { haptic('light'); handleSelectPhoto(); }}
-                className="absolute bottom-[-15px] w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-lg flex items-center justify-center transform transition-transform active:scale-95 border-[4px] border-background"
-              >
-                <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <button
-              onClick={() => { haptic('light'); toggleTheme(); }}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground/70 hover:bg-foreground/5 transition-all active:scale-95"
-            >
-              {theme === 'dark' ? (
-                <Moon className="w-5 h-5" strokeWidth={2} />
-              ) : (
-                <Sun className="w-5 h-5" strokeWidth={2} />
-              )}
-            </button>
-          </div>
-        </div>
-      </nav>
+      {/* FLOATING ACTION BUTTON (Center Bottom) */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+        <button
+          onClick={() => { haptic('light'); handleSelectPhoto(); }}
+          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-background"
+        >
+          <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
+        </button>
+      </div>
 
       <SettingsSheet 
         open={settingsOpen} 
