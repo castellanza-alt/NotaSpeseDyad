@@ -106,8 +106,7 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
       </DialogTrigger>
       
       <DialogContent 
-        className="w-screen h-screen max-w-none rounded-none border-0 p-0 bg-background flex flex-col overflow-hidden animate-scale-in"
-        showCloseButton={false}
+        className="w-screen h-screen max-w-none rounded-none border-0 p-0 bg-background flex flex-col overflow-hidden animate-scale-in [&>button]:hidden"
       >
         <DialogTitle className="sr-only">Report Mensile</DialogTitle>
         

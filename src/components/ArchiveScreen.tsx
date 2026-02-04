@@ -125,14 +125,15 @@ export function ArchiveScreen() {
     scrollToMonth(newDate);
   };
 
-  const topSpacerHeight = showSearchBar ? 'h-[calc(18.5rem+22px)]' : 'h-[calc(14.5rem+22px)]';
+  // INCREASED SPACER: Aumentato per prevenire overlap con l'header
+  const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-[18rem]';
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden relative font-sans">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* HEADER BACKGROUND */}
-      <div className="fixed top-0 left-0 right-0 h-[calc(14rem+15px)] z-40 pointer-events-none">
+      {/* HEADER BACKGROUND - Increased height to match new spacer visually */}
+      <div className="fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
         <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
@@ -259,7 +260,7 @@ export function ArchiveScreen() {
 
       {/* SEARCH BAR (Dropdown) */}
       {showSearchBar && (
-        <div className="fixed top-[calc(14.5rem+22px)] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
+        <div className="fixed top-[18.5rem] left-0 right-0 z-40 px-6 flex justify-center animate-slide-down">
           <SearchBar 
             value={searchQuery} 
             onChange={setSearchQuery} 
