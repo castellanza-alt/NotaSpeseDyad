@@ -242,13 +242,15 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
       <div className="relative w-full max-w-md max-h-[90vh] bg-card text-card-foreground rounded-3xl shadow-2xl overflow-hidden animate-scale-in flex flex-col">
-        <header className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+        {/* Header */}
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border/50 shrink-0 bg-card/80 backdrop-blur-md z-10">
           <h2 className="text-lg font-bold text-foreground">Analisi Giustificativo</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </header>
 
-        <div className="flex-1 overflow-auto p-5 space-y-4">
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30 border border-border/50">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-hide">
+          <div className="relative aspect-video rounded-2xl overflow-hidden bg-secondary/30 border border-border/50 shadow-sm mb-6 shrink-0">
             <img src={imageUrl} alt="Scontrino" className="w-full h-full object-contain" />
             {analyzing && (
               <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm">
@@ -266,46 +268,54 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           </div>
 
           {!analyzing && expenseData && !sent && (
-            <div className="space-y-3 animate-slide-up">
-              <div>
-                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Esercente (Descrizione)</Label>
+            <div className="flex flex-col gap-5 animate-slide-up pb-4">
+              
+              {/* Merchant */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Esercente</Label>
                 <Input 
                   value={expenseData.merchant || ""} 
                   onChange={(e) => setExpenseData({...expenseData, merchant: e.target.value})} 
-                  className="rounded-xl h-12 text-base bg-secondary/30" 
+                  className="rounded-2xl h-14 px-4 text-lg font-medium bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm"
+                  placeholder="Nome Esercente"
                 />
               </div>
 
-              {/* Data e Totale sulla stessa riga */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Data</Label>
+              {/* Data e Totale Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Data</Label>
                   <Input 
                     type="date" 
                     value={expenseData.expense_date || ""} 
                     onChange={(e) => setExpenseData({...expenseData, expense_date: e.target.value})} 
-                    className="rounded-xl h-12 text-base bg-secondary/30 w-full" 
+                    className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm w-full" 
                   />
                 </div>
-                <div>
-                  <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Totale (€)</Label>
-                  <Input 
-                    type="text" 
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    value={totalString}
-                    onChange={handleAmountChange} 
-                    className="rounded-xl h-12 text-base font-medium bg-secondary/30 w-full text-right" 
-                  />
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Totale</Label>
+                  <div className="relative">
+                    <Input 
+                      type="text" 
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={totalString}
+                      onChange={handleAmountChange} 
+                      className="rounded-2xl h-14 pl-4 pr-10 text-lg font-bold text-right bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm w-full" 
+                    />
+                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">€</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label className="text-xs font-semibold text-muted-foreground uppercase mb-1.5 block">Categoria</Label>
+              {/* Category */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Categoria</Label>
                 <Input 
                   value={expenseData.category || ""} 
                   onChange={(e) => setExpenseData({...expenseData, category: e.target.value})} 
-                  className="rounded-xl h-12 text-base bg-secondary/30" 
+                  className="rounded-2xl h-14 px-4 text-base bg-secondary/30 border-transparent focus:bg-background focus:border-primary/50 transition-all shadow-sm"
+                  placeholder="Categoria Spesa"
                 />
               </div>
               
@@ -313,12 +323,13 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
           )}
         </div>
 
+        {/* Footer - Fixed */}
         {!analyzing && expenseData && !sent && (
-          <div className="p-5 border-t border-border/50 bg-card/50 backdrop-blur-sm">
+          <div className="p-5 border-t border-border/50 bg-card/80 backdrop-blur-md shrink-0 z-10">
             <Button 
               onClick={handleSend} 
               disabled={sending} 
-              className="w-full h-14 rounded-full font-bold bg-primary text-primary-foreground hover:opacity-90 shadow-lg"
+              className="w-full h-14 rounded-full font-bold text-base bg-primary text-primary-foreground hover:opacity-90 shadow-lg active:scale-95 transition-all"
             >
               {sending ? (
                 <>
