@@ -77,6 +77,7 @@ export function ArchiveScreen() {
       .from('expenses')
       .select('expense_date')
       .not('expense_date', 'is', null)
+      .is('deleted_at', null) // Filter out deleted expenses for month calculation
       .order('expense_date', { ascending: false });
 
     if (data && data.length > 0) {
@@ -96,11 +97,6 @@ export function ArchiveScreen() {
       
       setAvailableMonths(dates);
       
-      // Set current date to most recent if not already set specifically
-      // Or if current date is not in list (e.g. initial load)
-      // We'll just stick to the first one for initial load if needed, but let's respect state
-      // Logic: If current date has no expenses, maybe switch to the most recent one?
-      // For now, let's just populate the list.
       if (dates.length > 0) {
           // Check if current date is in the list
           const found = dates.find(d => isSameMonth(d, currentDate));
@@ -447,7 +443,7 @@ export function ArchiveScreen() {
       {showSearchBar && (
         <div className={cn(
            "fixed z-[60] flex justify-center animate-slide-down",
-           isDesktop ? "top-8 left-[calc(25%+80px)] right-0" : "top-[18.5rem] left-0 right-0 px-6"
+           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[18.5rem] left-0 right-0 px-6"
         )}>
           <SearchBar 
             value={searchQuery} 
@@ -460,8 +456,8 @@ export function ArchiveScreen() {
 
       {/* LIST CONTAINER */}
       <div className={cn(
-        "flex-1 flex flex-col h-full w-full relative z-0 transition-all duration-300",
-        isDesktop ? "ml-[calc(80px+25%)]" : ""
+        "flex-1 flex flex-col h-full relative z-0 transition-all duration-300",
+        isDesktop ? "ml-[calc(80px_+_25%)] w-[calc(100%_-_80px_-_25%)]" : "w-full"
       )}>
         {/* Mobile Top Mask */}
         {!isDesktop && (
