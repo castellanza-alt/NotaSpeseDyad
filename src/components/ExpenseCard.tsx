@@ -166,8 +166,8 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
           touchAction: 'pan-y' 
         }}
         className={cn(
-          "chunky-card-3d group relative flex flex-col p-5 w-full h-full", 
-          "rounded-[2.5rem] cursor-pointer bg-card z-20",
+          "chunky-card-3d group relative flex flex-col p-5 w-full h-full",
+          "rounded-[2.5rem] cursor-pointer z-20",
           className
         )}
       >

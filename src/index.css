@@ -14,7 +14,7 @@
     --background: 40 10% 94%; 
     --foreground: 160 30% 20%; 
     
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* Pure white for glass effect base */
     --card-surface-top: 45 10% 99%;
     --card-surface-center: 0 0% 100%;
     --card-surface-bottom: 45 15% 97%;
@@ -53,7 +53,7 @@
     --background: 210 5% 7%; 
     --foreground: 40 20% 95%; 
 
-    --card: 220 14% 14%;
+    --card: 220 14% 14%; /* Dark base for glass effect */
     --card-surface-top: 220 14% 17%;
     --card-surface-center: 220 14% 20%; 
     --card-surface-bottom: 220 14% 15%;
@@ -89,22 +89,24 @@
     @apply text-foreground antialiased;
     font-family: 'Inter', sans-serif;
     
-    /* Advanced Scaling Background Logic */
+    /* 2. LOGICA DI SCALING E REATTIVITÀ */
     background-image: var(--bg-image);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
     
-    /* Ensure full viewport coverage */
     min-height: 100vh;
     width: 100vw;
     
-    /* Smooth Transition for Theme Switch */
+    /* Transizione fluida */
     transition: background-image 0.6s ease-in-out, color 0.3s ease-in-out;
     
-    /* Fallback color while image loads */
+    /* Fallback color */
     background-color: hsl(var(--background));
+    
+    /* Prevent white edges on bounce */
+    overscroll-behavior-y: none;
   }
 }
 
@@ -112,7 +114,6 @@
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 32px); }
 
 @layer utilities {
-  /* --- Parallax Wrapper Cleanup --- */
   .parallax-wrapper {
     overflow-x: hidden;
     overflow-y: auto;
@@ -122,22 +123,18 @@
   }
   .parallax-wrapper::-webkit-scrollbar { display: none; }
 
-  /* REMOVED .parallax-bg and mesh-gradients as strictly requested to rely on body background */
-
   /* --- Tactile 3D Card with Glassmorphism --- */
   .chunky-card-3d {
-    /* Glassmorphism Logic */
-    background: linear-gradient(
-      to bottom, 
-      hsl(var(--card-surface-top) / 0.65), 
-      hsl(var(--card-surface-center) / 0.65) 40%,
-      hsl(var(--card-surface-bottom) / 0.65)
-    );
+    /* 3. INTERAZIONE CON LA UI (Vetro Satinato) */
+    /* background-color: rgba(var(--card-bg), 0.4) equiv. using CSS vars */
+    background-color: hsl(var(--card) / 0.4);
+    
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     
+    /* Keeping the tactile border/shadow but simplifying bg for glass effect */
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4), 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 
       0 8px 24px -6px rgba(0, 0, 0, 0.1),
       0 2px 6px -1px rgba(0, 0, 0, 0.05);
       
@@ -147,7 +144,7 @@
   
   .dark .chunky-card-3d {
     box-shadow: 
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 
       0 12px 32px -8px rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255,255,255,0.05);
   }
