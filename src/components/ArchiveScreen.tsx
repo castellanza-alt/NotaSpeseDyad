@@ -38,7 +38,7 @@ export function ArchiveScreen() {
   const { trigger: haptic } = useHaptic();
 
   // RULER CONFIGURATION
-  const ITEM_WIDTH = 120; 
+  const ITEM_WIDTH = 120; // Larghezza fissa di ogni blocco mese in pixel
 
   // Responsive Handler
   useEffect(() => {
@@ -73,6 +73,7 @@ export function ArchiveScreen() {
 
   // Fetch available months from DB
   const fetchAvailableMonths = useCallback(async () => {
+    // Removed deleted_at check to avoid errors
     const { data } = await supabase
       .from('expenses')
       .select('expense_date')
@@ -84,22 +85,27 @@ export function ArchiveScreen() {
       data.forEach(e => {
         if (!e.expense_date) return;
         const date = new Date(e.expense_date);
+        // Normalize to 1st of month: YYYY-MM-01
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
         uniqueMonths.add(key);
       });
       
       const dates = Array.from(uniqueMonths).map(dateStr => new Date(dateStr));
+      
+      // Sort descending (Recent first)
       dates.sort((a, b) => b.getTime() - a.getTime());
       
       setAvailableMonths(dates);
       
       if (dates.length > 0) {
+          // Check if current date is in the list
           const found = dates.find(d => isSameMonth(d, currentDate));
           if (!found) {
               setCurrentDate(dates[0]);
           }
       }
     } else {
+      // Fallback if no data
       setAvailableMonths([new Date()]);
     }
   }, [currentDate]);
@@ -160,7 +166,7 @@ export function ArchiveScreen() {
   const handleSuccess = useCallback(() => {
     setSelectedImage(null);
     refetch();
-    fetchAvailableMonths(); 
+    fetchAvailableMonths(); // Refresh month list in case a new month was created
     setShowSuccess(true);
     haptic('success');
     setTimeout(() => setShowSuccess(false), 2500);
@@ -192,15 +198,16 @@ export function ArchiveScreen() {
     if (!isDesktop) scrollToMonth(newDate);
   };
 
-  // Header Height Calculation for spacer
-  // Mobile Header is roughly:
-  // pt-safe-top + 50px (Nav) + 80px (Hero) + 60px (Ruler) ~ 190px + margins
-  const topSpacerHeight = showSearchBar ? 'h-[17rem]' : 'h-[14rem]';
+  // Adjusted spacer for the new header height
+  // Header height: roughly 4rem (top) + 5rem (ruler) + margins ~ 11rem
+  const topSpacerHeight = showSearchBar ? 'h-[14rem]' : 'h-[11rem]';
 
   // --- DESKTOP COMPONENTS ---
+
   const NavigationRail = () => (
     <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/20 bg-background/50 backdrop-blur-xl">
       <div className="h-4" />
+
       <div className="flex flex-col gap-6 w-full items-center">
         <button 
           onClick={() => { haptic('light'); handleSelectPhoto(); }}
@@ -208,12 +215,14 @@ export function ArchiveScreen() {
         >
           <Plus className="w-6 h-6" />
         </button>
+
         <button 
            onClick={toggleSearchBar}
            className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary/50", showSearchBar ? "bg-secondary text-primary" : "text-muted-foreground")}
         >
           <Search className="w-5 h-5" />
         </button>
+
         <button 
            onClick={toggleTheme}
            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary/50 text-muted-foreground"
@@ -221,6 +230,7 @@ export function ArchiveScreen() {
           {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
         </button>
       </div>
+
       <div className="mt-auto flex flex-col gap-6 items-center">
         <button 
            onClick={() => setSettingsOpen(true)}
@@ -237,6 +247,7 @@ export function ArchiveScreen() {
       <h1 className="text-3xl font-black tracking-tight text-foreground mb-6 drop-shadow-sm">
         Nota Spese
       </h1>
+
       <div className="mb-8">
         <MonthlyReport 
             expenses={filteredExpenses} 
@@ -259,6 +270,7 @@ export function ArchiveScreen() {
           </div>
         </MonthlyReport>
       </div>
+
       <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
         {availableMonths.map((date, i) => {
@@ -283,85 +295,83 @@ export function ArchiveScreen() {
     </div>
   );
 
+
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden relative font-sans bg-transparent">
+      {/* 
+          IMPORTANT: bg-transparent on container. 
+          The background image is on the BODY tag (fixed).
+      */}
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-      {/* --- MOBILE HEADER REDESIGNED --- */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col pt-safe-top pointer-events-none transition-all duration-300">
+      {/* --- MOBILE COMPONENTS --- */}
+      
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[10rem] z-40 pointer-events-none">
+        {/* Adjusted header backdrop to be glassy but not opaque */}
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-xl border-b border-white/5 transition-all duration-300" />
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
+      </div>
+
+      <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
+        <button
+          onClick={() => { haptic('light'); setSettingsOpen(true); }}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/20 backdrop-blur-md hover:bg-background/40 transition-all active:scale-95 border border-foreground/5 shadow-sm"
+        >
+          <Menu className="w-5 h-5 text-foreground/80" strokeWidth={2} />
+        </button>
+      </div>
+
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
-        {/* Unified Glass Backdrop */}
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-2xl border-b border-white/5 shadow-sm" />
-        
-        {/* ROW 1: Navigation Bar (Menu & Actions) */}
-        <div className="relative z-10 w-full px-5 py-3 flex items-center justify-between pointer-events-auto">
-          {/* Left: Menu */}
+        {/* LEVEL 1: HERO AMOUNT & UTILITIES */}
+        <div className="relative w-full px-6 flex items-center justify-between pointer-events-auto z-50">
           <button
-            onClick={() => { haptic('light'); setSettingsOpen(true); }}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/50 hover:bg-background/80 transition-all active:scale-95 text-foreground/80 border border-white/5"
+            onClick={() => { haptic('light'); toggleTheme(); }}
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
           >
-            <Menu className="w-5 h-5" strokeWidth={2} />
+            {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
 
-          {/* Right: Actions Group */}
-          <div className="flex items-center gap-3">
-             <button
-               onClick={() => { haptic('light'); toggleTheme(); }}
-               className="w-10 h-10 rounded-full flex items-center justify-center bg-background/50 hover:bg-background/80 transition-all active:scale-95 text-foreground/80 border border-white/5"
-             >
-               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-             </button>
-             <button 
-               onClick={toggleSearchBar}
-               className={cn(
-                 "w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95 border border-white/5",
-                 showSearchBar ? "bg-primary text-primary-foreground" : "bg-background/50 text-foreground/80 hover:bg-background/80"
-               )}
-             >
-               <Search className="w-5 h-5" strokeWidth={2} />
-             </button>
-          </div>
-        </div>
-
-        {/* ROW 2: Hero Amount (Centered) */}
-        <div className="relative z-10 w-full flex flex-col items-center justify-center pb-4 pt-1 pointer-events-auto">
-           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">
-             Saldo Attuale
-           </span>
-           <MonthlyReport 
+          <MonthlyReport 
             expenses={filteredExpenses} 
             currentDate={currentDate} 
             total={currentMonthTotal}
             onMonthChange={handleReportMonthChange}
-           >
+          >
             <div 
-              className="flex items-baseline justify-center text-gradient-bronze-rich drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => haptic('light')}
             >
-              <span className="text-2xl font-light mr-1 opacity-50 text-foreground translate-y-[-4px]">€</span>
+              <span className="text-xl font-medium mr-1 opacity-40 text-foreground">€</span>
               <span className="text-5xl font-black tracking-tighter tabular-nums text-shadow-sm">
                 <OdometerValue value={currentMonthTotal} />
               </span>
             </div>
-           </MonthlyReport>
+          </MonthlyReport>
+
+          <button 
+            onClick={toggleSearchBar}
+            className={`w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md border border-foreground/5 shadow-sm transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/20 border-primary/20' : 'text-muted-foreground hover:bg-background/40'}`}
+          >
+            <Search className="w-5 h-5" strokeWidth={2} />
+          </button>
         </div>
 
-        {/* ROW 3: Ruler (Wheel Effect) */}
-        <div className="relative w-full h-[4rem] flex items-end pointer-events-auto select-none overflow-hidden bg-background/20 border-t border-white/5">
-          {/* Side Fades */}
-          <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-background via-background/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-background via-background/80 to-transparent z-20 pointer-events-none" />
+        {/* LEVEL 2: RULER (FILTER) - WHEEL EFFECT */}
+        <div className="relative w-full h-[5rem] mt-2 flex items-end pointer-events-auto select-none overflow-hidden">
+          {/* Side Fades for depth */}
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/60 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/60 to-transparent z-20 pointer-events-none" />
           
-          {/* Center Indicator */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 z-30 flex flex-col items-center justify-center pointer-events-none">
-             <div className="w-[4px] h-4 bg-primary rounded-full shadow-lg" />
-             <div className="w-[1px] h-full bg-primary/20" />
+          {/* Center Indicator Line */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-4 bottom-1 z-30 flex flex-col items-center justify-end pointer-events-none">
+             <div className="w-[3px] h-full bg-gradient-to-b from-transparent via-red-500/50 to-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.6)]" />
           </div>
 
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
-            className="w-full h-full overflow-x-auto scrollbar-hide flex items-center snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10"
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-1"
           >
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
             
@@ -374,37 +384,27 @@ export function ArchiveScreen() {
                 <div 
                   key={i} 
                   style={{ width: `${ITEM_WIDTH}px` }}
-                  className="shrink-0 h-full snap-center flex flex-col justify-center items-center gap-3 group relative transition-all"
+                  className="shrink-0 h-full snap-center flex flex-col justify-end items-center group relative"
                 >
                   <button 
                     onClick={() => scrollToMonth(date)}
-                    className="w-full h-full flex flex-col justify-center items-center"
+                    className="w-full h-full flex flex-col justify-end items-center gap-2 pb-2"
                   >
-                     {/* Scale Effect on Text */}
-                     <div className={cn(
-                        "flex flex-col items-center transition-all duration-300 ease-out", 
-                        isCurrent ? "scale-100 opacity-100" : "scale-75 opacity-40 blur-[1px]"
-                      )}>
-                        <span className={cn(
-                          "text-sm font-bold tracking-widest font-mono",
-                          isCurrent ? "text-foreground" : "text-muted-foreground"
-                        )}>
-                          {monthStr}
-                        </span>
-                        <span className="text-[10px] font-medium opacity-60 font-mono">
-                          {yearStr}
-                        </span>
-                    </div>
+                     {/* TICK MARK */}
+                    <div className={cn(
+                      "w-[2px] rounded-full transition-all duration-300",
+                      isCurrent 
+                        ? "h-4 bg-foreground shadow-[0_0_10px_rgba(0,0,0,0.2)]" 
+                        : "h-2 bg-muted-foreground/30"
+                    )} />
 
-                    {/* Ruler Ticks (Bottom) */}
-                    <div className="absolute bottom-0 left-0 right-0 h-3 flex justify-center gap-1 opacity-20">
-                       <div className="w-[1px] h-2 bg-foreground" />
-                       <div className="w-[1px] h-1 bg-foreground" />
-                       <div className="w-[1px] h-1 bg-foreground" />
-                       <div className="w-[1px] h-2 bg-foreground" />
-                       <div className="w-[1px] h-1 bg-foreground" />
-                       <div className="w-[1px] h-1 bg-foreground" />
-                       <div className="w-[1px] h-2 bg-foreground" />
+                    {/* TEXT LABEL */}
+                    <div className={cn(
+                        "font-mono tracking-widest transition-all duration-300 flex items-baseline gap-0.5", 
+                        isCurrent ? "scale-110 opacity-100 transform -translate-y-1" : "scale-90 opacity-40 blur-[0.5px]"
+                      )}>
+                        <span className={cn("text-sm font-bold", isCurrent ? "text-foreground" : "text-muted-foreground")}>{monthStr}</span>
+                        <span className="text-[10px] font-medium opacity-60">-{yearStr}</span>
                     </div>
                   </button>
                 </div>
@@ -416,13 +416,12 @@ export function ArchiveScreen() {
         </div>
       </header>
       
-      {/* Floating Action Button (FAB) */}
-      <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto animate-scale-in">
+      <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
         <button
           onClick={() => { haptic('light'); handleSelectPhoto(); }}
-          className="w-[72px] h-[72px] rounded-full fab-glass-bronze shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[3px] border-white/20 backdrop-blur-md"
+          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-white/20 backdrop-blur-sm"
         >
-          <Plus className="w-9 h-9 text-white drop-shadow-sm" strokeWidth={2.5} />
+          <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
         </button>
       </div>
 
@@ -430,11 +429,10 @@ export function ArchiveScreen() {
       <NavigationRail />
       <DesktopSidebar />
 
-      {/* SEARCH BAR DROPDOWN */}
       {showSearchBar && (
         <div className={cn(
            "fixed z-[60] flex justify-center animate-slide-down",
-           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[14.5rem] left-0 right-0 px-6"
+           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[13rem] left-0 right-0 px-6"
         )}>
           <SearchBar 
             value={searchQuery} 
@@ -453,8 +451,8 @@ export function ArchiveScreen() {
         {!isDesktop && (
           <div className="absolute top-0 left-0 right-0 h-full pointer-events-none z-10"
              style={{
-               maskImage: 'linear-gradient(to bottom, transparent 0px, black 220px, black 100%)',
-               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 220px, black 100%)'
+               maskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)',
+               WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 160px, black 100%)'
              }} 
           />
         )}
@@ -464,7 +462,7 @@ export function ArchiveScreen() {
             <div className="shimmer w-64 h-32 rounded-3xl opacity-50 backdrop-blur-sm" />
           </div>
         ) : filteredExpenses.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center pt-48 animate-fade-in text-center px-10">
+          <div className="flex-1 flex flex-col items-center justify-center pt-32 animate-fade-in text-center px-10">
             <div className="bg-background/20 backdrop-blur-md p-6 rounded-3xl border border-white/5">
               <p className="text-muted-foreground text-sm font-medium tracking-wide">
                 Nessuna voce per questo mese
