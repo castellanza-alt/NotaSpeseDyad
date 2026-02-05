@@ -203,7 +203,7 @@ export function ArchiveScreen() {
   // --- DESKTOP COMPONENTS ---
 
   const NavigationRail = () => (
-    <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/50 bg-background/95 backdrop-blur">
+    <div className="hidden md:flex flex-col items-center py-8 w-[80px] h-screen fixed left-0 top-0 z-50 border-r border-border/20 bg-background/50 backdrop-blur-xl">
       <div className="h-4" />
 
       <div className="flex flex-col gap-6 w-full items-center">
@@ -216,14 +216,14 @@ export function ArchiveScreen() {
 
         <button 
            onClick={toggleSearchBar}
-           className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary", showSearchBar ? "bg-secondary text-primary" : "text-muted-foreground")}
+           className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary/50", showSearchBar ? "bg-secondary text-primary" : "text-muted-foreground")}
         >
           <Search className="w-5 h-5" />
         </button>
 
         <button 
            onClick={toggleTheme}
-           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary text-muted-foreground"
+           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary/50 text-muted-foreground"
         >
           {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
         </button>
@@ -232,7 +232,7 @@ export function ArchiveScreen() {
       <div className="mt-auto flex flex-col gap-6 items-center">
         <button 
            onClick={() => setSettingsOpen(true)}
-           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary text-muted-foreground"
+           className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-secondary/50 text-muted-foreground"
         >
           <Settings className="w-5 h-5" />
         </button>
@@ -241,8 +241,8 @@ export function ArchiveScreen() {
   );
 
   const DesktopSidebar = () => (
-    <div className="hidden md:flex flex-col w-[25%] h-screen fixed left-[80px] top-0 z-40 p-8 border-r border-border/50 bg-background/50 backdrop-blur-sm">
-      <h1 className="text-3xl font-black tracking-tight text-foreground mb-6">
+    <div className="hidden md:flex flex-col w-[25%] h-screen fixed left-[80px] top-0 z-40 p-8 border-r border-border/20 bg-background/30 backdrop-blur-lg">
+      <h1 className="text-3xl font-black tracking-tight text-foreground mb-6 drop-shadow-sm">
         Nota Spese
       </h1>
 
@@ -253,7 +253,7 @@ export function ArchiveScreen() {
             total={currentMonthTotal}
             onMonthChange={handleReportMonthChange}
         >
-          <div className="w-full bg-card p-6 rounded-3xl border border-border/50 shadow-sm text-left group hover:border-primary/50 transition-colors cursor-pointer">
+          <div className="w-full bg-card/60 backdrop-blur-md p-6 rounded-3xl border border-border/30 shadow-sm text-left group hover:bg-card/80 transition-all cursor-pointer">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Saldo Mensile</p>
             <div className="flex items-baseline text-gradient-bronze-rich">
                 <span className="text-2xl font-medium mr-1 opacity-60">€</span>
@@ -278,10 +278,10 @@ export function ArchiveScreen() {
               key={i}
               onClick={() => setCurrentDate(date)}
               className={cn(
-                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm",
+                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm backdrop-blur-sm",
                 isCurrent 
                   ? "bg-primary text-primary-foreground font-bold shadow-md" 
-                  : "hover:bg-secondary text-muted-foreground"
+                  : "hover:bg-secondary/40 text-muted-foreground"
               )}
             >
               <span>{format(date, "MMMM yyyy", { locale: it })}</span>
@@ -295,35 +295,40 @@ export function ArchiveScreen() {
 
 
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-background overflow-hidden relative font-sans">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden relative font-sans bg-transparent">
+      {/* 
+          IMPORTANT: bg-transparent on container. 
+          The background image is on the BODY tag (fixed).
+      */}
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* --- MOBILE COMPONENTS --- */}
       
       <div className="md:hidden fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
-        <div className="absolute inset-0 bg-background/60 dark:bg-[#121414]/60 backdrop-blur-xl shadow-lg border-b border-white/5 transition-all duration-300" />
+        {/* Adjusted header backdrop to be glassy but not opaque */}
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-xl border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
       <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/40 backdrop-blur-md hover:bg-background/60 transition-all active:scale-95 border border-foreground/5 shadow-sm"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/20 backdrop-blur-md hover:bg-background/40 transition-all active:scale-95 border border-foreground/5 shadow-sm"
         >
           <Menu className="w-5 h-5 text-foreground/80" strokeWidth={2} />
         </button>
       </div>
 
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
-        <div className="mb-2 opacity-60 animate-fade-in pointer-events-none">
+        <div className="mb-2 opacity-80 animate-fade-in pointer-events-none drop-shadow-sm">
           <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
-          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/90 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/90 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           
           <div className="absolute left-1/2 -translate-x-1/2 bottom-5 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
@@ -379,7 +384,7 @@ export function ArchiveScreen() {
         <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md hover:bg-background/60 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
           >
             {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
@@ -395,7 +400,7 @@ export function ArchiveScreen() {
               onClick={() => haptic('light')}
             >
               <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
-              <span className="text-6xl font-black tracking-tighter tabular-nums">
+              <span className="text-6xl font-black tracking-tighter tabular-nums text-shadow-sm">
                 <OdometerValue value={currentMonthTotal} />
               </span>
             </div>
@@ -403,7 +408,7 @@ export function ArchiveScreen() {
 
           <button 
             onClick={toggleSearchBar}
-            className={`w-10 h-10 rounded-full flex items-center justify-center bg-background/40 backdrop-blur-md border border-foreground/5 shadow-sm transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/10 border-primary/20' : 'text-muted-foreground hover:bg-background/60'}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md border border-foreground/5 shadow-sm transition-all active:scale-95 ${showSearchBar ? 'text-primary bg-primary/20 border-primary/20' : 'text-muted-foreground hover:bg-background/40'}`}
           >
             <Search className="w-5 h-5" strokeWidth={2} />
           </button>
@@ -413,7 +418,7 @@ export function ArchiveScreen() {
       <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
         <button
           onClick={() => { haptic('light'); handleSelectPhoto(); }}
-          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-background"
+          className="w-[74px] h-[74px] rounded-full fab-glass-bronze shadow-2xl flex items-center justify-center transform transition-all active:scale-95 hover:scale-105 border-[4px] border-white/20 backdrop-blur-sm"
         >
           <Plus className="w-10 h-10 text-white drop-shadow-sm" strokeWidth={2.5} />
         </button>
@@ -453,13 +458,15 @@ export function ArchiveScreen() {
         
         {loading && !expenses.length ? (
           <div className="flex-1 flex items-center justify-center pt-32">
-            <div className="shimmer w-64 h-32 rounded-3xl opacity-50" />
+            <div className="shimmer w-64 h-32 rounded-3xl opacity-50 backdrop-blur-sm" />
           </div>
         ) : filteredExpenses.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center pt-32 animate-fade-in text-center px-10">
-            <p className="text-muted-foreground/40 text-sm font-medium tracking-wide">
-              Nessuna voce per questo mese
-            </p>
+            <div className="bg-background/20 backdrop-blur-md p-6 rounded-3xl border border-white/5">
+              <p className="text-muted-foreground text-sm font-medium tracking-wide">
+                Nessuna voce per questo mese
+              </p>
+            </div>
           </div>
         ) : (
           <VirtualizedExpenseList

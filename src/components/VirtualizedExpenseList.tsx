@@ -4,7 +4,6 @@ import { ExpenseCard } from "./ExpenseCard";
 import type { Expense } from "@/hooks/useExpenses";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/hooks/useTheme";
 import { useHaptic } from "@/hooks/use-haptic";
 
 interface VirtualizedExpenseListProps {
@@ -33,7 +32,6 @@ export function VirtualizedExpenseList({
   columns = 1
 }: VirtualizedExpenseListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
   const { trigger: haptic } = useHaptic();
 
   // BASE HEIGHTS
@@ -87,7 +85,7 @@ export function VirtualizedExpenseList({
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-center pt-20">
-        <p className="text-muted-foreground text-sm font-medium">
+        <p className="text-muted-foreground text-sm font-medium bg-background/50 px-4 py-2 rounded-full backdrop-blur-md border border-border/20">
           Nessuna spesa trovata
         </p>
       </div>
@@ -100,8 +98,11 @@ export function VirtualizedExpenseList({
       className="parallax-wrapper flex-1 w-full scrollbar-hide h-full overflow-y-auto"
       style={{ contain: "strict" }}
     >
-      {/* Parallax Background Layer */}
-      <div className={cn("parallax-bg", theme === 'dark' ? "mesh-gradient-dark" : "mesh-gradient-light")} />
+      {/* 
+         BACKGROUND REMOVED:
+         The background is now handled by the body element via CSS 
+         to support the fixed attachment requested.
+      */}
 
       {/* Spacer for Header */}
       <div className={cn("w-full shrink-0 transition-all duration-300", paddingClassName)} />
@@ -126,7 +127,7 @@ export function VirtualizedExpenseList({
                 }}
               >
                 {loadingMore && (
-                    <div className="flex items-center gap-2 text-muted-foreground/60 bg-muted/20 px-4 py-2 rounded-full">
+                    <div className="flex items-center gap-2 text-muted-foreground/80 bg-background/40 backdrop-blur-md px-4 py-2 rounded-full border border-border/20 shadow-sm">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span className="text-xs font-medium tracking-wide uppercase">Caricamento</span>
                     </div>

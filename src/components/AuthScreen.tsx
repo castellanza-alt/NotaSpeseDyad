@@ -80,24 +80,26 @@ export function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 safe-top safe-bottom">
-      {/* Background gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/15 via-background to-accent/10 pointer-events-none" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 safe-top safe-bottom">
+      {/* 
+         Removed manual gradient backgrounds.
+         The body background (image) now shows through.
+      */}
       
-      {/* Decorative glows */}
-      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
-      <div className="fixed bottom-1/3 right-1/3 w-80 h-80 bg-accent/15 rounded-full blur-[80px] pointer-events-none" />
+      {/* Decorative glows - Keep subtle */}
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] pointer-events-none mix-blend-overlay" />
+      <div className="fixed bottom-1/3 right-1/3 w-80 h-80 bg-accent/15 rounded-full blur-[80px] pointer-events-none mix-blend-overlay" />
 
       {/* Theme Toggle */}
       <div className="fixed top-6 right-6 z-20">
         <ThemeToggle />
       </div>
       
-      {/* Card Container */}
-      <div className="relative z-10 w-full max-w-xs poker-card p-8 flex flex-col items-center justify-center animate-fade-in shadow-2xl">
+      {/* Card Container - Glass Effect */}
+      <div className="relative z-10 w-full max-w-xs chunky-card-3d p-8 flex flex-col items-center justify-center animate-fade-in rounded-3xl">
         {/* Logo/Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-card-foreground mb-3 tracking-tight">
+          <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight drop-shadow-sm">
             Nota Spese
           </h1>
           <p className="text-muted-foreground text-sm font-medium">
@@ -144,7 +146,7 @@ export function AuthScreen() {
             variant="ghost"
             onClick={handleDevLogin}
             disabled={loading}
-            className="w-full h-12 rounded-xl border-2 border-dashed border-destructive/30 text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 mt-2"
+            className="w-full h-12 rounded-xl border-2 border-dashed border-destructive/30 text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 mt-2 bg-background/50"
           >
             <ShieldAlert className="h-4 w-4" />
             Login Amministratore (Dev)
