@@ -110,7 +110,8 @@
   }
 }
 
-.pt-safe-top { padding-top: max(env(safe-area-inset-top, 20px), 48px); }
+/* Increased safe-top padding by ~15px (from 48px to 64px min base) */
+.pt-safe-top { padding-top: max(env(safe-area-inset-top, 20px), 64px); }
 .pb-safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 20px), 32px); }
 
 @layer utilities {

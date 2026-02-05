@@ -198,9 +198,9 @@ export function ArchiveScreen() {
     if (!isDesktop) scrollToMonth(newDate);
   };
 
-  // Adjusted spacer for the new compact header
-  // Header height roughly: pt-safe-top + padding + hero (80px) + gap (20px) + ruler (60px) ~ 200px (12.5rem)
-  const topSpacerHeight = showSearchBar ? 'h-[16rem]' : 'h-[13rem]';
+  // Adjusted spacer for the new compact header + extra spacing requested
+  // Base: ~14rem + 15px extra top + 10px extra margin ~> round up to safe values
+  const topSpacerHeight = showSearchBar ? 'h-[17rem]' : 'h-[14rem]';
 
   // --- DESKTOP COMPONENTS ---
 
@@ -306,12 +306,14 @@ export function ArchiveScreen() {
 
       {/* --- MOBILE COMPONENTS --- */}
       
-      <div className="md:hidden fixed top-0 left-0 right-0 h-[13rem] z-40 pointer-events-none">
+      {/* HEADER BACKGROUND - HEIGHT INCREASED for extra padding */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[14rem] z-40 pointer-events-none">
         {/* Adjusted header backdrop to be glassy but not opaque */}
         <div className="absolute inset-0 bg-background/40 backdrop-blur-xl border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
+      {/* MENU BUTTON - PADDING INCREASED */}
       <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
@@ -321,10 +323,11 @@ export function ArchiveScreen() {
         </button>
       </div>
 
+      {/* HEADER CONTENT - PADDING INCREASED */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
         {/* LEVEL 1: HERO AMOUNT & UTILITIES */}
-        <div className="relative w-full px-6 pt-4 flex items-center justify-between pointer-events-auto">
+        <div className="relative w-full px-6 flex items-center justify-between pointer-events-auto pb-2">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
@@ -339,7 +342,7 @@ export function ArchiveScreen() {
             onMonthChange={handleReportMonthChange}
           >
             <div 
-              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity pt-2"
               onClick={() => haptic('light')}
             >
               <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
@@ -357,8 +360,8 @@ export function ArchiveScreen() {
           </button>
         </div>
 
-        {/* LEVEL 2: RULER (FILTER) - COMPACTED */}
-        <div className="relative w-full h-[3.5rem] mt-4 flex items-end pointer-events-auto select-none">
+        {/* LEVEL 2: RULER (FILTER) - COMPACTED & SPACED FROM TOP */}
+        <div className="relative w-full h-[3.5rem] mt-3 mb-2 flex items-end pointer-events-auto select-none">
           <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           
@@ -423,7 +426,7 @@ export function ArchiveScreen() {
       {showSearchBar && (
         <div className={cn(
            "fixed z-[60] flex justify-center animate-slide-down",
-           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[13.5rem] left-0 right-0 px-6"
+           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[16rem] left-0 right-0 px-6"
         )}>
           <SearchBar 
             value={searchQuery} 
