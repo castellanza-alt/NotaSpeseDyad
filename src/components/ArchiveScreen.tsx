@@ -198,9 +198,9 @@ export function ArchiveScreen() {
     if (!isDesktop) scrollToMonth(newDate);
   };
 
-  // Adjusted spacer for the new compact header
-  // Header height roughly: pt-safe-top + 20px (top row) + 40px (ruler) + margins ~ 140px total
-  const topSpacerHeight = showSearchBar ? 'h-[13rem]' : 'h-[10rem]';
+  // Adjusted spacer for the new header height
+  // Header height: roughly 4rem (top) + 5rem (ruler) + margins ~ 11rem
+  const topSpacerHeight = showSearchBar ? 'h-[14rem]' : 'h-[11rem]';
 
   // --- DESKTOP COMPONENTS ---
 
@@ -324,7 +324,7 @@ export function ArchiveScreen() {
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
         
         {/* LEVEL 1: HERO AMOUNT & UTILITIES */}
-        <div className="relative w-full px-6 flex items-center justify-between pointer-events-auto">
+        <div className="relative w-full px-6 flex items-center justify-between pointer-events-auto z-50">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
@@ -357,19 +357,21 @@ export function ArchiveScreen() {
           </button>
         </div>
 
-        {/* LEVEL 2: RULER (FILTER) - COMPACTED */}
-        <div className="relative w-full h-[3rem] mt-1 flex items-end pointer-events-auto select-none">
-          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
+        {/* LEVEL 2: RULER (FILTER) - WHEEL EFFECT */}
+        <div className="relative w-full h-[5rem] mt-2 flex items-end pointer-events-auto select-none overflow-hidden">
+          {/* Side Fades for depth */}
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/60 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/60 to-transparent z-20 pointer-events-none" />
           
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-30 flex flex-col items-center">
-             <div className="w-[2px] h-6 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+          {/* Center Indicator Line */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-4 bottom-1 z-30 flex flex-col items-center justify-end pointer-events-none">
+             <div className="w-[3px] h-full bg-gradient-to-b from-transparent via-red-500/50 to-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.6)]" />
           </div>
 
           <div 
             ref={scrollRef}
             onScroll={handleWheelScroll}
-            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-1"
           >
             <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
             
@@ -382,20 +384,27 @@ export function ArchiveScreen() {
                 <div 
                   key={i} 
                   style={{ width: `${ITEM_WIDTH}px` }}
-                  className="shrink-0 h-[3rem] snap-center flex flex-col justify-end group relative"
+                  className="shrink-0 h-full snap-center flex flex-col justify-end items-center group relative"
                 >
                   <button 
                     onClick={() => scrollToMonth(date)}
-                    className="w-full h-full flex flex-col justify-end items-center"
+                    className="w-full h-full flex flex-col justify-end items-center gap-2 pb-2"
                   >
-                    <div className="absolute bottom-0 text-center w-full">
-                      <span className={cn(
-                        "font-mono tracking-widest transition-all duration-300 block", 
-                        isCurrent ? "text-foreground scale-110" : "text-muted-foreground/50 scale-90"
+                     {/* TICK MARK */}
+                    <div className={cn(
+                      "w-[2px] rounded-full transition-all duration-300",
+                      isCurrent 
+                        ? "h-4 bg-foreground shadow-[0_0_10px_rgba(0,0,0,0.2)]" 
+                        : "h-2 bg-muted-foreground/30"
+                    )} />
+
+                    {/* TEXT LABEL */}
+                    <div className={cn(
+                        "font-mono tracking-widest transition-all duration-300 flex items-baseline gap-0.5", 
+                        isCurrent ? "scale-110 opacity-100 transform -translate-y-1" : "scale-90 opacity-40 blur-[0.5px]"
                       )}>
-                        <span className="text-sm font-bold">{monthStr}</span>
-                        <span className="text-xs opacity-70 ml-1">-{yearStr}</span>
-                      </span>
+                        <span className={cn("text-sm font-bold", isCurrent ? "text-foreground" : "text-muted-foreground")}>{monthStr}</span>
+                        <span className="text-[10px] font-medium opacity-60">-{yearStr}</span>
                     </div>
                   </button>
                 </div>
