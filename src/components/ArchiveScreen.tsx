@@ -198,7 +198,9 @@ export function ArchiveScreen() {
     if (!isDesktop) scrollToMonth(newDate);
   };
 
-  const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-[18rem]';
+  // Adjusted spacer for the new compact header
+  // Header height roughly: pt-safe-top + 20px (top row) + 40px (ruler) + margins ~ 140px total
+  const topSpacerHeight = showSearchBar ? 'h-[13rem]' : 'h-[10rem]';
 
   // --- DESKTOP COMPONENTS ---
 
@@ -304,7 +306,7 @@ export function ArchiveScreen() {
 
       {/* --- MOBILE COMPONENTS --- */}
       
-      <div className="md:hidden fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-[10rem] z-40 pointer-events-none">
         {/* Adjusted header backdrop to be glassy but not opaque */}
         <div className="absolute inset-0 bg-background/40 backdrop-blur-xl border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
@@ -320,68 +322,9 @@ export function ArchiveScreen() {
       </div>
 
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
-        <div className="mb-2 opacity-80 animate-fade-in pointer-events-none drop-shadow-sm">
-          <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
-            {format(currentDate, "yyyy")}
-          </span>
-        </div>
-
-        <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
-          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
-          
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-5 z-30 flex flex-col items-center">
-             <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-             <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
-          </div>
-
-          <div 
-            ref={scrollRef}
-            onScroll={handleWheelScroll}
-            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
-          >
-            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
-            
-            {availableMonths.map((date, i) => {
-              const isCurrent = isSameMonth(date, currentDate);
-              return (
-                <div 
-                  key={i} 
-                  style={{ width: `${ITEM_WIDTH}px` }}
-                  className="shrink-0 h-[3.75rem] snap-center flex flex-col justify-end group relative"
-                >
-                  <button 
-                    onClick={() => scrollToMonth(date)}
-                    className="w-full h-full flex flex-col justify-end"
-                  >
-                    <div className="w-full h-10 flex items-end justify-between px-1 mb-2">
-                      <div className={cn(
-                        "w-[2px] rounded-t-sm transition-all duration-300",
-                        isCurrent ? "h-10 bg-foreground" : "h-6 bg-foreground/30 group-hover:bg-foreground/50"
-                      )} />
-                      <div className="w-[1px] h-3 bg-foreground/10" />
-                      <div className="w-[1px] h-3 bg-foreground/10" />
-                      <div className="w-[1px] h-3 bg-foreground/10" />
-                      <div className="w-[1px] h-3 bg-foreground/10" />
-                    </div>
-                    <div className="absolute bottom-0 left-0 w-full text-left pl-1">
-                      <span className={cn(
-                        "text-xs font-bold tracking-widest transition-all duration-300 block transform -translate-x-[40%]", 
-                        isCurrent ? "text-foreground scale-110" : "text-muted-foreground/50 scale-90"
-                      )}>
-                        {format(date, "MMM", { locale: it }).toUpperCase()}
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-            
-            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
-          </div>
-        </div>
         
-        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
+        {/* LEVEL 1: HERO AMOUNT & UTILITIES */}
+        <div className="relative w-full px-6 flex items-center justify-between pointer-events-auto">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
@@ -396,11 +339,11 @@ export function ArchiveScreen() {
             onMonthChange={handleReportMonthChange}
           >
             <div 
-              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm scale-90 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-baseline text-gradient-bronze-rich drop-shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => haptic('light')}
             >
-              <span className="text-2xl font-medium mr-1 opacity-40 text-foreground">€</span>
-              <span className="text-6xl font-black tracking-tighter tabular-nums text-shadow-sm">
+              <span className="text-xl font-medium mr-1 opacity-40 text-foreground">€</span>
+              <span className="text-5xl font-black tracking-tighter tabular-nums text-shadow-sm">
                 <OdometerValue value={currentMonthTotal} />
               </span>
             </div>
@@ -412,6 +355,55 @@ export function ArchiveScreen() {
           >
             <Search className="w-5 h-5" strokeWidth={2} />
           </button>
+        </div>
+
+        {/* LEVEL 2: RULER (FILTER) - COMPACTED */}
+        <div className="relative w-full h-[3rem] mt-1 flex items-end pointer-events-auto select-none">
+          <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
+          
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-30 flex flex-col items-center">
+             <div className="w-[2px] h-6 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+          </div>
+
+          <div 
+            ref={scrollRef}
+            onScroll={handleWheelScroll}
+            className="w-full h-full overflow-x-auto scrollbar-hide flex items-end snap-x snap-mandatory cursor-grab active:cursor-grabbing relative z-10 pb-2"
+          >
+            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
+            
+            {availableMonths.map((date, i) => {
+              const isCurrent = isSameMonth(date, currentDate);
+              const monthStr = format(date, "MMM", { locale: it }).toUpperCase();
+              const yearStr = format(date, "yy");
+              
+              return (
+                <div 
+                  key={i} 
+                  style={{ width: `${ITEM_WIDTH}px` }}
+                  className="shrink-0 h-[3rem] snap-center flex flex-col justify-end group relative"
+                >
+                  <button 
+                    onClick={() => scrollToMonth(date)}
+                    className="w-full h-full flex flex-col justify-end items-center"
+                  >
+                    <div className="absolute bottom-0 text-center w-full">
+                      <span className={cn(
+                        "font-mono tracking-widest transition-all duration-300 block", 
+                        isCurrent ? "text-foreground scale-110" : "text-muted-foreground/50 scale-90"
+                      )}>
+                        <span className="text-sm font-bold">{monthStr}</span>
+                        <span className="text-xs opacity-70 ml-1">-{yearStr}</span>
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+            
+            <div style={{ width: `calc(50vw - ${ITEM_WIDTH / 2}px)` }} className="shrink-0 h-full" />
+          </div>
         </div>
       </header>
       
@@ -431,7 +423,7 @@ export function ArchiveScreen() {
       {showSearchBar && (
         <div className={cn(
            "fixed z-[60] flex justify-center animate-slide-down",
-           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[18.5rem] left-0 right-0 px-6"
+           isDesktop ? "top-8 left-[calc(25%_+_80px)] right-0" : "top-[13rem] left-0 right-0 px-6"
         )}>
           <SearchBar 
             value={searchQuery} 
