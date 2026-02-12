@@ -32,46 +32,80 @@ export function AuthScreen() {
     const devPassword = "adminpassword123";
 
     try {
-      // Tentativo di login
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // 1. Tentativo di Login diretto
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: devEmail,
         password: devPassword,
       });
 
+      if (!signInError && signInData.session) {
+        toast({
+          title: "Accesso Admin",
+          description: "Bentornato amministratore",
+        });
+        return; // Login riuscito, l'auth state listener farà il resto
+      }
+
+      // 2. Analisi dell'errore
       if (signInError) {
-        // Se il login fallisce (es. utente non esiste), proviamo a crearlo
-        console.log("Dev user not found, creating...", signInError.message);
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: devEmail,
-          password: devPassword,
-        });
+        console.log("Login failed:", signInError.message);
 
-        if (signUpError) throw signUpError;
-
-        // Riprova il login dopo la creazione
-        const { error: retryError } = await supabase.auth.signInWithPassword({
-          email: devEmail,
-          password: devPassword,
-        });
-        
-        if (retryError) {
+        // Caso A: Email non confermata
+        if (signInError.message.includes("Email not confirmed")) {
           toast({
-            title: "Verifica richiesta",
-            description: "Account creato. Se richiesto, verifica l'email (admin@preview.dev) o disabilita la conferma email su Supabase.",
+            title: "Verifica Email Richiesta",
+            description: "Account esistente ma non confermato. Controlla la posta o disabilita 'Confirm Email' su Supabase > Auth > Providers.",
+            variant: "destructive"
           });
           return;
         }
+
+        // Caso B: Credenziali invalide (probabilmente l'utente non esiste)
+        if (signInError.message.includes("Invalid login credentials")) {
+          console.log("User not found, attempting registration...");
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: devEmail,
+            password: devPassword,
+            options: {
+              data: {
+                full_name: "Admin User",
+              }
+            }
+          });
+
+          if (signUpError) {
+            // Se la registrazione fallisce (es. rate limit, o utente esiste già in altro modo)
+            throw signUpError;
+          }
+
+          // Registrazione avvenuta. Controlliamo se abbiamo la sessione.
+          if (signUpData.session) {
+             toast({
+              title: "Account Creato",
+              description: "Accesso effettuato come Amministratore.",
+            });
+            // L'auth state listener gestirà il redirect
+          } else if (signUpData.user && !signUpData.session) {
+            // Utente creato ma serve conferma email (comune nei nuovi progetti Supabase)
+             toast({
+              title: "Account Creato - Verifica Necessaria",
+              description: "Vai su Supabase > Authentication e conferma manualmente l'utente admin@preview.dev, oppure clicca il link nella email simulata.",
+              duration: 6000,
+            });
+          }
+          return;
+        }
+        
+        // Altri errori imprevisti
+        throw signInError;
       }
 
-      toast({
-        title: "Accesso Admin",
-        description: "Login effettuato con successo (Modalità Dev)",
-      });
     } catch (error: any) {
-      console.error("Dev login error:", error);
+      console.error("Dev login critical error:", error);
       toast({
-        title: "Errore Dev Login",
-        description: error.message,
+        title: "Errore Login",
+        description: error.message || "Errore sconosciuto durante il login",
         variant: "destructive"
       });
     } finally {
