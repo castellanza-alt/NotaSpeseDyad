@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check, Search, Sun, LayoutDashboard, Settings, LogOut } from "lucide-react";
+import { Moon, Menu, Plus, Check, Search, Sun, LayoutDashboard, Settings } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptic } from "@/hooks/use-haptic";
 import { SettingsSheet } from "./SettingsSheet";
@@ -73,18 +73,17 @@ export function ArchiveScreen() {
 
   // Fetch available months from DB
   const fetchAvailableMonths = useCallback(async () => {
-    // Removed deleted_at check to avoid errors
     const { data } = await supabase
-      .from('expenses')
-      .select('expense_date')
-      .not('expense_date', 'is', null)
-      .order('expense_date', { ascending: false });
+      .from('transactions' as any)
+      .select('date')
+      .not('date', 'is', null)
+      .order('date', { ascending: false });
 
     if (data && data.length > 0) {
       const uniqueMonths = new Set<string>();
-      data.forEach(e => {
-        if (!e.expense_date) return;
-        const date = new Date(e.expense_date);
+      data.forEach((e: any) => {
+        if (!e.date) return;
+        const date = new Date(e.date);
         // Normalize to 1st of month: YYYY-MM-01
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
         uniqueMonths.add(key);
@@ -147,13 +146,13 @@ export function ArchiveScreen() {
   const filteredExpenses = useMemo(() => {
     if (debouncedSearch) return expenses;
     return expenses.filter(expense => {
-      if (!expense.expense_date) return false;
-      return isSameMonth(new Date(expense.expense_date), currentDate);
+      if (!expense.date) return false;
+      return isSameMonth(new Date(expense.date), currentDate);
     });
   }, [expenses, currentDate, debouncedSearch]);
 
   const currentMonthTotal = useMemo(() => {
-    return filteredExpenses.reduce((sum, e) => sum + (e.total || 0), 0);
+    return filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   }, [filteredExpenses]);
 
   const handleSelectPhoto = () => fileInputRef.current?.click();

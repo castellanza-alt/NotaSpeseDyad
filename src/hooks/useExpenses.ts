@@ -8,21 +8,21 @@ export interface Expense {
   id: string;
   user_id: string;
   merchant: string | null;
-  expense_date: string | null;
-  total: number | null;
+  date: string | null;
+  amount: number | null;
   currency: string;
   category: string | null;
-  items: any;
   image_url: string | null;
-  sent_to_email: string | null;
-  sent_at: string | null;
   created_at: string;
   updated_at: string;
+  // properties that might or might not exist in the new table, keeping them optional for now
+  items?: any;
+  sent_to_email?: string | null;
+  sent_at?: string | null;
   vat_number?: string | null;
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  // deleted_at removed to prevent query errors if column missing
 }
 
 const PAGE_SIZE = 30;
@@ -56,11 +56,10 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       
       const isSearching = searchQuery.trim().length > 0;
       
-      // Removed .is("deleted_at", null) to fix visibility issues
       let query = supabase
-        .from("expenses")
+        .from("transactions" as any)
         .select("*")
-        .order("expense_date", { ascending: false })
+        .order("date", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (limit) {
@@ -75,7 +74,11 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
-      let resultData = data || [];
+      let resultData = (data as any[])?.map(item => ({
+        ...item,
+        // Map any differing columns if necessary, but we are assuming schema match or update
+        // If the DB returns 'amount' and 'date', it matches our new interface.
+      })) || [];
 
       // Client-Side Filtering if searching
       if (isSearching && resultData.length > 0) {
@@ -83,13 +86,13 @@ export function useExpenses(options: UseExpensesOptions = {}) {
         resultData = resultData.filter(e => {
           const merchant = e.merchant?.toLowerCase() || "";
           const category = e.category?.toLowerCase() || "";
-          const totalStr = e.total?.toString() || "";
-          const totalComma = totalStr.replace('.', ',');
+          const amountStr = e.amount?.toString() || "";
+          const amountComma = amountStr.replace('.', ',');
           
           let dateStr = "";
           let dayStr = "";
-          if (e.expense_date) {
-            const d = new Date(e.expense_date);
+          if (e.date) {
+            const d = new Date(e.date);
             dateStr = format(d, "d MMMM yyyy", { locale: it }).toLowerCase();
             dayStr = format(d, "EEEE", { locale: it }).toLowerCase();
           }
@@ -97,8 +100,8 @@ export function useExpenses(options: UseExpensesOptions = {}) {
           return (
             merchant.includes(lowerQ) ||
             category.includes(lowerQ) ||
-            totalStr.includes(lowerQ) ||
-            totalComma.includes(lowerQ) ||
+            amountStr.includes(lowerQ) ||
+            amountComma.includes(lowerQ) ||
             dateStr.includes(lowerQ) ||
             dayStr.includes(lowerQ)
           );
@@ -113,7 +116,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
         setHasMore((data?.length || 0) === PAGE_SIZE);
       }
     } catch (error) {
-      console.error("Error fetching expenses:", error);
+      console.error("Error fetching transactions:", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -127,7 +130,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;
     const { data, error } = await supabase
-      .from("expenses")
+      .from("transactions" as any)
       .insert({ ...expense, user_id: user.id })
       .select()
       .single();
@@ -139,11 +142,9 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     return data;
   }
 
-  // Modified to Hard Delete temporarily to ensure functionality
   async function deleteExpense(id: string) {
-    // Fallback to hard delete if soft delete column is missing
     const { error } = await supabase
-      .from("expenses")
+      .from("transactions" as any)
       .delete()
       .eq("id", id);
       
@@ -151,15 +152,15 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     setExpenses(prev => prev.filter(e => e.id !== id));
   }
 
-  // RESTORE - No-op if soft delete is disabled
+  // RESTORE - No-op
   async function restoreExpense(id: string) {
-    console.warn("Restore not available without DB schema update");
+    console.warn("Restore not available");
   }
 
   // HARD DELETE
   async function permanentlyDeleteExpense(id: string) {
     const { error } = await supabase
-      .from("expenses")
+      .from("transactions" as any)
       .delete()
       .eq("id", id);
       
