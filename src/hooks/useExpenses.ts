@@ -23,6 +23,7 @@ export interface Expense {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  deleted_at?: string | null;
 }
 
 const PAGE_SIZE = 30;
@@ -76,8 +77,6 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
       let resultData = (data as any[])?.map(item => ({
         ...item,
-        // Map any differing columns if necessary, but we are assuming schema match or update
-        // If the DB returns 'amount' and 'date', it matches our new interface.
       })) || [];
 
       // Client-Side Filtering if searching
@@ -136,10 +135,14 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       .single();
 
     if (error) throw error;
-    setExpenses(prev => [data, ...prev]);
-    setLastAddedId(data.id);
+    
+    // Cast data to Expense to satisfy TypeScript (using unknown first to avoid overlap error)
+    const newExpense = data as unknown as Expense;
+    
+    setExpenses(prev => [newExpense, ...prev]);
+    setLastAddedId(newExpense.id);
     setTimeout(() => setLastAddedId(null), 3000);
-    return data;
+    return newExpense;
   }
 
   async function deleteExpense(id: string) {
@@ -154,7 +157,17 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
   // RESTORE - No-op
   async function restoreExpense(id: string) {
-    console.warn("Restore not available");
+    // This functionality depends on backend support for soft deletes in the new table
+    // For now, we'll try to update deleted_at to null if the column exists
+    const { error } = await supabase
+      .from("transactions" as any)
+      .update({ deleted_at: null })
+      .eq("id", id);
+      
+    if (error) {
+       console.warn("Restore failed", error);
+       throw error;
+    }
   }
 
   // HARD DELETE

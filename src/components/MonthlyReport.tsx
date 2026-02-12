@@ -46,7 +46,7 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
     
     expenses.forEach(e => {
       const cat = e.category || "Altro";
-      const amount = e.total || 0;
+      const amount = e.amount || 0;
       map.set(cat, (map.get(cat) || 0) + amount);
     });
 
@@ -66,8 +66,8 @@ export function MonthlyReport({ expenses, currentDate, total, children, onMonthC
     const csvContent = [
       "Data,Esercente,Categoria,Importo",
       ...expenses.map(e => {
-        const date = e.expense_date ? format(new Date(e.expense_date), "dd/MM/yyyy") : "";
-        return `${date},"${e.merchant || ''}","${e.category || ''}",${e.total}`;
+        const date = e.date ? format(new Date(e.date), "dd/MM/yyyy") : "";
+        return `${date},"${e.merchant || ''}","${e.category || ''}",${e.amount}`;
       })
     ].join("\n");
 

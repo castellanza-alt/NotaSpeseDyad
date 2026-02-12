@@ -82,13 +82,13 @@ export function RecentExpenses() {
               
               {/* Amount */}
               <p className="text-lg font-semibold text-primary mt-1">
-                €{expense.total?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00"}
+                €{expense.amount?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00"}
               </p>
               
               {/* Date */}
               <p className="text-xs text-muted-foreground mt-1.5">
-                {expense.expense_date 
-                  ? format(new Date(expense.expense_date), "d MMM", { locale: it }) 
+                {expense.date 
+                  ? format(new Date(expense.date), "d MMM", { locale: it }) 
                   : "—"}
               </p>
             </div>

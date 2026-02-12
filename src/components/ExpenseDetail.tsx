@@ -22,15 +22,15 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
   
   const [merchant, setMerchant] = useState(expense.merchant || "");
   // Initialize total with comma for display
-  const [total, setTotal] = useState(expense.total?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00");
+  const [total, setTotal] = useState(expense.amount?.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0,00");
   const [category, setCategory] = useState(expense.category || "");
-  const [expenseDate, setExpenseDate] = useState(expense.expense_date || "");
+  const [expenseDate, setExpenseDate] = useState(expense.date || "");
 
-  const formattedDate = expense.expense_date 
-    ? format(new Date(expense.expense_date), "d MMMM yyyy", { locale: it })
+  const formattedDate = expense.date 
+    ? format(new Date(expense.date), "d MMMM yyyy", { locale: it })
     : "—";
 
-  const formattedTotal = expense.total?.toLocaleString("it-IT", {
+  const formattedTotal = expense.amount?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }) || "0,00";
@@ -39,7 +39,7 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
     setIsDeleting(true);
     try {
       const { error } = await supabase
-        .from("expenses")
+        .from("transactions" as any)
         .delete()
         .eq("id", expense.id);
       
@@ -60,12 +60,12 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
       const parsedTotal = parseFloat(total.replace(',', '.')) || 0;
 
       const { error } = await supabase
-        .from("expenses")
+        .from("transactions" as any)
         .update({
           merchant,
-          total: parsedTotal,
+          amount: parsedTotal,
           category,
-          expense_date: expenseDate,
+          date: expenseDate,
         })
         .eq("id", expense.id);
       

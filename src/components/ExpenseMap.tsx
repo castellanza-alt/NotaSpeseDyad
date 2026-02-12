@@ -112,7 +112,7 @@ export function ExpenseMap({ expenses }: ExpenseMapProps) {
                     
                     <h4 className="font-bold text-sm pr-2 truncate max-w-[180px]">{popupInfo.merchant || "Sconosciuto"}</h4>
                     <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">
-                        {popupInfo.expense_date ? format(new Date(popupInfo.expense_date), "d MMM yyyy", { locale: it }) : ""}
+                        {popupInfo.date ? format(new Date(popupInfo.date), "d MMM yyyy", { locale: it }) : ""}
                     </p>
                     
                     <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
@@ -120,7 +120,7 @@ export function ExpenseMap({ expenses }: ExpenseMapProps) {
                             {popupInfo.category || "Altro"}
                         </span>
                         <span className="font-bold text-primary text-sm">
-                            €{popupInfo.total?.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                            €{popupInfo.amount?.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
                         </span>
                     </div>
 

@@ -14,19 +14,19 @@ interface ExpenseCardProps {
 }
 
 export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: ExpenseCardProps) {
-  const expenseDate = expense.expense_date ? new Date(expense.expense_date) : null;
+  const expenseDate = expense.date ? new Date(expense.date) : null;
   
   // Calendar Widget Data
   const day = expenseDate ? format(expenseDate, "d") : "-";
   const month = expenseDate ? format(expenseDate, "MMM", { locale: it }).replace(".", "") : "";
 
   // STRICT ITALIAN FORMATTING
-  let rawFormatted = expense.total?.toLocaleString("it-IT", {
+  let rawFormatted = expense.amount?.toLocaleString("it-IT", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }) || "0,00";
 
-  if ((expense.total || 0) >= 1000 && !rawFormatted.includes(".")) {
+  if ((expense.amount || 0) >= 1000 && !rawFormatted.includes(".")) {
       const parts = rawFormatted.split(",");
       parts[0] = parts[0].replace(/\s/g, "."); 
       if (!parts[0].includes(".")) {
@@ -37,7 +37,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
   rawFormatted = rawFormatted.replace(/\s/g, ".");
   
   const [integerPart, decimalPart] = rawFormatted.split(",");
-  const isIncome = (expense.total || 0) < 0; 
+  const isIncome = (expense.amount || 0) < 0; 
 
   // Organic Rotation Calculation
   const { rotation, offsetX } = useMemo(() => {

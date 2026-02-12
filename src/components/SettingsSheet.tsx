@@ -81,7 +81,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     try {
       // Try to fetch trash. If deleted_at doesn't exist, this might fail.
       const { data, error } = await supabase
-        .from("expenses")
+        .from("transactions" as any)
         .select("*")
         .not("deleted_at", "is", null)
         .order("deleted_at", { ascending: false });
@@ -91,7 +91,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
          // Don't throw, just show empty
          setTrashItems([]);
       } else {
-         setTrashItems(data || []);
+         setTrashItems((data as any[]) || []);
       }
     } catch (e) {
       console.error("Trash fetch error", e);
@@ -224,13 +224,13 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
         const date = new Date(year, month, safeDay, 12, 0, 0);
         const dateStr = format(date, "yyyy-MM-dd");
 
-        await supabase.from("expenses").insert({
+        await supabase.from("transactions" as any).insert({
           user_id: user.id,
           merchant: item.merchant,
           category: item.category,
-          total: item.total,
+          amount: item.total, // Mapped to amount
           currency: "EUR",
-          expense_date: dateStr,
+          date: dateStr,      // Mapped to date
           created_at: new Date().toISOString()
         });
       }
@@ -254,9 +254,9 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     try {
       const headers = ["Data", "Esercente", "Importo", "Valuta", "Categoria"];
       const rows = expenses.map(e => [
-        e.expense_date || "", 
+        e.date || "", 
         e.merchant || "", 
-        e.total?.toString() || "", 
+        e.amount?.toString() || "", 
         e.currency || "EUR", 
         e.category || ""
       ]);
@@ -517,9 +517,9 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
                       <div className="overflow-hidden mr-3">
                          <h4 className="font-bold text-foreground truncate">{item.merchant || "Sconosciuto"}</h4>
                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                            <span>{item.expense_date ? format(new Date(item.expense_date), "d MMM yyyy", { locale: it }) : "-"}</span>
+                            <span>{item.date ? format(new Date(item.date), "d MMM yyyy", { locale: it }) : "-"}</span>
                             <span>•</span>
-                            <span className="text-foreground font-medium">€{item.total?.toFixed(2)}</span>
+                            <span className="text-foreground font-medium">€{item.amount?.toFixed(2)}</span>
                          </div>
                       </div>
                       
