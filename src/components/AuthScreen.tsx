@@ -54,8 +54,9 @@ export function AuthScreen() {
         if (signInError.message.includes("Email not confirmed")) {
           toast({
             title: "Verifica Email Richiesta",
-            description: "Account esistente ma non confermato. Controlla la posta o disabilita 'Confirm Email' su Supabase > Auth > Providers.",
-            variant: "destructive"
+            description: "Vai su Supabase > Authentication > Providers > Email e DISABILITA 'Confirm Email'. Poi cancella l'utente dalla lista Users e riprova.",
+            variant: "destructive",
+            duration: 8000,
           });
           return;
         }
@@ -75,7 +76,6 @@ export function AuthScreen() {
           });
 
           if (signUpError) {
-            // Se la registrazione fallisce (es. rate limit, o utente esiste già in altro modo)
             throw signUpError;
           }
 
@@ -87,11 +87,11 @@ export function AuthScreen() {
             });
             // L'auth state listener gestirà il redirect
           } else if (signUpData.user && !signUpData.session) {
-            // Utente creato ma serve conferma email (comune nei nuovi progetti Supabase)
+            // Utente creato ma serve conferma email
              toast({
-              title: "Account Creato - Verifica Necessaria",
-              description: "Vai su Supabase > Authentication e conferma manualmente l'utente admin@preview.dev, oppure clicca il link nella email simulata.",
-              duration: 6000,
+              title: "Configurazione Supabase Richiesta",
+              description: "Per il login immediato: Vai su Supabase > Auth > Providers > Email e disabilita 'Confirm Email'. Poi cancella questo utente e riprova.",
+              duration: 8000,
             });
           }
           return;
