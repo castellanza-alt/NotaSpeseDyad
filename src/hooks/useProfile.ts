@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface Profile {
   id: string;
   user_id: string;
-  default_emails: string[] | null; // Changed to array of strings
+  default_emails: string[] | null;
   is_default_email: boolean;
   display_name: string | null;
   created_at: string;
@@ -20,10 +20,7 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) {
-      setLoading(true);
-      return;
-    }
+    if (authLoading) return;
     if (!user) {
       setProfile(null);
       setLoading(false);
@@ -33,71 +30,73 @@ export function useProfile() {
     fetchProfile();
   }, [user, authLoading]);
 
-  async function fetchProfile() {
-    if (!user) {
-      setProfile(null);
-      setLoading(false);
-      return;
-    }
-
-    console.log("Current user ID:", user.id);
+  async function fetchProfile(retry = true) {
+    if (!user) return;
 
     try {
       setLoading(true);
-      console.log("Attempting to fetch or create profile for user:", user.id);
-
-      const { data: existingProfile, error: selectError } = await supabase
+      console.log("Fetching profile for:", user.id);
+      
+      let { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (selectError) {
-        console.error("Error during profile SELECT:", {
-          message: selectError.message,
-          status: selectError.code,
-          details: selectError.details,
-          fullError: selectError,
-          queryResult: existingProfile,
-        });
-        throw selectError;
+      if (error) {
+         console.error("Error fetching profile:", error);
+         throw error;
       }
 
-      if (existingProfile) {
-        console.log("Profile found:", existingProfile);
-        setProfile(existingProfile);
+      // If not found and retry is allowed, wait and try again (Trigger latency)
+      if (!data && retry) {
+        console.log("Profile not found yet. Waiting for DB trigger (2000ms)...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const retryResult = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .maybeSingle();
+            
+        data = retryResult.data;
+        error = retryResult.error;
+        
+        if (error) throw error;
+      }
+
+      if (data) {
+        console.log("Profile loaded:", data);
+        setProfile(data);
       } else {
-        console.log("No profile found for user, attempting to create a new one.");
+        // Fallback creation if trigger failed or didn't fire
+        console.log("Profile still not found. Attempting fallback creation...");
         const { data: newProfile, error: upsertError } = await supabase
           .from("profiles")
           .upsert({
             id: user.id,
             user_id: user.id,
             display_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            default_emails: user.user_metadata?.email ? [user.user_metadata.email] : null, // Initialize with an array
+            default_emails: user.user_metadata?.email ? [user.user_metadata.email] : null,
             is_default_email: false,
           }, { onConflict: 'id' })
           .select()
           .single();
 
         if (upsertError) {
-          console.error("Error during profile UPSERT:", {
-            message: upsertError.message,
-            status: upsertError.code,
-            details: upsertError.details,
-            fullError: upsertError,
-          });
-          throw upsertError;
+             console.error("Fallback creation failed:", upsertError);
+             throw upsertError;
         }
-        console.log("New profile created:", newProfile);
+        
+        console.log("Fallback profile created:", newProfile);
         setProfile(newProfile);
       }
     } catch (error: any) {
-      console.error("Unhandled error in fetchProfile (or upsert):", error);
+      console.error("Critical profile error:", error);
       toast({
-        title: "Errore",
-        description: "Impossibile caricare o creare il profilo utente.",
-        variant: "destructive",
+          title: "Errore Profilo",
+          description: "Impossibile caricare il profilo utente. Ricarica la pagina.",
+          variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -107,8 +106,6 @@ export function useProfile() {
   async function updateProfile(updates: Partial<Profile>) {
     if (!user) return;
 
-    console.log("Current user ID for update:", user.id);
-
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -117,15 +114,7 @@ export function useProfile() {
         .select()
         .single();
 
-      if (error) {
-        console.error("Error updating profile:", {
-          message: error.message,
-          status: error.code,
-          details: error.details,
-          fullError: error,
-        });
-        throw error;
-      }
+      if (error) throw error;
       setProfile(data);
       toast({
         title: "Salvato",
@@ -133,7 +122,7 @@ export function useProfile() {
       });
       return data;
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      console.error("Update error:", error);
       toast({
         title: "Errore",
         description: "Impossibile salvare le impostazioni",
@@ -143,5 +132,5 @@ export function useProfile() {
     }
   }
 
-  return { profile, loading, updateProfile, refetch: fetchProfile };
+  return { profile, loading, updateProfile, refetch: () => fetchProfile(false) };
 }
