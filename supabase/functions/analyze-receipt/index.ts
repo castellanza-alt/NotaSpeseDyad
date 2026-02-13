@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -26,7 +27,7 @@ function parseGeminiResponse(rawText: string) {
     console.warn("[analyze-receipt] JSON Regex fallito:", e);
   }
 
-  // 2. TENTATIVO FALLBACK (Pipe)
+  // 2. TENTATIVO FALLBACK (Pipe) - Legacy
   if (rawText.includes("|")) {
     const parts = rawText.split("|").map(p => p.trim());
     if (parts.length >= 3) {
@@ -34,7 +35,8 @@ function parseGeminiResponse(rawText: string) {
       return {
         amount: parseFloat(amountStr) || 0,
         category: parts[1],
-        description: parts[2]
+        description: parts[2],
+        date: new Date().toISOString().split("T")[0] // Fallback date for legacy format
       };
     }
   }
@@ -71,7 +73,7 @@ serve(async (req) => {
     }
 
     // 3. PROMPT RIGIDO E CATEGORIE
-    const prompt = `Analizza lo scontrino e estrai i dati.
+    const prompt = `Analizza lo scontrino e estrai: Importo Totale, Data, Categoria e Nome Esercente.
     
     CATEGORIE AMMESSE (USARE SOLO QUESTE):
     - Vitto Oltre Comune
@@ -92,16 +94,20 @@ serve(async (req) => {
 
     FORMATO OUTPUT OBBLIGATORIO (JSON):
     Restituisci SOLO un oggetto JSON valido nel seguente formato, senza markdown (no \`\`\`), senza commenti:
-    {"amount": 12.50, "category": "Vitto Comune", "description": "Nome Esercente"}
+    {"amount": 12.50, "date": "YYYY-MM-DD", "category": "Vitto Comune", "description": "Nome Esercente"}
 
-    Se non riesci a generare il JSON, usa il formato di emergenza: IMPORTO|CATEGORIA|DESCRIZIONE`;
+    IMPORTANTE:
+    - La data deve essere in formato ISO YYYY-MM-DD. Se non trovi la data, usa la data di oggi.
+    - L'importo deve essere un numero (usa il punto per i decimali).
 
-    console.log("[analyze-receipt] Chiamata a gemini-flash-latest...");
+    Se non riesci a generare il JSON, restituisci un errore JSON valido.`;
+
+    console.log("[analyze-receipt] Chiamata a gemini-1.5-flash...");
 
     // 4. CHIAMATA GEMINI (ENDPOINT AGGIORNATO)
-    // URL Corretto: gemini-flash-latest
+    // URL Corretto: gemini-1.5-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,7 +143,8 @@ serve(async (req) => {
     const sanitizedData = {
       amount: typeof data.amount === "number" ? data.amount : (parseFloat(String(data.amount).replace(',', '.')) || 0),
       category: data.category || "Altri Costi",
-      description: data.description || "Spesa"
+      description: data.description || "Spesa",
+      date: data.date || new Date().toISOString().split("T")[0]
     };
 
     return new Response(

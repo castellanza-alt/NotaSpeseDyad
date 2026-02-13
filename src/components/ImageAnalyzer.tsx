@@ -121,7 +121,8 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
       // MAPPING DEI DATI DALL'IA
       setExpenseData({
         merchant: receivedData.description || "Sconosciuto",
-        expense_date: new Date().toISOString().split("T")[0],
+        // Usa la data restituita dall'IA se presente, altrimenti oggi
+        expense_date: receivedData.date || new Date().toISOString().split("T")[0],
         total: receivedData.amount || 0,
         currency: "EUR",
         category: receivedData.category || "",
@@ -202,7 +203,7 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
 
       if (!emailResponse.ok) throw new Error("Errore email");
 
-      // MAP TO DB SCHEMA (transactions table)
+      // MAP TO DB SCHEMA (expenses table)
       const dbPayload = {
         merchant: expenseData.merchant,
         date: expenseData.expense_date, // Mapped to date
