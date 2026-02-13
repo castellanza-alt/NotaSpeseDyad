@@ -319,7 +319,6 @@ export function ArchiveScreen() {
       {/* Dynamic Header: Greeting & Avatar/Settings */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-6 pt-safe-top flex items-center justify-between pointer-events-auto">
         <div className="flex flex-col animate-fade-in">
-           <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Benvenuto</span>
            <span className="text-xl font-bold text-foreground">Ciao, {userName}</span>
         </div>
 
@@ -400,12 +399,22 @@ export function ArchiveScreen() {
         
         {/* Total & Tools - Moved UP 19px */}
         <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto -translate-y-[19px]">
-          <button
+          
+          {/* THEME SLIDER */}
+          <div
             onClick={() => { haptic('light'); toggleTheme(); }}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
+            className={cn(
+              "w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors border border-foreground/5 shadow-inner backdrop-blur-md",
+              theme === 'dark' ? "bg-slate-950/50" : "bg-amber-100/50"
+            )}
           >
-            {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
+            <div className={cn(
+              "w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-transform duration-300",
+              theme === 'dark' ? "translate-x-6 bg-slate-800 text-white" : "translate-x-0 bg-white text-amber-500"
+            )}>
+               {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+            </div>
+          </div>
 
           <MonthlyReport 
             expenses={filteredExpenses} 

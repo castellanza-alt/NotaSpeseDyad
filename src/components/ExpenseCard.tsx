@@ -112,7 +112,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
   };
 
   return (
-    <div className="relative w-full max-w-[90%] mx-auto mb-3 min-h-[175px]">
+    <div className="relative w-full max-w-[95%] mx-auto mb-3 min-h-[175px]">
       
       {/* BACKGROUND ACTIONS (Revealed on Swipe) - MOBILE */}
       <div 
@@ -211,7 +211,7 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
           )}
         </div>
 
-        {/* TOP ROW */}
+        {/* TOP ROW: Calendar & Price */}
         <div className="flex justify-between items-start w-full mb-1">
           
           {/* Calendar Widget */}
@@ -228,31 +228,33 @@ export function ExpenseCard({ expense, onClick, onDelete, onEdit, className }: E
               </div>
           </div>
 
-          {/* Merchant Title */}
-          <div className="flex-1 pt-2 flex flex-col items-end">
-            <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 text-right">
-              {expense.merchant || "Sconosciuto"}
-            </h3>
-            {/* Category Pill */}
-            <div className="inline-flex items-center justify-center px-2.5 py-1 mt-2 rounded-full bg-secondary/30 border border-border/50">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                {expense.category || "Spesa"}
-              </span>
+          {/* Price (Moved to Top) */}
+          <div className="flex-1 flex justify-end pt-1">
+            <div className={cn(
+              "font-black tracking-tighter flex items-baseline gap-1",
+              isIncome ? "text-emerald-500" : "text-price-solid"
+            )}>
+              <span className="text-4xl">{integerPart}</span>
+              <span className="text-xl opacity-60">,{decimalPart}</span>
+              <span className="text-lg opacity-60 font-bold ml-0.5">€</span>
             </div>
           </div>
 
         </div>
 
-        {/* BOTTOM RIGHT: Price */}
-        <div className="flex-1 flex items-end justify-end mt-4">
-          <div className={cn(
-            "font-black tracking-tighter flex items-baseline gap-1",
-            isIncome ? "text-emerald-500" : "text-price-solid"
-          )}>
-            <span className="text-4xl">{integerPart}</span>
-            <span className="text-xl opacity-60">,{decimalPart}</span>
-            <span className="text-lg opacity-60 font-bold ml-0.5">€</span>
-          </div>
+        {/* BOTTOM SECTION: Merchant & Category (Moved to Bottom) */}
+        <div className="flex-1 flex flex-col justify-end mt-4">
+            <h3 className="text-xl font-extrabold text-foreground leading-tight line-clamp-2 text-left">
+              {expense.merchant || "Sconosciuto"}
+            </h3>
+            
+            <div className="flex mt-2">
+              <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-secondary/30 border border-border/50">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                  {expense.category || "Spesa"}
+                </span>
+              </div>
+            </div>
         </div>
       </div>
     </div>
