@@ -332,15 +332,15 @@ export function ArchiveScreen() {
       </div>
 
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none mt-14">
-        {/* Year Display - Moved down slightly */}
-        <div className="mb-2 opacity-60 animate-fade-in pointer-events-none drop-shadow-sm">
+        {/* Year Display - Moved UP 10px */}
+        <div className="mb-2 opacity-60 animate-fade-in pointer-events-none drop-shadow-sm -translate-y-[10px]">
           <span className="text-sm font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
-        {/* Month Selector */}
-        <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
+        {/* Month Selector - Moved UP 15px */}
+        <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none -translate-y-[15px]">
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           
@@ -394,8 +394,8 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* Total & Tools */}
-        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
+        {/* Total & Tools - Moved UP 30px */}
+        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto -translate-y-[30px]">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
