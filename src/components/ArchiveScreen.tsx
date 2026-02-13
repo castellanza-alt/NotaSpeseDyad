@@ -88,12 +88,26 @@ export function ArchiveScreen() {
       const uniqueMonths = new Set<string>();
       data.forEach((e: any) => {
         if (!e.expense_date) return;
-        const date = new Date(e.expense_date);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
-        uniqueMonths.add(key);
+        
+        // SAFE PARSING: Extract YYYY-MM manually to avoid Timezone shifts (UTC vs Local)
+        // e.expense_date is "YYYY-MM-DD"
+        try {
+          const [y, m] = e.expense_date.split('-'); 
+          // Create local date for 1st of month. Month is 0-indexed in JS Date.
+          const key = `${y}-${m}-01`; 
+          uniqueMonths.add(key);
+        } catch (err) {
+          // Fallback
+          const date = new Date(e.expense_date);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+          uniqueMonths.add(key);
+        }
       });
       
-      const dates = Array.from(uniqueMonths).map(dateStr => new Date(dateStr));
+      const dates = Array.from(uniqueMonths).map(dateStr => {
+        const [y, m, d] = dateStr.split('-');
+        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      });
       
       // CHANGE: Sort Ascending (Oldest -> Newest) so slider goes Left -> Right chronologically
       dates.sort((a, b) => a.getTime() - b.getTime());
@@ -121,15 +135,27 @@ export function ArchiveScreen() {
     if (scrollRef.current && availableMonths.length > 0) {
       const index = availableMonths.findIndex(m => isSameMonth(m, targetDate));
       if (index !== -1) {
-        const containerWidth = scrollRef.current.clientWidth;
-        const scrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
-        scrollRef.current.scrollTo({ left: scrollPos, behavior: 'smooth' });
+        const container = scrollRef.current;
+        const containerWidth = container.clientWidth;
+        
+        // Calculate where we WANT to be
+        const targetScrollPos = (index * ITEM_WIDTH) - (containerWidth / 2) + (ITEM_WIDTH / 2);
+        
+        // Check where we ARE
+        const currentScrollPos = container.scrollLeft;
+        
+        // Only scroll if the difference is significant (> 10px) to avoid fighting user touch
+        // This breaks the feedback loop when user is manually scrolling/swiping
+        if (Math.abs(currentScrollPos - targetScrollPos) > 10) {
+          container.scrollTo({ left: targetScrollPos, behavior: 'smooth' });
+        }
       }
     }
   };
 
   useEffect(() => {
     if (!isDesktop) {
+      // Small timeout to ensure rendering is complete
       const timer = setTimeout(() => {
          scrollToMonth(currentDate);
       }, 50);
@@ -189,6 +215,7 @@ export function ArchiveScreen() {
     
     if (index >= 0 && index < availableMonths.length) {
       const newMonth = availableMonths[index];
+      // Only update state if it's actually different to avoid render thrashing
       if (!isSameMonth(newMonth, currentDate)) {
         setCurrentDate(newMonth);
       }
@@ -405,8 +432,8 @@ export function ArchiveScreen() {
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-all duration-300 border shadow-inner backdrop-blur-md"
             style={{ 
-              backgroundColor: "rgba(163, 146, 120, 0.2)", // #A39278 with 0.2 opacity
-              borderColor: "rgba(163, 146, 120, 0.3)"      // #A39278 with 0.3 opacity
+              backgroundColor: "hsl(35, 40%, 75% / 0.2)", // Fixed HSL from Dark Theme price font
+              borderColor: "hsl(35, 40%, 75% / 0.3)"
             }}
           >
             <div className={cn(
