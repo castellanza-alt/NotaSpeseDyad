@@ -403,10 +403,11 @@ export function ArchiveScreen() {
           {/* THEME SLIDER */}
           <div
             onClick={() => { haptic('light'); toggleTheme(); }}
-            className={cn(
-              "w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-colors border border-foreground/5 shadow-inner backdrop-blur-md",
-              theme === 'dark' ? "bg-slate-950/50" : "bg-amber-100/50"
-            )}
+            className="w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-all duration-300 border shadow-inner backdrop-blur-md"
+            style={{ 
+              backgroundColor: "hsl(var(--price-solid) / 0.15)",
+              borderColor: "hsl(var(--price-solid) / 0.2)"
+            }}
           >
             <div className={cn(
               "w-6 h-6 rounded-full shadow-md flex items-center justify-center transition-transform duration-300",
