@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Loader2, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -25,10 +25,6 @@ interface ImageAnalyzerProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-// URL del progetto Supabase hardcodato per garantire che le chiamate vadano sempre in produzione
-const PROJECT_URL = "https://sbscowwgmokkbbzwllqs.supabase.co";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNic2Nvd3dnbW9ra2JiendsbHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4OTA5ODQsImV4cCI6MjA4NjQ2Njk4NH0.tcnvFqENYEu20lRCUHzby3N-xI4n538naNZahQVIyBk";
 
 export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerProps) {
   const { session } = useAuth();
@@ -95,14 +91,14 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
     try {
       const base64Image = await compressImage(imageFile);
       
-      console.log("Calling Edge Function at:", `${PROJECT_URL}/functions/v1/analyze-receipt`);
+      console.log("Calling Edge Function at:", `${SUPABASE_URL}/functions/v1/analyze-receipt`);
       
-      const response = await fetch(`${PROJECT_URL}/functions/v1/analyze-receipt`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`,
-          'apikey': ANON_KEY
+          'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify({ image: base64Image })
       });
@@ -190,12 +186,12 @@ export function ImageAnalyzer({ imageFile, onClose, onSuccess }: ImageAnalyzerPr
         date: expenseData.expense_date 
       };
 
-      const emailResponse = await fetch(`${PROJECT_URL}/functions/v1/send-expense-email`, {
+      const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-expense-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`,
-          'apikey': ANON_KEY
+          'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify({ 
           to: recipientEmails, 
