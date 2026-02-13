@@ -405,8 +405,8 @@ export function ArchiveScreen() {
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-14 h-8 rounded-full flex items-center px-1 cursor-pointer transition-all duration-300 border shadow-inner backdrop-blur-md"
             style={{ 
-              backgroundColor: "hsl(var(--price-solid) / 0.15)",
-              borderColor: "hsl(var(--price-solid) / 0.2)"
+              backgroundColor: "hsl(35, 40%, 75% / 0.2)", // Fixed HSL from Dark Theme price font
+              borderColor: "hsl(35, 40%, 75% / 0.3)"
             }}
           >
             <div className={cn(
