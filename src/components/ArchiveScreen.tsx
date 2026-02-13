@@ -94,14 +94,17 @@ export function ArchiveScreen() {
       });
       
       const dates = Array.from(uniqueMonths).map(dateStr => new Date(dateStr));
-      dates.sort((a, b) => b.getTime() - a.getTime());
+      
+      // CHANGE: Sort Ascending (Oldest -> Newest) so slider goes Left -> Right chronologically
+      dates.sort((a, b) => a.getTime() - b.getTime());
       
       setAvailableMonths(dates);
       
       if (dates.length > 0) {
           const found = dates.find(d => isSameMonth(d, currentDate));
           if (!found) {
-              setCurrentDate(dates[0]);
+              // CHANGE: Default to last element (Newest) since array is now ascending
+              setCurrentDate(dates[dates.length - 1]);
           }
       }
     } else {
@@ -278,7 +281,8 @@ export function ArchiveScreen() {
 
       <div className="flex-1 overflow-y-auto pr-2 space-y-1 scrollbar-hide">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Periodo</p>
-        {availableMonths.map((date, i) => {
+        {/* Reverse availableMonths for Sidebar so Newest is on top */}
+        {[...availableMonths].reverse().map((date, i) => {
           const isCurrent = isSameMonth(date, currentDate);
           return (
             <button
