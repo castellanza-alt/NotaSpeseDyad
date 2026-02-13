@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle, Database, X, Trash2, RotateCcw, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Settings, Download, LogOut, Loader2, ChevronRight, PlusCircle, MinusCircle, Database, X, Trash2, RotateCcw, ArrowLeft, AlertTriangle, Network } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useExpenses, Expense } from "@/hooks/useExpenses"; 
 import { signOut } from "@/lib/auth";
@@ -52,6 +52,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
 
   // Trash State
@@ -181,22 +182,65 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     }
   };
 
+  const handleConnectionTest = async () => {
+    if (!user) {
+      toast({ title: "Login Richiesto", description: "Devi essere loggato per il test", variant: "destructive" });
+      return;
+    }
+
+    setTestingConnection(true);
+    try {
+      // 1. Log URL being used (visible in console)
+      // Extract project ID from URL for display
+      const currentUrl = (supabase as any).supabaseUrl || "Unknown";
+      console.log("TESTING CONNECTION TO:", currentUrl);
+
+      // 2. Attempt Insert
+      const { data, error } = await supabase.from("transactions" as any).insert({
+        merchant: "Test Connessione",
+        amount: 1,
+        currency: "EUR",
+        user_id: user.id,
+        created_at: new Date().toISOString()
+      }).select().single();
+
+      if (error) {
+        console.error("TEST FAILED:", error);
+        toast({
+          title: "TEST FALLITO",
+          description: `URL: ${currentUrl.substring(8, 25)}... | Err: ${error.code} - ${error.message}`,
+          variant: "destructive",
+          duration: 10000
+        });
+      } else {
+        toast({
+          title: "TEST RIUSCITO",
+          description: `Inserito ID: ${(data as any).id} su ${currentUrl.substring(8, 25)}...`,
+          className: "bg-emerald-500 text-white"
+        });
+        // Cleanup
+        await supabase.from("transactions" as any).delete().eq("id", (data as any).id);
+        onDataGenerated?.();
+      }
+
+    } catch (e: any) {
+      toast({ title: "Errore Critico", description: e.message, variant: "destructive" });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
   const handleGenerateDemoData = async () => {
     if (!user) return;
     
-    // RESTRICTION REMOVED FOR TESTING
-    // if (user.email !== 'admin@preview.dev') { ... }
-
     setGenerating(true);
     try {
-      // DEFINIZIONE DATASETS
       const datasets = [
-        { year: 2025, month: 11, label: "Dicembre 2025" }, // Mese 11 = Dicembre (0-indexed)
-        { year: 2026, month: 0, label: "Gennaio 2026" },   // Mese 0 = Gennaio
-        { year: 2026, month: 1, label: "Febbraio 2026" },  // Mese 1 = Febbraio
+        { year: 2025, month: 11, label: "Dicembre 2025" },
+        { year: 2026, month: 0, label: "Gennaio 2026" },
+        { year: 2026, month: 1, label: "Febbraio 2026" },
       ];
 
-      // LISTA BASE DI SPESE REALISTICHE
       const baseExpenses = [
         { m: "Bar Milano Centrale", c: "Vitto Comune", a: 4.50 },
         { m: "Taxi 3570", c: "Taxi", a: 18.00 },
@@ -218,19 +262,11 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       let count = 0;
 
       for (const ds of datasets) {
-        // Genera 15 spese per ogni mese
         for (let i = 0; i < 15; i++) {
-            // Prendi una spesa base (ciclica o randomica)
             const template = baseExpenses[i % baseExpenses.length];
-            
-            // Genera giorno casuale tra 1 e 28
             const day = Math.floor(Math.random() * 28) + 1;
-            
-            // Crea data
             const date = new Date(ds.year, ds.month, day, 12, 0, 0);
             const dateStr = format(date, "yyyy-MM-dd");
-
-            // Leggera variazione importo per realismo
             const amount = template.a + (Math.random() * 10 - 5); 
 
             await supabase.from("transactions" as any).insert({
@@ -434,6 +470,32 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Area Sviluppatore (TEST MODE)
               </h3>
+              
+              {/* TEST CONNECTION BUTTON */}
+              <button 
+                onClick={handleConnectionTest} 
+                disabled={testingConnection}
+                className="w-full flex items-center justify-between bg-card rounded-2xl p-4 card-shadow mb-3
+                          disabled:opacity-50 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] border border-red-500/10"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="icon-pill-muted bg-red-500/10 text-red-500">
+                    {testingConnection ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Network className="w-4 h-4" strokeWidth={1.5} />
+                    )}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-foreground">Test Connessione DB</p>
+                    <p className="text-xs text-muted-foreground">
+                      Verifica URL e permessi scrittura
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+              </button>
+
               <button 
                 onClick={handleGenerateDemoData} 
                 disabled={generating}
