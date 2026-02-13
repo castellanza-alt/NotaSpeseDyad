@@ -79,7 +79,6 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     if (!user) return;
     setLoadingTrash(true);
     try {
-      // Try to fetch trash. If deleted_at doesn't exist, this might fail.
       const { data, error } = await supabase
         .from("transactions" as any)
         .select("*")
@@ -88,7 +87,6 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       
       if (error) {
          console.warn("Trash fetch failed (column might be missing)", error);
-         // Don't throw, just show empty
          setTrashItems([]);
       } else {
          setTrashItems((data as any[]) || []);
@@ -105,7 +103,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       await restoreExpense(id);
       setTrashItems(prev => prev.filter(item => item.id !== id));
       toast({ title: "Recuperata", description: "La nota è stata ripristinata" });
-      onDataGenerated?.(); // Trigger refresh of main list
+      onDataGenerated?.(); 
     } catch (e) {
       toast({ title: "Errore", description: "Impossibile ripristinare", variant: "destructive" });
     }
@@ -186,58 +184,71 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
   const handleGenerateDemoData = async () => {
     if (!user) return;
     
-    // RESTRICTION: Only Admin
-    if (user.email !== 'admin@preview.dev') {
-        toast({
-            title: "Accesso Negato",
-            description: "Solo l'account Administrator può generare i dati demo.",
-            variant: "destructive"
-        });
-        return;
-    }
+    // RESTRICTION REMOVED FOR TESTING
+    // if (user.email !== 'admin@preview.dev') { ... }
 
     setGenerating(true);
     try {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth(); // 0-indexed
-
-      // Dati coerenti con le categorie richieste
-      const demoExpenses = [
-        { merchant: "Trenitalia S.p.A.", category: "Spese trasporti", total: 89.90, day: 2 },
-        { merchant: "Hotel Splendid Roma", category: "Alloggio Oltre Comune", total: 145.00, day: 2 },
-        { merchant: "Ristorante La Carbonara", category: "Vitto Oltre Comune", total: 45.50, day: 2 },
-        { merchant: "Taxi Roma Capitale", category: "Taxi", total: 22.00, day: 3 },
-        { merchant: "Ristorante Da Vittorio", category: "Spese Rappresentanza", total: 230.00, day: 5 },
-        { merchant: "Bar Centrale Milano", category: "Vitto Comune", total: 12.50, day: 8 },
-        { merchant: "Uber", category: "Taxi", total: 18.40, day: 10 },
-        { merchant: "Starbucks London", category: "Vitto Estero", total: 14.50, day: 12 }, 
-        { merchant: "Hilton London", category: "Alloggio Estero", total: 320.00, day: 12 },
-        { merchant: "Cancelleria Ufficio", category: "Altri Costi", total: 42.00, day: 15 },
-        { merchant: "Italo Treno", category: "Spese trasporti", total: 65.00, day: 20 },
-        { merchant: "Trattoria Milanese", category: "Vitto Comune", total: 35.00, day: 22 },
+      // DEFINIZIONE DATASETS
+      const datasets = [
+        { year: 2025, month: 11, label: "Dicembre 2025" }, // Mese 11 = Dicembre (0-indexed)
+        { year: 2026, month: 0, label: "Gennaio 2026" },   // Mese 0 = Gennaio
+        { year: 2026, month: 1, label: "Febbraio 2026" },  // Mese 1 = Febbraio
       ];
 
-      for (const item of demoExpenses) {
-        // Usa una data fissa nel mese corrente (mezzogiorno per evitare problemi di timezone)
-        const safeDay = Math.min(item.day, 28); 
-        const date = new Date(year, month, safeDay, 12, 0, 0);
-        const dateStr = format(date, "yyyy-MM-dd");
+      // LISTA BASE DI SPESE REALISTICHE
+      const baseExpenses = [
+        { m: "Bar Milano Centrale", c: "Vitto Comune", a: 4.50 },
+        { m: "Taxi 3570", c: "Taxi", a: 18.00 },
+        { m: "Trenitalia Frecciarossa", c: "Spese trasporti", a: 89.00 },
+        { m: "Ristorante Da Enzo Roma", c: "Vitto Oltre Comune", a: 45.00 },
+        { m: "Hotel Artemide", c: "Alloggio Oltre Comune", a: 150.00 },
+        { m: "Uber", c: "Taxi", a: 22.50 },
+        { m: "Cancelleria Ufficio", c: "Altri Costi", a: 12.90 },
+        { m: "Pranzo di Lavoro - Clienti", c: "Spese Rappresentanza", a: 120.00 },
+        { m: "Starbucks", c: "Vitto Comune", a: 8.50 },
+        { m: "Italo Treno", c: "Spese trasporti", a: 56.00 },
+        { m: "Trattoria Milanese", c: "Vitto Comune", a: 35.00 },
+        { m: "Autogrill Cantagallo", c: "Vitto Oltre Comune", a: 14.50 },
+        { m: "Parcheggio Linate", c: "Spese trasporti", a: 28.00 },
+        { m: "Metro Milano ATM", c: "Spese trasporti", a: 2.20 },
+        { m: "Cena Sociale", c: "Spese Rappresentanza", a: 200.00 },
+      ];
 
-        await supabase.from("transactions" as any).insert({
-          user_id: user.id,
-          merchant: item.merchant,
-          category: item.category,
-          amount: item.total, // Mapped to amount
-          currency: "EUR",
-          date: dateStr,      // Mapped to date
-          created_at: new Date().toISOString()
-        });
+      let count = 0;
+
+      for (const ds of datasets) {
+        // Genera 15 spese per ogni mese
+        for (let i = 0; i < 15; i++) {
+            // Prendi una spesa base (ciclica o randomica)
+            const template = baseExpenses[i % baseExpenses.length];
+            
+            // Genera giorno casuale tra 1 e 28
+            const day = Math.floor(Math.random() * 28) + 1;
+            
+            // Crea data
+            const date = new Date(ds.year, ds.month, day, 12, 0, 0);
+            const dateStr = format(date, "yyyy-MM-dd");
+
+            // Leggera variazione importo per realismo
+            const amount = template.a + (Math.random() * 10 - 5); 
+
+            await supabase.from("transactions" as any).insert({
+              user_id: user.id,
+              merchant: template.m,
+              category: template.c,
+              amount: parseFloat(amount.toFixed(2)),
+              currency: "EUR",
+              date: dateStr,
+              created_at: new Date().toISOString()
+            });
+            count++;
+        }
       }
 
       toast({
-        title: "Dati Admin Generati",
-        description: `Create ${demoExpenses.length} note spese per il mese corrente.`,
+        title: "Dati Demo Generati",
+        description: `Create ${count} note spese di test per ${user.email}`,
       });
       onDataGenerated?.();
       setOpen(false);
@@ -421,7 +432,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
              {/* Demo Data Section */}
             <section className="space-y-4">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Area Sviluppatore
+                Area Sviluppatore (TEST MODE)
               </h3>
               <button 
                 onClick={handleGenerateDemoData} 
@@ -438,9 +449,9 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
                     )}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-foreground">Genera Dati Demo (Admin)</p>
+                    <p className="text-sm font-medium text-foreground">Genera Dati Demo (Tutti)</p>
                     <p className="text-xs text-muted-foreground">
-                      Crea dati test nel mese corrente
+                      Crea dati test (Dic 25 - Feb 26)
                     </p>
                   </div>
                 </div>
