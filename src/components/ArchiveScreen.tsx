@@ -394,8 +394,8 @@ export function ArchiveScreen() {
           </div>
         </div>
         
-        {/* Total & Tools - Moved UP 25px */}
-        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto -translate-y-[25px]">
+        {/* Total & Tools - Moved UP 20px (was 25px, lowered by 5px) */}
+        <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto -translate-y-[20px]">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-background/20 backdrop-blur-md hover:bg-background/40 border border-foreground/5 shadow-sm transition-all active:scale-95 text-muted-foreground"
