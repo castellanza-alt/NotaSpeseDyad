@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useExpenses, Expense } from "@/hooks/useExpenses";
-import { Moon, Menu, Plus, Check, Search, Sun, LayoutDashboard, Settings } from "lucide-react";
+import { Moon, Plus, Check, Search, Sun, LayoutDashboard, Settings, Menu } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useHaptic } from "@/hooks/use-haptic";
 import { SettingsSheet } from "./SettingsSheet";
@@ -14,6 +14,8 @@ import { format, isSameMonth } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export function ArchiveScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +26,9 @@ export function ArchiveScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showSearchBar, setShowSearchBar] = useState(false);
+  
+  // Auth & Profile
+  const { user } = useAuth();
   
   // RESPONSIVE STATE
   const [columns, setColumns] = useState(1);
@@ -84,27 +89,22 @@ export function ArchiveScreen() {
       data.forEach((e: any) => {
         if (!e.date) return;
         const date = new Date(e.date);
-        // Normalize to 1st of month: YYYY-MM-01
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
         uniqueMonths.add(key);
       });
       
       const dates = Array.from(uniqueMonths).map(dateStr => new Date(dateStr));
-      
-      // Sort descending (Recent first)
       dates.sort((a, b) => b.getTime() - a.getTime());
       
       setAvailableMonths(dates);
       
       if (dates.length > 0) {
-          // Check if current date is in the list
           const found = dates.find(d => isSameMonth(d, currentDate));
           if (!found) {
               setCurrentDate(dates[0]);
           }
       }
     } else {
-      // Fallback if no data
       setAvailableMonths([new Date()]);
     }
   }, [currentDate]);
@@ -165,7 +165,7 @@ export function ArchiveScreen() {
   const handleSuccess = useCallback(() => {
     setSelectedImage(null);
     refetch();
-    fetchAvailableMonths(); // Refresh month list in case a new month was created
+    fetchAvailableMonths(); 
     setShowSuccess(true);
     haptic('success');
     setTimeout(() => setShowSuccess(false), 2500);
@@ -196,6 +196,8 @@ export function ArchiveScreen() {
     setCurrentDate(newDate);
     if (!isDesktop) scrollToMonth(newDate);
   };
+
+  const userName = user?.user_metadata?.full_name?.split(" ")[0] || "Utente";
 
   const topSpacerHeight = showSearchBar ? 'h-[22rem]' : 'h-[18rem]';
 
@@ -235,15 +237,21 @@ export function ArchiveScreen() {
         >
           <Settings className="w-5 h-5" />
         </button>
+        <div className="w-10 h-10 flex items-center justify-center cursor-pointer" onClick={() => setSettingsOpen(true)}>
+             <UserAvatar size="sm" className="ring-offset-2 ring-offset-background" />
+        </div>
       </div>
     </div>
   );
 
   const DesktopSidebar = () => (
     <div className="hidden md:flex flex-col w-[25%] h-screen fixed left-[80px] top-0 z-40 p-8 border-r border-border/20 bg-background/30 backdrop-blur-lg">
-      <h1 className="text-3xl font-black tracking-tight text-foreground mb-6 drop-shadow-sm">
-        Nota Spese
-      </h1>
+      <div className="mb-8 animate-fade-in">
+        <h1 className="text-3xl font-black tracking-tight text-foreground drop-shadow-sm mb-1">
+          Nota Spese
+        </h1>
+        <p className="text-muted-foreground font-medium">Ciao, {userName}</p>
+      </div>
 
       <div className="mb-8">
         <MonthlyReport 
@@ -294,44 +302,50 @@ export function ArchiveScreen() {
 
 
   return (
-    <div className="h-screen flex flex-col md:flex-row overflow-hidden relative font-sans bg-transparent">
-      {/* 
-          IMPORTANT: bg-transparent on container. 
-          The background image is on the BODY tag (fixed).
-      */}
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden relative font-sans bg-transparent animate-fade-in">
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* --- MOBILE COMPONENTS --- */}
       
       <div className="md:hidden fixed top-0 left-0 right-0 h-[17rem] z-40 pointer-events-none">
-        {/* Adjusted header backdrop to be glassy but not opaque */}
         <div className="absolute inset-0 bg-background/40 backdrop-blur-xl border-b border-white/5 transition-all duration-300" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/10 to-transparent opacity-50" />
       </div>
 
-      <div className="md:hidden fixed top-0 right-0 z-50 p-6 pt-safe-top">
+      {/* Dynamic Header: Greeting & Avatar/Settings */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 px-6 pt-safe-top flex items-center justify-between pointer-events-auto">
+        <div className="flex flex-col animate-fade-in">
+           <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Benvenuto</span>
+           <span className="text-xl font-bold text-foreground">Ciao, {userName}</span>
+        </div>
+
         <button
           onClick={() => { haptic('light'); setSettingsOpen(true); }}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-background/20 backdrop-blur-md hover:bg-background/40 transition-all active:scale-95 border border-foreground/5 shadow-sm"
+          className="relative group transition-transform active:scale-95"
         >
-          <Menu className="w-5 h-5 text-foreground/80" strokeWidth={2} />
+          <div className="absolute inset-0 bg-background/50 rounded-full blur-md" />
+          <UserAvatar className="w-10 h-10 border-2 border-white/20 shadow-sm relative z-10" />
+          <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5 border border-border shadow-sm z-20">
+             <Menu className="w-3 h-3 text-muted-foreground" />
+          </div>
         </button>
       </div>
 
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none">
-        <div className="mb-2 opacity-80 animate-fade-in pointer-events-none drop-shadow-sm">
-          <span className="text-2xl font-bold tracking-[0.3em] text-foreground font-mono">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col items-center pt-safe-top pointer-events-none mt-14">
+        {/* Year Display - Moved down slightly */}
+        <div className="mb-2 opacity-60 animate-fade-in pointer-events-none drop-shadow-sm">
+          <span className="text-sm font-bold tracking-[0.3em] text-foreground font-mono">
             {format(currentDate, "yyyy")}
           </span>
         </div>
 
+        {/* Month Selector */}
         <div className="relative w-full h-[4.5rem] flex items-end pointer-events-auto select-none">
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background/40 via-background/20 to-transparent z-20 pointer-events-none" />
           
           <div className="absolute left-1/2 -translate-x-1/2 bottom-5 z-30 flex flex-col items-center">
              <div className="w-[2px] h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-             <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-red-500 mt-1" />
           </div>
 
           <div 
@@ -380,6 +394,7 @@ export function ArchiveScreen() {
           </div>
         </div>
         
+        {/* Total & Tools */}
         <div className="relative z-50 mt-1 w-full px-6 flex items-center justify-between pointer-events-auto">
           <button
             onClick={() => { haptic('light'); toggleTheme(); }}
