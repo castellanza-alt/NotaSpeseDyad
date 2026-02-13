@@ -39,7 +39,7 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
     setIsDeleting(true);
     try {
       const { error } = await supabase
-        .from("transactions" as any)
+        .from("expenses") // updated from transactions
         .delete()
         .eq("id", expense.id);
       
@@ -57,15 +57,15 @@ export function ExpenseDetail({ expense, onClose, onDelete, onUpdate }: ExpenseD
     setIsSaving(true);
     try {
       // Convert comma to dot for parsing
-      const parsedTotal = parseFloat(total.replace(',', '.')) || 0;
+      const parsedTotal = parseFloat(total.replace(/\./g, '').replace(',', '.')) || 0;
 
       const { error } = await supabase
-        .from("transactions" as any)
+        .from("expenses") // updated from transactions
         .update({
           merchant,
-          amount: parsedTotal,
+          total: parsedTotal, // updated from amount
           category,
-          date: expenseDate,
+          expense_date: expenseDate, // updated from date
         })
         .eq("id", expense.id);
       

@@ -79,16 +79,16 @@ export function ArchiveScreen() {
   // Fetch available months from DB
   const fetchAvailableMonths = useCallback(async () => {
     const { data } = await supabase
-      .from('transactions' as any)
-      .select('date')
-      .not('date', 'is', null)
-      .order('date', { ascending: false });
+      .from('expenses') // Updated to expenses
+      .select('expense_date') // Updated to expense_date
+      .not('expense_date', 'is', null)
+      .order('expense_date', { ascending: false });
 
     if (data && data.length > 0) {
       const uniqueMonths = new Set<string>();
       data.forEach((e: any) => {
-        if (!e.date) return;
-        const date = new Date(e.date);
+        if (!e.expense_date) return;
+        const date = new Date(e.expense_date);
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
         uniqueMonths.add(key);
       });

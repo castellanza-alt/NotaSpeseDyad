@@ -15,7 +15,6 @@ export interface Expense {
   image_url: string | null;
   created_at: string;
   updated_at: string;
-  // properties that might or might not exist in the new table, keeping them optional for now
   items?: any;
   sent_to_email?: string | null;
   sent_at?: string | null;
@@ -58,9 +57,9 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       const isSearching = searchQuery.trim().length > 0;
       
       let query = supabase
-        .from("transactions" as any)
+        .from("expenses")
         .select("*")
-        .order("date", { ascending: false })
+        .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (limit) {
@@ -75,8 +74,11 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
+      // MAPPING DB (expenses) -> APP (Expense interface)
       let resultData = (data as any[])?.map(item => ({
         ...item,
+        date: item.expense_date, // Map DB 'expense_date' to App 'date'
+        amount: item.total       // Map DB 'total' to App 'amount'
       })) || [];
 
       // Client-Side Filtering if searching
@@ -115,7 +117,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
         setHasMore((data?.length || 0) === PAGE_SIZE);
       }
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error("Error fetching expenses:", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -128,16 +130,36 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
   async function addExpense(expense: Omit<Expense, "id" | "user_id" | "created_at" | "updated_at">) {
     if (!user) return null;
+    
+    // MAPPING APP -> DB
+    const dbPayload = {
+      ...expense,
+      user_id: user.id,
+      expense_date: expense.date, // Map App 'date' to DB 'expense_date'
+      total: expense.amount,      // Map App 'amount' to DB 'total'
+      // Remove unmapped fields if spread included them (though Omit protects somewhat)
+      date: undefined, 
+      amount: undefined
+    };
+
+    // Clean up undefined
+    delete (dbPayload as any).date;
+    delete (dbPayload as any).amount;
+
     const { data, error } = await supabase
-      .from("transactions" as any)
-      .insert({ ...expense, user_id: user.id })
+      .from("expenses")
+      .insert(dbPayload)
       .select()
       .single();
 
     if (error) throw error;
     
-    // Cast data to Expense to satisfy TypeScript (using unknown first to avoid overlap error)
-    const newExpense = data as unknown as Expense;
+    // Map response back to App
+    const newExpense: Expense = {
+      ...(data as any),
+      date: (data as any).expense_date,
+      amount: (data as any).total
+    };
     
     setExpenses(prev => [newExpense, ...prev]);
     setLastAddedId(newExpense.id);
@@ -146,21 +168,22 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   }
 
   async function deleteExpense(id: string) {
+    // Soft delete if column exists, or hard delete? 
+    // Usually standard delete for now unless we implement logic
+    // But SettingsSheet uses soft delete logic. Let's assume soft delete if deleted_at exists.
+    // Actually, let's stick to simple delete for the main list, but use update deleted_at
     const { error } = await supabase
-      .from("transactions" as any)
-      .delete()
+      .from("expenses")
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
       
     if (error) throw error;
     setExpenses(prev => prev.filter(e => e.id !== id));
   }
 
-  // RESTORE - No-op
   async function restoreExpense(id: string) {
-    // This functionality depends on backend support for soft deletes in the new table
-    // For now, we'll try to update deleted_at to null if the column exists
     const { error } = await supabase
-      .from("transactions" as any)
+      .from("expenses")
       .update({ deleted_at: null })
       .eq("id", id);
       
@@ -170,10 +193,9 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     }
   }
 
-  // HARD DELETE
   async function permanentlyDeleteExpense(id: string) {
     const { error } = await supabase
-      .from("transactions" as any)
+      .from("expenses")
       .delete()
       .eq("id", id);
       

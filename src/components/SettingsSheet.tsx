@@ -81,16 +81,22 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
     setLoadingTrash(true);
     try {
       const { data, error } = await supabase
-        .from("transactions" as any)
+        .from("expenses") // Updated from transactions
         .select("*")
         .not("deleted_at", "is", null)
         .order("deleted_at", { ascending: false });
       
       if (error) {
-         console.warn("Trash fetch failed (column might be missing)", error);
+         console.warn("Trash fetch failed", error);
          setTrashItems([]);
       } else {
-         setTrashItems((data as any[]) || []);
+         // Map for Trash View display
+         const mappedData = (data as any[]).map(item => ({
+             ...item,
+             date: item.expense_date,
+             amount: item.total
+         }));
+         setTrashItems(mappedData || []);
       }
     } catch (e) {
       console.error("Trash fetch error", e);
@@ -195,10 +201,10 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
       const currentUrl = (supabase as any).supabaseUrl || "Unknown";
       console.log("TESTING CONNECTION TO:", currentUrl);
 
-      // 2. Attempt Insert
-      const { data, error } = await supabase.from("transactions" as any).insert({
+      // 2. Attempt Insert into EXPENSES (was transactions)
+      const { data, error } = await supabase.from("expenses").insert({
         merchant: "Test Connessione",
-        amount: 1,
+        total: 1, // was amount
         currency: "EUR",
         user_id: user.id,
         created_at: new Date().toISOString()
@@ -219,7 +225,7 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
           className: "bg-emerald-500 text-white"
         });
         // Cleanup
-        await supabase.from("transactions" as any).delete().eq("id", (data as any).id);
+        await supabase.from("expenses").delete().eq("id", (data as any).id);
         onDataGenerated?.();
       }
 
@@ -269,13 +275,14 @@ export function SettingsSheet({ open: controlledOpen, onOpenChange, showTrigger 
             const dateStr = format(date, "yyyy-MM-dd");
             const amount = template.a + (Math.random() * 10 - 5); 
 
-            await supabase.from("transactions" as any).insert({
+            // Updated to insert into 'expenses' with correct columns
+            await supabase.from("expenses").insert({
               user_id: user.id,
               merchant: template.m,
               category: template.c,
-              amount: parseFloat(amount.toFixed(2)),
+              total: parseFloat(amount.toFixed(2)), // was amount
               currency: "EUR",
-              date: dateStr,
+              expense_date: dateStr, // was date
               created_at: new Date().toISOString()
             });
             count++;
